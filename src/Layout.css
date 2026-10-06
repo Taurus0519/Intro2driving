@@ -1,0 +1,82 @@
+/* Portal header and student sidebar */
+.portal-eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .17em;
+  color: #778a99;
+  margin-bottom: 3px;
+}
+.header-search {
+  width: 190px;
+  margin: 0;
+  background: #fff;
+}
+body:has(.student-dashboard) {
+  background: linear-gradient(#c7e5f6, #eef8fd 55%);
+}
+body:has(.student-dashboard) .sidebar {
+  width: 200px;
+  flex: 0 0 200px;
+  background: linear-gradient(#b83939, #832525);
+}
+body:has(.student-dashboard) .sidebar .brand-mark {
+  width: 50px;
+  height: 50px;
+  font-size: 25px;
+}
+body:has(.student-dashboard) .sidebar .brand-name {
+  font-size: 21px;
+}
+body:has(.student-dashboard) .main-content {
+  padding: 25px;
+}
+body:has(.student-dashboard) .topbar h2 {
+  font-size: 23px;
+}
+@media (max-width: 600px) {
+  .app {
+    display: block;
+  }
+  body:has(.student-dashboard) .sidebar {
+    width: 100%;
+    padding: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sidebar nav {
+    display: flex;
+    overflow-x: auto;
+  }
+  .nav-link {
+    width: auto;
+    white-space: nowrap;
+  }
+  .role-badge {
+    margin: 0;
+  }
+  .sidebar .brand-mark, .brand-name {
+    margin: 0;
+  }
+  .topbar {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .top-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .header-search {
+    width: 140px;
+  }
+  .student-welcome {
+    padding: 20px;
+  }
+  .welcome-stars {
+    font-size: 24px;
+  }
+  .progress-cards {
+    gap: 8px;
+  }
+}

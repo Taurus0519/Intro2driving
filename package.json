@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "dev": "concurrently -k \"npm:api\" \"npm:client\"",
+    "api": "node --env-file-if-exists=.env server/index.mjs",
+    "client": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "express": "^5.2.1",
+    "react": "^19.x",
+    "react-dom": "^19.x",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.x",
+    "concurrently": "^10.0.5",
+    "vite": "^7.3.6"
+  }
+}
