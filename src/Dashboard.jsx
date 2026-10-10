@@ -7,7 +7,9 @@ import { ACHIEVEMENTS } from './achievementData';
 import { Link } from 'react-router-dom';
 import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistData';
 
-const PDC_CHECKLIST_ITEM_IDS = new Set(PDC_CHECKLIST_ITEMS.map((item) => item.id));
+const PDC_CHECKLIST_ITEM_IDS = new Set(
+  PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
+);
 
 async function fetchAllRows(buildQuery) {
   const pageSize = 1000;

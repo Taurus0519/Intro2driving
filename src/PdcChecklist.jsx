@@ -5,7 +5,9 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_SECTIONS }
 import './PdcChecklist.css';
 import './PdcChecklistPrint.css';
 
-const PDC_CHECKLIST_ITEM_IDS = new Set(PDC_CHECKLIST_ITEMS.map((item) => item.id));
+const PDC_CHECKLIST_ITEM_IDS = new Set(
+  PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
+);
 
 function getProgress(responses) {
   const answered = responses.filter((response) =>
@@ -259,27 +261,35 @@ function FragmentSection({ section, responseByItem, savedItemIds, draftResponses
 
         return (
           <tr key={item.id}>
-            <td>{item.label}</td>
-            {['yes', 'no'].map((result) => (
-              <td key={result} className="pdc-choice-cell">
-                {isStaff ? (
-                  <button
-                    type="button"
-                    className={`pdc-choice-toggle${response.result === result ? ' is-selected' : ''}`}
-                    aria-label={`${result === 'yes' ? 'Yes' : 'No'}: ${item.label}`}
-                    aria-pressed={response.result === result}
-                    onClick={() => onUpdate(item.id, 'result', response.result === result ? '' : result)}
-                    disabled={isSaving}
-                  >
-                    {response.result === result ? '✓' : ''}
-                  </button>
-                ) : (
-                  <span className="pdc-result-check" aria-hidden="true">
-                    {response.result === result ? '✓' : ''}
-                  </span>
-                )}
-              </td>
-            ))}
+            <td>
+              {item.label}
+              {item.optional && <span className="pdc-optional-label"> (Optional)</span>}
+            </td>
+            {item.optional ? (
+              <>
+                <td className="pdc-choice-cell" aria-label="Not required" />
+                <td className="pdc-choice-cell" aria-label="Not required" />
+              </>
+            ) : ['yes', 'no'].map((result) => (
+                <td key={result} className="pdc-choice-cell">
+                  {isStaff ? (
+                    <button
+                      type="button"
+                      className={`pdc-choice-toggle${response.result === result ? ' is-selected' : ''}`}
+                      aria-label={`${result === 'yes' ? 'Yes' : 'No'}: ${item.label}`}
+                      aria-pressed={response.result === result}
+                      onClick={() => onUpdate(item.id, 'result', response.result === result ? '' : result)}
+                      disabled={isSaving}
+                    >
+                      {response.result === result ? '✓' : ''}
+                    </button>
+                  ) : (
+                    <span className="pdc-result-check" aria-hidden="true">
+                      {response.result === result ? '✓' : ''}
+                    </span>
+                  )}
+                </td>
+              ))}
             <td>
               {isStaff ? (
                 <textarea

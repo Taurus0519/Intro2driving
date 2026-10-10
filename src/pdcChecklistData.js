@@ -63,10 +63,16 @@ export const PDC_CHECKLIST_SECTIONS = [
       { id: 'heavy_traffic_attitudes', label: 'Acquaints the student with actual heavy-traffic driving conditions and develops correct driving attitudes' },
     ],
   },
+  {
+    title: 'Night Driving',
+    items: [
+      { id: 'night_driving_attitudes', label: 'Student must familiarize themselves with actual night-driving conditions', optional: true },
+    ],
+  },
 ];
 
 export const PDC_CHECKLIST_ITEMS = PDC_CHECKLIST_SECTIONS.flatMap((section) =>
   section.items.map((item) => ({ ...item, section: section.title })),
 );
 
-export const PDC_CHECKLIST_ITEM_COUNT = PDC_CHECKLIST_ITEMS.length;
+export const PDC_CHECKLIST_ITEM_COUNT = PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).length;
