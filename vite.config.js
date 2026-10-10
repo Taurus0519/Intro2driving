@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const configuredBasePath = process.env.VITE_BASE_PATH || (
-  process.env.VERCEL ? '/' : '/intro2driving-system'
-);
+const configuredBasePath = process.env.VERCEL
+  ? '/'
+  : process.env.VITE_BASE_PATH || '/intro2driving-system';
 const basePath = configuredBasePath === '/'
   ? '/'
   : `/${configuredBasePath.replace(/^\/+|\/+$/g, '')}/`;
