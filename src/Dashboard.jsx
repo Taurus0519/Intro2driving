@@ -3,6 +3,23 @@ import { useEffect, useState } from 'react';
 import './Dashboard.css';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth.jsx';
+import { ACHIEVEMENTS } from './achievementData';
+import { Link } from 'react-router-dom';
+import { PDC_CHECKLIST_ITEM_COUNT } from './pdcChecklistData';
+
+async function fetchAllRows(buildQuery) {
+  const pageSize = 1000;
+  const rows = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await buildQuery().range(offset, offset + pageSize - 1);
+    if (error) return { data: null, error };
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) return { data: rows, error: null };
+    offset += pageSize;
+  }
+}
 
 function ProgressCard({ icon, count, title, hint }) {
   return (
@@ -17,6 +34,10 @@ function ProgressCard({ icon, count, title, hint }) {
 
 function StudentDashboard({ profile }) {
   const [progress, setProgress] = useState({ quizzes: 0 });
+  const [completedAchievements, setCompletedAchievements] = useState([]);
+  const [achievementError, setAchievementError] = useState('');
+  const [pdcProgress, setPdcProgress] = useState({ answered: 0, complete: false });
+  const [pdcError, setPdcError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -36,6 +57,56 @@ function StudentDashboard({ profile }) {
     }
 
     void loadProgress();
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPdcProgress() {
+      const { data, error } = await supabase
+        .from('pdc_checklist_responses')
+        .select('item_id, result')
+        .eq('student_id', profile.id);
+
+      if (!active) return;
+      if (error) {
+        setPdcError(`PDC checklist status could not be loaded: ${error.message}`);
+        return;
+      }
+
+      const answered = (data || []).filter((item) => item.result === 'yes' || item.result === 'no').length;
+      setPdcProgress({ answered, complete: answered === PDC_CHECKLIST_ITEM_COUNT });
+    }
+
+    void loadPdcProgress();
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAchievements() {
+      const { data, error } = await supabase
+        .from('player_achievements')
+        .select('achievement_id, unlocked_at')
+        .eq('user_id', profile.id)
+        .order('unlocked_at', { ascending: false });
+
+      if (!active) return;
+      if (error) {
+        setAchievementError(`Achievements could not be loaded: ${error.message}`);
+        return;
+      }
+
+      setCompletedAchievements(data || []);
+    }
+
+    void loadAchievements();
     return () => {
       active = false;
     };
@@ -68,7 +139,62 @@ function StudentDashboard({ profile }) {
               title="Quizzes Completed"
               hint="Start your first quiz!"
             />
+            <ProgressCard
+              icon="★"
+              count={completedAchievements.length}
+              title="Achievements Completed"
+              hint="Keep working toward your next achievement."
+            />
+            <ProgressCard
+              icon="✓"
+              count={`${pdcProgress.answered}/${PDC_CHECKLIST_ITEM_COUNT}`}
+              title="PDC Checklist"
+              hint={pdcError ? 'Status unavailable' : pdcProgress.complete ? 'Completed' : 'In progress'}
+            />
           </div>
+
+          <section className="dash-card pdc-dashboard-card">
+            <div className="card-heading">
+              <h3>PDC Checklist</h3>
+              <Link to="/pdc-checklist">View checklist</Link>
+            </div>
+            {pdcError ? (
+              <p role="alert" className="quiz-results-error">{pdcError}</p>
+            ) : (
+              <p>{pdcProgress.complete
+                ? 'Your PDC checklist is complete.'
+                : `Your PDC checklist is ${pdcProgress.answered} of ${PDC_CHECKLIST_ITEM_COUNT} items complete.`}</p>
+            )}
+          </section>
+
+          <section className="dash-card completed-achievements-panel">
+            <div className="card-heading">
+              <h3>Your Completed Achievements</h3>
+              <Link to="/achievements">View all</Link>
+            </div>
+            {achievementError ? (
+              <p role="alert" className="quiz-results-error">{achievementError}</p>
+            ) : completedAchievements.length ? (
+              <ul className="completed-achievements-list">
+                {completedAchievements.map((award) => {
+                  const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
+                  if (!achievement) return null;
+
+                  return (
+                    <li key={award.achievement_id}>
+                      <span aria-hidden="true">{achievement.icon}</span>
+                      <div>
+                        <strong>{achievement.title}</strong>
+                        <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="quiz-results-empty">No achievements completed yet.</p>
+            )}
+          </section>
 
         </div>
 
@@ -98,6 +224,9 @@ function AdminDashboard({ profile }) {
   const [quizTakeCount, setQuizTakeCount] = useState(0);
   const [quizAttempts, setQuizAttempts] = useState([]);
   const [quizAttemptsError, setQuizAttemptsError] = useState('');
+  const [pdcStudentCount, setPdcStudentCount] = useState(0);
+  const [pdcCompletedCount, setPdcCompletedCount] = useState(0);
+  const [pdcStatsError, setPdcStatsError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -160,6 +289,43 @@ function AdminDashboard({ profile }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadPdcStats() {
+      const [studentsResult, responsesResult] = await Promise.all([
+        fetchAllRows(() => supabase.from('profiles').select('id').eq('role', 'student')),
+        fetchAllRows(() => supabase.from('pdc_checklist_responses').select('student_id, item_id, result')),
+      ]);
+
+      if (!active) return;
+      if (studentsResult.error || responsesResult.error) {
+        setPdcStatsError(
+          `PDC completion count could not be loaded: ${studentsResult.error?.message || responsesResult.error?.message}`,
+        );
+        return;
+      }
+
+      const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
+      const evaluatedItems = new Map();
+      for (const response of responsesResult.data || []) {
+        if (!studentIds.has(response.student_id) || !['yes', 'no'].includes(response.result)) continue;
+        if (!evaluatedItems.has(response.student_id)) evaluatedItems.set(response.student_id, new Set());
+        evaluatedItems.get(response.student_id).add(response.item_id);
+      }
+
+      setPdcStudentCount(studentIds.size);
+      setPdcCompletedCount(
+        [...evaluatedItems.values()].filter((items) => items.size >= PDC_CHECKLIST_ITEM_COUNT).length,
+      );
+    }
+
+    void loadPdcStats();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="role-dashboard">
       <section className="role-welcome">
@@ -181,7 +347,14 @@ function AdminDashboard({ profile }) {
             {Object.entries(ageGroups).map(([group, count]) => (
               <ProgressCard key={group} icon="◷" count={count} title={group} hint="Students" />
             ))}
+            <ProgressCard
+              icon="✓"
+              count={pdcStatsError ? '—' : pdcCompletedCount}
+              title="PDC Checklist Completed"
+              hint={pdcStatsError ? 'Count unavailable' : `of ${pdcStudentCount} students`}
+            />
           </div>
+          {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
 
           <section className="dash-card quiz-results-panel">
             <div className="card-heading">
