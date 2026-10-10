@@ -32,6 +32,10 @@ export default async function handler(req, res) {
   const authClient = createClient(supabaseUrl, publishableKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+  const userClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -44,7 +48,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const { data: callerProfile, error: callerProfileError } = await adminClient
+    const { data: callerProfile, error: callerProfileError } = await userClient
       .from('profiles')
       .select('role')
       .eq('id', caller.id)
@@ -52,7 +56,7 @@ export default async function handler(req, res) {
     if (callerProfileError || !callerProfile) {
       console.error('Could not verify caller role for student deletion:', callerProfileError);
       return respond(res, 500, {
-        error: 'Could not verify your portal role. Check that SUPABASE_SERVICE_ROLE_KEY belongs to the same Supabase project as VITE_SUPABASE_URL.',
+        error: `Could not load your portal role: ${callerProfileError?.message || 'profile not found.'}`,
       });
     }
     const callerRole = callerProfile.role?.trim().toLowerCase();
@@ -60,19 +64,25 @@ export default async function handler(req, res) {
       return respond(res, 403, { error: 'Only an admin or superadmin can delete student accounts.' });
     }
 
-    const { data: studentProfile, error: studentProfileError } = await adminClient
+    const { data: studentProfile, error: studentProfileError } = await userClient
       .from('profiles')
       .select('role')
       .eq('id', userId)
       .single();
-    if (studentProfileError || studentProfile?.role !== 'student') {
+    if (studentProfileError) {
+      console.error('Could not verify target student role:', studentProfileError);
+      return respond(res, 500, { error: `Could not verify the selected student: ${studentProfileError.message}` });
+    }
+    if (studentProfile?.role?.trim().toLowerCase() !== 'student') {
       return respond(res, 404, { error: 'The requested student account was not found.' });
     }
 
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
     if (deleteError) {
       console.error('Student account deletion failed:', deleteError);
-      return respond(res, 500, { error: `Student account could not be deleted: ${deleteError.message}` });
+      return respond(res, 500, {
+        error: `Student account could not be deleted: ${deleteError.message}. Ensure SUPABASE_SERVICE_ROLE_KEY is the service-role key for the same Supabase project as VITE_SUPABASE_URL.`,
+      });
     }
 
     return respond(res, 200, { success: true });

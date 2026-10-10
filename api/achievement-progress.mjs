@@ -27,6 +27,10 @@ export default async function handler(req, res) {
   const authClient = createClient(supabaseUrl, publishableKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+  const userClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -39,7 +43,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const { data: callerProfile, error: callerProfileError } = await adminClient
+    const { data: callerProfile, error: callerProfileError } = await userClient
       .from('profiles')
       .select('role')
       .eq('id', caller.id)
@@ -47,7 +51,7 @@ export default async function handler(req, res) {
     if (callerProfileError || !callerProfile) {
       console.error('Could not verify caller role for achievement progress:', callerProfileError);
       return respond(res, 500, {
-        error: 'Could not verify your portal role. Check that SUPABASE_SERVICE_ROLE_KEY belongs to the same Supabase project as VITE_SUPABASE_URL.',
+        error: `Could not load your portal role: ${callerProfileError?.message || 'profile not found.'}`,
       });
     }
     const callerRole = callerProfile.role?.trim().toLowerCase();
@@ -60,7 +64,9 @@ export default async function handler(req, res) {
       .select('user_id, achievement_id');
     if (awardsError) {
       console.error('Student achievement progress could not be loaded:', awardsError);
-      return respond(res, 500, { error: `Achievement progress could not be loaded: ${awardsError.message}` });
+      return respond(res, 500, {
+        error: `Achievement progress could not be loaded: ${awardsError.message}. Check that SUPABASE_SERVICE_ROLE_KEY belongs to the same Supabase project as VITE_SUPABASE_URL.`,
+      });
     }
 
     return respond(res, 200, { awards: awards || [] });
