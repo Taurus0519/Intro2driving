@@ -3,6 +3,7 @@ import { useAuth } from './useAunth.jsx';
 import { supabase } from './supabase_Client';
 import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_SECTIONS } from './pdcChecklistData';
 import './PdcChecklist.css';
+import './PdcChecklistPrint.css';
 
 function getProgress(responses) {
   const answered = responses.filter((response) => response.result === 'yes' || response.result === 'no').length;
