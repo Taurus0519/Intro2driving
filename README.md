@@ -40,4 +40,4 @@ Run [`supabase/pdc_checklist.sql`](./supabase/pdc_checklist.sql) in the Supabase
 
 ## Password recovery on Vercel
 
-In Supabase Authentication URL Configuration, set the Site URL to `https://intro2driving-system.vercel.app` and add `https://intro2driving-system.vercel.app/reset-password` to the Redirect URLs allow-list. Add `VITE_APP_URL=https://intro2driving-system.vercel.app` to the Vercel project environment variables, then redeploy. For local recovery testing, use `VITE_APP_URL=http://localhost:5173` and allow `http://localhost:5173/reset-password` in Supabase. Always request a fresh reset email after changing these settings.
+In Supabase Authentication URL Configuration, set the Site URL to `https://intro2driving-system.vercel.app` and add `https://intro2driving-system.vercel.app/reset-password` to the Redirect URLs allow-list. Production builds use the current deployed site origin for reset links, so do not set a localhost `VITE_APP_URL` in Vercel. For local recovery testing, optionally set `VITE_APP_URL=http://localhost:5173` and allow `http://localhost:5173/reset-password` in Supabase. Always request a fresh reset email after changing these settings.

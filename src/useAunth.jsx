@@ -37,7 +37,8 @@ export function AuthProvider({ children }) {
     supabase.auth.signInWithPassword({ email, password });
 
   const resetPassword = (email) => {
-    const appUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/+$/, '');
+    const configuredAppUrl = import.meta.env.DEV ? import.meta.env.VITE_APP_URL : '';
+    const appUrl = (configuredAppUrl || window.location.origin).replace(/\/+$/, '');
     const basePath = import.meta.env.BASE_URL === '/'
       ? ''
       : import.meta.env.BASE_URL.replace(/\/+$/, '');
