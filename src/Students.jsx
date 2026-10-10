@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { createAccount } from './accounts';
 import { useAuth } from './useAunth.jsx';
+import { ACHIEVEMENTS } from './achievementData.js';
 
 export default function Students() {
   const { isAdmin } = useAuth();
@@ -9,6 +10,9 @@ export default function Students() {
   const [form, setForm] = useState({ name: '', email: '', username: '', password: '', age: '' });
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
+  const [achievementError, setAchievementError] = useState('');
+  const [achievementProgress, setAchievementProgress] = useState({});
+  const [achievementProgressLoading, setAchievementProgressLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [studentsLoading, setStudentsLoading] = useState(true);
 
@@ -17,6 +21,8 @@ export default function Students() {
   async function load() {
     setStudentsLoading(true);
     setError('');
+    setAchievementError('');
+    setAchievementProgressLoading(true);
     try {
       const { data, error: loadError } = await supabase
         .from('profiles').select('*').eq('role', 'student').order('name');
@@ -24,8 +30,37 @@ export default function Students() {
       setStudents(data || []);
     } catch (loadError) {
       setError(`Students could not be loaded: ${loadError.message || 'Please try again.'}`);
-    } finally {
       setStudentsLoading(false);
+      setAchievementProgressLoading(false);
+      return;
+    }
+    setStudentsLoading(false);
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+
+      const response = await fetch('/api/achievement-progress', {
+        headers: { Authorization: ['Bearer', session.access_token].join(' ') },
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || 'Achievement progress could not be loaded.');
+      const knownAchievementIds = new Set(ACHIEVEMENTS.map((achievement) => achievement.id));
+      const completedByStudent = new Map();
+      for (const award of result?.awards || []) {
+        if (!knownAchievementIds.has(award.achievement_id)) continue;
+        const completed = completedByStudent.get(award.user_id) || new Set();
+        completed.add(award.achievement_id);
+        completedByStudent.set(award.user_id, completed);
+      }
+      setAchievementProgress(
+        Object.fromEntries([...completedByStudent].map(([userId, completed]) => [userId, completed.size])),
+      );
+    } catch (progressLoadError) {
+      setAchievementError(progressLoadError.message || 'Achievement progress could not be loaded.');
+    } finally {
+      setAchievementProgressLoading(false);
     }
   }
 
@@ -67,7 +102,7 @@ export default function Students() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: ['Bearer', session.access_token].join(' '),
         },
         body: JSON.stringify({ userId: s.id }),
       });
@@ -112,11 +147,11 @@ export default function Students() {
       <div className="panel table-wrap">
         <table className="data-table">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Status</th><th>Progress</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Status</th><th>Progress</th><th>Achievements</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {studentsLoading ? (
-              <tr><td colSpan="5">Loading students...</td></tr>
+              <tr><td colSpan="6">Loading students...</td></tr>
             ) : students.map((s) => {
               const status = s.status || 'Unknown';
               return (
@@ -125,6 +160,13 @@ export default function Students() {
                 <td>{s.email}</td>
                 <td><span className={`status ${status.toLowerCase()}`}>{status}</span></td>
                 <td>{s.progress ?? 0}%</td>
+                <td>
+                  {achievementProgressLoading
+                    ? 'Loading...'
+                    : achievementError
+                      ? 'Unavailable'
+                      : `${achievementProgress[s.id] || 0}/${ACHIEVEMENTS.length}`}
+                </td>
                 <td>
                   <button type="button" className="button small-button" onClick={() => toggleStatus(s)}>
                     {status === 'Active' ? 'Disable' : 'Enable'}
@@ -137,6 +179,7 @@ export default function Students() {
           </tbody>
         </table>
       </div>
+      {achievementError && <p className="error" role="alert">Achievement progress could not be loaded: {achievementError}</p>}
     </>
   );
 }

@@ -24,7 +24,7 @@ Account creation runs through the Node API in `server/index.mjs`. It requires `S
 
 Run `npm install` and then `npm run dev` to start the API and Vite client together. The API listens on port 3001. Set `ACCOUNT_API_ORIGINS` to the comma-separated frontend origins when deploying the API, and set `VITE_ACCOUNT_API_URL` to the API's base URL when building the client for production.
 
-Student deletion runs through the Vercel serverless function in `api/delete-account.mjs`. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables. The service-role key must remain server-side and must never use a `VITE_` prefix.
+Student deletion and achievement progress use Vercel serverless functions in `api/`. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
 
 ## Quiz results
 
