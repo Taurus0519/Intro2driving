@@ -20,9 +20,9 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Account creation API
 
-Account creation runs through the Node API in `server/index.mjs`. It requires `SUPABASE_SERVICE_ROLE_KEY` in the root `.env` file in addition to the Supabase URL and publishable key. Get the service-role key from your Supabase project's API settings, keep it server-side, and do not use a `VITE_` prefix. The API prefers `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` so its auth checks use the same Supabase project as the frontend; `SUPABASE_URL` and `SUPABASE_ANON_KEY` are fallbacks. After adding the key, restart the API (or run `npm run dev` again).
+Account creation uses the local Node API in `server/index.mjs` during development and the Vercel function in `api/create-account.mjs` when deployed. For Vercel, configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` for the same Supabase project. Keep the service-role key server-side and do not use a `VITE_` prefix. For local development, add `SUPABASE_SERVICE_ROLE_KEY` to the root `.env` file and run `npm run dev`.
 
-Run `npm install` and then `npm run dev` to start the API and Vite client together. The API listens on port 3001. Set `ACCOUNT_API_ORIGINS` to the comma-separated frontend origins when deploying the API, and set `VITE_ACCOUNT_API_URL` to the API's base URL when building the client for production.
+Run `npm install` and then `npm run dev` to start the local API and Vite client together. The API listens on port 3001. In production, account creation always uses the same-origin Vercel function.
 
 Student deletion and achievement progress use Vercel serverless functions in `api/`. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables for the same Supabase project. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
 
