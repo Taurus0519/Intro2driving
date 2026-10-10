@@ -117,6 +117,7 @@ export default function Messages() {
   const [showForm, setShowForm] = useState(false);
   const [replyToId, setReplyToId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recipientsLoading, setRecipientsLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
@@ -126,11 +127,12 @@ export default function Messages() {
 
   async function load() {
     setLoading(true);
+    setRecipientsLoading(true);
     setError('');
     try {
       const { data: messageRows, error: messagesError } = await supabase
         .from('messages')
-        .select('*, sender:profiles!messages_sender_id_fkey(name), recipient:profiles!messages_recipient_id_fkey(name), parent:messages!messages_parent_message_id_fkey(body,sender_id,recipient_id)')
+        .select('*, sender:profiles!messages_sender_id_fkey(name), recipient:profiles!messages_recipient_id_fkey(name)')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('sent_at', { ascending: false });
 
@@ -141,6 +143,20 @@ export default function Messages() {
       }
 
       const rows = messageRows || [];
+      const parentIds = [...new Set(rows.map((message) => message.parent_message_id).filter(Boolean))];
+      const parentsById = new Map();
+      if (parentIds.length > 0) {
+        const { data: parentRows, error: parentsError } = await supabase
+          .from('messages')
+          .select('id,body,sender_id,recipient_id')
+          .in('id', parentIds);
+        if (parentsError) {
+          setError(`Reply context could not be loaded: ${parentsError.message}`);
+        } else {
+          for (const parent of parentRows || []) parentsById.set(parent.id, parent);
+        }
+      }
+
       let attachmentRows = [];
       if (rows.length > 0) {
         const { data, error: attachmentsError } = await supabase
@@ -170,24 +186,38 @@ export default function Messages() {
 
       setMessages(rows.map((message) => ({
         ...message,
+        parent: parentsById.get(message.parent_message_id) || null,
         attachments: attachmentsByMessage.get(message.id) || [],
       })));
 
-      const { data: recipientRows, error: recipientsError } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .neq('id', user.id)
-        .order('name');
-      if (recipientsError) {
-        setError((current) => current || `Recipients could not be loaded: ${recipientsError.message}`);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        setError(`Your session could not be checked: ${sessionError.message}`);
+        setRecipients([]);
+      } else if (!session?.access_token) {
+        setError('Sign in again to load message recipients.');
+        setRecipients([]);
       } else {
-        setRecipients(recipientRows || []);
+        const apiUrl = import.meta.env.DEV
+          ? 'http://localhost:3001/api/message-recipients'
+          : '/api/message-recipients';
+        const recipientsResponse = await fetch(apiUrl, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const recipientsResult = await recipientsResponse.json();
+        if (!recipientsResponse.ok) {
+          setError(`Recipients could not be loaded: ${recipientsResult.error || 'Please try again.'}`);
+          setRecipients([]);
+        } else {
+          setRecipients(recipientsResult.recipients || []);
+        }
       }
     } catch (loadError) {
       setError(`Messages could not be loaded: ${loadError instanceof Error ? loadError.message : 'Please try again.'}`);
       setMessages([]);
     } finally {
       setLoading(false);
+      setRecipientsLoading(false);
     }
   }
 
@@ -311,8 +341,10 @@ export default function Messages() {
             recipientSelect={(
               <label>
                 Recipient
-                <select value={recipientId} onChange={(event) => setRecipientId(event.target.value)} required>
-                  <option value="">Select recipient</option>
+                <select value={recipientId} onChange={(event) => setRecipientId(event.target.value)} required disabled={recipientsLoading}>
+                  <option value="">
+                    {recipientsLoading ? 'Loading recipients...' : recipients.length ? 'Select recipient' : 'No recipients available'}
+                  </option>
                   {recipients.map((recipient) => (
                     <option key={recipient.id} value={recipient.id}>{recipient.name}</option>
                   ))}

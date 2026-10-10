@@ -5,6 +5,10 @@
       "destination": "/api/create-account.js"
     },
     {
+      "source": "/api/message-recipients",
+      "destination": "/api/message-recipients.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

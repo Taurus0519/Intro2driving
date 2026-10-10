@@ -165,6 +165,49 @@ app.post('/api/create-account', async (request, response) => {
   }
 });
 
+app.get('/api/message-recipients', async (request, response) => {
+  if (!authClient || !adminClient) {
+    return response.status(500).json({
+      error: `The message recipients API is missing required configuration: ${missingSupabaseConfig.join(', ')}. Add it to the root .env file and restart the API.`,
+    });
+  }
+
+  const token = getBearerToken(request.get('authorization'));
+  if (!token) return response.status(401).json({ error: 'Sign in to view message recipients.' });
+
+  try {
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !user) {
+      return response.status(401).json({ error: 'Your session is invalid or expired. Sign in again.' });
+    }
+
+    const { data: callerProfile, error: callerProfileError } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+    if (callerProfileError || !callerProfile) {
+      console.error('Could not verify caller profile for message recipients:', callerProfileError);
+      return response.status(403).json({ error: 'Your account does not have a portal profile.' });
+    }
+
+    const { data: recipients, error: recipientsError } = await adminClient
+      .from('profiles')
+      .select('id, name')
+      .neq('id', user.id)
+      .order('name');
+    if (recipientsError) {
+      console.error('Message recipients could not be loaded:', recipientsError);
+      return response.status(500).json({ error: 'Message recipients could not be loaded.' });
+    }
+
+    return response.json({ recipients: recipients || [] });
+  } catch (error) {
+    console.error('Message recipients request failed:', error);
+    return response.status(500).json({ error: 'Message recipients failed due to a server error.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Account API listening on port ${port}`);
 });

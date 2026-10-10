@@ -32,7 +32,7 @@ Before students can submit recorded quiz results, run [`supabase/quiz_attempts.s
 
 ## Message replies and attachments
 
-Run [`supabase/message_replies_attachments.sql`](./supabase/message_replies_attachments.sql) in the Supabase SQL Editor to enable replies and private message attachments. Senders and recipients can reply to messages and share up to five images, videos, or other files per message, up to 50 MB each. The storage bucket is private; only the two message participants can access its attachments.
+Run [`supabase/message_replies_attachments.sql`](./supabase/message_replies_attachments.sql) in the Supabase SQL Editor to enable replies and private message attachments. Senders and recipients can reply to messages and share up to five images, videos, or other files per message, up to 50 MB each. The storage bucket is private; only the two message participants can access its attachments. The recipient list is loaded from the authenticated `/api/message-recipients` endpoint; configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and the server-only `SUPABASE_SERVICE_ROLE_KEY` in Vercel for the same Supabase project.
 
 ## Achievement tracking
 
