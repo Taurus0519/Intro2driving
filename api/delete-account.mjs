@@ -49,8 +49,15 @@ export default async function handler(req, res) {
       .select('role')
       .eq('id', caller.id)
       .single();
-    if (callerProfileError || !['admin', 'superadmin'].includes(callerProfile?.role)) {
-      return respond(res, 403, { error: 'Only an admin can delete student accounts.' });
+    if (callerProfileError || !callerProfile) {
+      console.error('Could not verify caller role for student deletion:', callerProfileError);
+      return respond(res, 500, {
+        error: 'Could not verify your portal role. Check that SUPABASE_SERVICE_ROLE_KEY belongs to the same Supabase project as VITE_SUPABASE_URL.',
+      });
+    }
+    const callerRole = callerProfile.role?.trim().toLowerCase();
+    if (!['admin', 'superadmin'].includes(callerRole)) {
+      return respond(res, 403, { error: 'Only an admin or superadmin can delete student accounts.' });
     }
 
     const { data: studentProfile, error: studentProfileError } = await adminClient
