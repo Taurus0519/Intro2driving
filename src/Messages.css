@@ -1,0 +1,110 @@
+.messages-page .toolbar {
+  align-items: center;
+}
+.message-error {
+  margin: 0 0 16px;
+}
+.new-message-panel {
+  margin-bottom: 20px;
+}
+.message-list {
+  padding: 0 18px;
+}
+.message-row {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.message-row:last-child {
+  border-bottom: 0;
+}
+.message-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.message-heading time {
+  color: var(--muted);
+  font-size: 11px;
+}
+.message-body {
+  margin: 8px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message-reply-context {
+  margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0;
+}
+.message-attachment {
+  display: grid;
+  max-width: min(100%, 320px);
+  gap: 5px;
+  color: var(--blue);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.message-attachment img,
+.message-attachment video {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f4f8fa;
+}
+.message-video {
+  width: min(100%, 360px);
+}
+.message-file {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--blue);
+  overflow-wrap: anywhere;
+}
+.message-reply-button {
+  margin: 4px 0;
+}
+.message-composer {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.message-composer input[type="file"] {
+  min-height: auto;
+  padding: 8px;
+}
+.attachment-help {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .message-list {
+    padding: 0 12px;
+  }
+  .message-heading {
+    align-items: flex-start;
+  }
+  .message-heading time {
+    text-align: right;
+  }
+}

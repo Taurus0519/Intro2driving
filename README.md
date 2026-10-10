@@ -30,6 +30,10 @@ Student deletion and achievement progress use Vercel serverless functions in `ap
 
 Before students can submit recorded quiz results, run [`supabase/quiz_attempts.sql`](./supabase/quiz_attempts.sql) in the Supabase SQL Editor. It creates the attempt table and the row-level security policies that allow students to record their own results and admins to view them. Admin and super admin dashboards show the total number of takes and the 20 most recent results.
 
+## Message replies and attachments
+
+Run [`supabase/message_replies_attachments.sql`](./supabase/message_replies_attachments.sql) in the Supabase SQL Editor to enable replies and private message attachments. Senders and recipients can reply to messages and share up to five images, videos, or other files per message, up to 50 MB each. The storage bucket is private; only the two message participants can access its attachments.
+
 ## Achievement tracking
 
 Run [`supabase/player_achievements.sql`](./supabase/player_achievements.sql) in the Supabase SQL Editor to enable per-student achievement tracking. Super admins can mark or revoke achievements for a selected student on the Achievements page. Students can see their completed achievements and unlock dates there and on their dashboard.
