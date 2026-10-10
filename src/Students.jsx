@@ -57,11 +57,26 @@ export default function Students() {
 
   async function remove(s) {
     if (!window.confirm(`Delete ${s.name}?`)) return;
-    const { error } = await supabase.functions.invoke('delete-account', {
-      body: { userId: s.id },
-    });
-    if (error) return alert(error.message);
-    await load();
+    setError('');
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId: s.id }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || 'Student account could not be deleted.');
+      await load();
+    } catch (deleteError) {
+      setError(deleteError.message || 'Student account could not be deleted. Please try again.');
+    }
   }
 
   return (

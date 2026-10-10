@@ -24,6 +24,8 @@ Account creation runs through the Node API in `server/index.mjs`. It requires `S
 
 Run `npm install` and then `npm run dev` to start the API and Vite client together. The API listens on port 3001. Set `ACCOUNT_API_ORIGINS` to the comma-separated frontend origins when deploying the API, and set `VITE_ACCOUNT_API_URL` to the API's base URL when building the client for production.
 
+Student deletion runs through the Vercel serverless function in `api/delete-account.mjs`. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables. The service-role key must remain server-side and must never use a `VITE_` prefix.
+
 ## Quiz results
 
 Before students can submit recorded quiz results, run [`supabase/quiz_attempts.sql`](./supabase/quiz_attempts.sql) in the Supabase SQL Editor. It creates the attempt table and the row-level security policies that allow students to record their own results and admins to view them. Admin and super admin dashboards show the total number of takes and the 20 most recent results.
