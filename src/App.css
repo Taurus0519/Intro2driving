@@ -158,6 +158,36 @@ a {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.account-menu-labels {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  text-align: left;
+}
+.sidebar-account-menu {
+  align-self: stretch;
+  margin: 0 12px 20px;
+}
+.sidebar-account-menu > summary {
+  justify-content: space-between;
+  padding: 8px 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.14);
+}
+.sidebar-account-menu .account-menu-name {
+  max-width: 160px;
+}
+.sidebar-account-menu .account-menu-role {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 9px;
+}
+.sidebar-account-menu .account-menu-chevron {
+  color: rgba(255, 255, 255, 0.8);
+}
+.sidebar-account-menu .account-menu-panel {
+  left: 0;
+  right: auto;
+}
 .account-menu-panel .button.logout {
   width: 100%;
 }
@@ -475,6 +505,13 @@ form.panel {
   }
   .brand-name {
     font-size: 17px;
+  }
+  .sidebar-account-menu {
+    width: 100%;
+    margin: 0 0 8px;
+  }
+  .sidebar-account-menu .account-menu-name {
+    max-width: calc(100vw - 100px);
   }
   .nav-link {
     width: auto;

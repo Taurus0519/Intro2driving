@@ -43,6 +43,19 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="brand-mark">R</div>
         <div className="brand-name">Riteway</div>
+        <details className="account-menu sidebar-account-menu">
+          <summary className="user-chip">
+            <span className="account-menu-labels">
+              <span className="account-menu-name">{profile.name}</span>
+              <span className="account-menu-role">{roleLabel}</span>
+            </span>
+            <span className="account-menu-chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div className="account-menu-panel">
+            <span className="account-menu-role">{roleLabel}</span>
+            <button type="button" className="button logout" onClick={signOut}>Log out</button>
+          </div>
+        </details>
         <nav>
           {items.map((item) => (
             <NavLink
@@ -62,18 +75,6 @@ export default function Layout() {
           <div>
             <span className="portal-eyebrow">RITEWAY DRIVING SCHOOL PORTAL</span>
             <h2>{pageTitle}</h2>
-          </div>
-          <div className="top-actions">
-            <details className="account-menu">
-              <summary className="user-chip">
-                <span className="account-menu-name">{profile.name}</span>
-                <span className="account-menu-chevron" aria-hidden="true">▾</span>
-              </summary>
-              <div className="account-menu-panel">
-                <span className="account-menu-role">{roleLabel}</span>
-                <button type="button" className="button logout" onClick={signOut}>Log out</button>
-              </div>
-            </details>
           </div>
         </header>
         <Outlet />
