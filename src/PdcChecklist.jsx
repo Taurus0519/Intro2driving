@@ -208,7 +208,13 @@ export default function PdcChecklist() {
         <div className="pdc-table-wrap">
           <table className="pdc-table">
             <thead>
-              <tr><th>Training item</th><th>Yes</th><th>No</th><th>Remarks</th>{isStaff && <th className="pdc-save-heading">Save</th>}</tr>
+              <tr>
+                <th>Training item</th>
+                <th className="pdc-choice-heading">Yes</th>
+                <th className="pdc-choice-heading">No</th>
+                <th>Remarks</th>
+                {isStaff && <th className="pdc-save-heading">Save</th>}
+              </tr>
             </thead>
             <tbody>
               {PDC_CHECKLIST_SECTIONS.map((section) => (
@@ -247,7 +253,8 @@ export default function PdcChecklist() {
 function FragmentSection({ section, responseByItem, savedItemIds, draftResponses, isStaff, savingItems, onUpdate, onSave }) {
   return (
     <>
-      <tr className="pdc-section-row"><th colSpan={isStaff ? 5 : 4}>{section.title}</th></tr>
+      <tr className="pdc-section-row pdc-screen-only"><th colSpan={isStaff ? 5 : 4}>{section.title}</th></tr>
+      <tr className="pdc-section-row pdc-print-only"><th colSpan={2}>{section.title}</th></tr>
       {section.items.map((item) => {
         const response = responseByItem.get(item.id) || { result: '', remarks: '' };
         const isSaving = savingItems.has(item.id);
@@ -278,15 +285,23 @@ function FragmentSection({ section, responseByItem, savedItemIds, draftResponses
             ))}
             <td>
               {isStaff ? (
-                <textarea
-                  aria-label={`Remarks: ${item.label}`}
-                  value={response.remarks || ''}
-                  maxLength={1000}
-                  onChange={(event) => onUpdate(item.id, 'remarks', event.target.value)}
-                  rows={2}
-                  disabled={isSaving}
-                />
-              ) : response.remarks || ''}
+                <>
+                  <textarea
+                    aria-label={`Remarks: ${item.label}`}
+                    value={response.remarks || ''}
+                    maxLength={1000}
+                    onChange={(event) => onUpdate(item.id, 'remarks', event.target.value)}
+                    rows={2}
+                    disabled={isSaving}
+                  />
+                  <span className="pdc-print-remarks">{response.remarks || '\u00a0'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="pdc-screen-remarks">{response.remarks || ''}</span>
+                  <span className="pdc-print-remarks">{response.remarks || '\u00a0'}</span>
+                </>
+              )}
             </td>
             {isStaff && (
               <td className="pdc-save-cell">
