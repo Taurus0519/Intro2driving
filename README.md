@@ -20,7 +20,7 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Account creation API
 
-Account creation uses the local Node API in `server/index.mjs` during development and the Vercel function in `api/create-account.mjs` when deployed. For Vercel, configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` for the same Supabase project. Keep the service-role key server-side and do not use a `VITE_` prefix. For local development, add `SUPABASE_SERVICE_ROLE_KEY` to the root `.env` file and run `npm run dev`.
+Account creation uses the local Node API in `server/index.mjs` during development and the Vercel Node function in `api/create-account.js` when deployed. For Vercel, configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` for the same Supabase project. Keep the service-role key server-side and do not use a `VITE_` prefix. For local development, add `SUPABASE_SERVICE_ROLE_KEY` to the root `.env` file and run `npm run dev`.
 
 Run `npm install` and then `npm run dev` to start the local API and Vite client together. The API listens on port 3001. In production, account creation always uses the same-origin Vercel function.
 

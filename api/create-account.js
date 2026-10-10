@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -29,7 +29,7 @@ function parseAccountInput(body) {
   return { input: { email, password, name, username, role, age } };
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return respond(res, 405, { error: 'Method not allowed.' });
@@ -132,4 +132,4 @@ export default async function handler(req, res) {
     console.error('Account API request failed:', error);
     return respond(res, 500, { error: 'Account creation failed due to a server error.' });
   }
-}
+};
