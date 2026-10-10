@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/create-account",
+      "destination": "/api/create-account.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
