@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="login-card">
         <div className="brand-mark">R</div>
         <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
-        <h1>{forgotPassword ? 'Reset your password' : 'Welcome back'}</h1>
+        <h1>{forgotPassword ? 'Reset your password' : 'Welcome!'}</h1>
         <p className="muted">{forgotPassword ? 'Enter your email and we will send you a reset link.' : 'Sign in to your learning portal.'}</p>
 
         <form onSubmit={submit}>
