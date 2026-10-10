@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './useAunth.jsx';
 import { supabase } from './supabase_Client';
-import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_SECTIONS } from './pdcChecklistData';
+import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_SECTIONS } from './pdcChecklistData';
 import './PdcChecklist.css';
 import './PdcChecklistPrint.css';
 
+const PDC_CHECKLIST_ITEM_IDS = new Set(PDC_CHECKLIST_ITEMS.map((item) => item.id));
+
 function getProgress(responses) {
-  const answered = responses.filter((response) => response.result === 'yes' || response.result === 'no').length;
+  const answered = responses.filter((response) =>
+    PDC_CHECKLIST_ITEM_IDS.has(response.item_id) && (response.result === 'yes' || response.result === 'no')
+  ).length;
   return { answered, complete: answered === PDC_CHECKLIST_ITEM_COUNT };
 }
 
@@ -208,13 +212,7 @@ export default function PdcChecklist() {
         <div className="pdc-table-wrap">
           <table className="pdc-table">
             <thead>
-              <tr>
-                <th>Training item</th>
-                <th className="pdc-choice-heading">Yes</th>
-                <th className="pdc-choice-heading">No</th>
-                <th>Remarks</th>
-                {isStaff && <th className="pdc-save-heading">Save</th>}
-              </tr>
+              <tr><th>Training item</th><th>Yes</th><th>No</th><th>Remarks</th>{isStaff && <th className="pdc-save-heading">Save</th>}</tr>
             </thead>
             <tbody>
               {PDC_CHECKLIST_SECTIONS.map((section) => (
@@ -253,8 +251,7 @@ export default function PdcChecklist() {
 function FragmentSection({ section, responseByItem, savedItemIds, draftResponses, isStaff, savingItems, onUpdate, onSave }) {
   return (
     <>
-      <tr className="pdc-section-row pdc-screen-only"><th colSpan={isStaff ? 5 : 4}>{section.title}</th></tr>
-      <tr className="pdc-section-row pdc-print-only"><th colSpan={2}>{section.title}</th></tr>
+      <tr className="pdc-section-row"><th colSpan={isStaff ? 5 : 4}>{section.title}</th></tr>
       {section.items.map((item) => {
         const response = responseByItem.get(item.id) || { result: '', remarks: '' };
         const isSaving = savingItems.has(item.id);
@@ -285,23 +282,15 @@ function FragmentSection({ section, responseByItem, savedItemIds, draftResponses
             ))}
             <td>
               {isStaff ? (
-                <>
-                  <textarea
-                    aria-label={`Remarks: ${item.label}`}
-                    value={response.remarks || ''}
-                    maxLength={1000}
-                    onChange={(event) => onUpdate(item.id, 'remarks', event.target.value)}
-                    rows={2}
-                    disabled={isSaving}
-                  />
-                  <span className="pdc-print-remarks">{response.remarks || '\u00a0'}</span>
-                </>
-              ) : (
-                <>
-                  <span className="pdc-screen-remarks">{response.remarks || ''}</span>
-                  <span className="pdc-print-remarks">{response.remarks || '\u00a0'}</span>
-                </>
-              )}
+                <textarea
+                  aria-label={`Remarks: ${item.label}`}
+                  value={response.remarks || ''}
+                  maxLength={1000}
+                  onChange={(event) => onUpdate(item.id, 'remarks', event.target.value)}
+                  rows={2}
+                  disabled={isSaving}
+                />
+              ) : response.remarks || ''}
             </td>
             {isStaff && (
               <td className="pdc-save-cell">

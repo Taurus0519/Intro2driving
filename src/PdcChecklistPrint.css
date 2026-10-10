@@ -3,14 +3,6 @@
   margin: 6mm;
 }
 
-.pdc-print-remarks {
-  display: none;
-}
-
-.pdc-print-only {
-  display: none;
-}
-
 @media print {
   .pdc-checklist-page {
     width: 100%;
@@ -74,29 +66,21 @@
     line-height: 1.1;
   }
 
-  .pdc-choice-heading,
-  .pdc-choice-cell,
-  .pdc-save-heading,
-  .pdc-save-cell {
-    display: none !important;
+  .pdc-table th:nth-child(1),
+  .pdc-table td:nth-child(1) {
+    width: 50%;
   }
 
-  .pdc-screen-only {
-    display: none !important;
-  }
-
-  .pdc-print-only {
-    display: table-row !important;
-  }
-
-  .pdc-table th:first-child,
-  .pdc-table td:first-child {
-    width: 55%;
+  .pdc-table th:nth-child(2),
+  .pdc-table th:nth-child(3),
+  .pdc-table td:nth-child(2),
+  .pdc-table td:nth-child(3) {
+    width: 7%;
   }
 
   .pdc-table th:nth-child(4),
   .pdc-table td:nth-child(4) {
-    width: 45%;
+    width: 36%;
   }
 
   .pdc-table th,
@@ -108,16 +92,10 @@
     overflow-wrap: anywhere;
   }
 
-  .pdc-table textarea,
-  .pdc-screen-remarks {
-    display: none !important;
-  }
-
-  .pdc-print-remarks {
-    display: block;
-    min-height: 5mm;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+  .pdc-table textarea {
+    min-width: 0;
+    min-height: 5mm !important;
+    padding: 1px;
     font-size: 8px;
     line-height: 1.1;
   }

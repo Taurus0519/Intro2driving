@@ -5,7 +5,9 @@ import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth.jsx';
 import { ACHIEVEMENTS } from './achievementData';
 import { Link } from 'react-router-dom';
-import { PDC_CHECKLIST_ITEM_COUNT } from './pdcChecklistData';
+import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistData';
+
+const PDC_CHECKLIST_ITEM_IDS = new Set(PDC_CHECKLIST_ITEMS.map((item) => item.id));
 
 async function fetchAllRows(buildQuery) {
   const pageSize = 1000;
@@ -77,7 +79,9 @@ function StudentDashboard({ profile }) {
         return;
       }
 
-      const answered = (data || []).filter((item) => item.result === 'yes' || item.result === 'no').length;
+      const answered = (data || []).filter((item) =>
+        PDC_CHECKLIST_ITEM_IDS.has(item.item_id) && (item.result === 'yes' || item.result === 'no')
+      ).length;
       setPdcProgress({ answered, complete: answered === PDC_CHECKLIST_ITEM_COUNT });
     }
 
@@ -309,7 +313,11 @@ function AdminDashboard({ profile }) {
       const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
       const evaluatedItems = new Map();
       for (const response of responsesResult.data || []) {
-        if (!studentIds.has(response.student_id) || !['yes', 'no'].includes(response.result)) continue;
+        if (
+          !studentIds.has(response.student_id)
+          || !PDC_CHECKLIST_ITEM_IDS.has(response.item_id)
+          || !['yes', 'no'].includes(response.result)
+        ) continue;
         if (!evaluatedItems.has(response.student_id)) evaluatedItems.set(response.student_id, new Set());
         evaluatedItems.get(response.student_id).add(response.item_id);
       }
