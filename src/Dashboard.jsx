@@ -216,7 +216,7 @@ function StudentDashboard({ profile }) {
 
 function AdminDashboard({ profile }) {
   const [ageGroups, setAgeGroups] = useState({
-    'Under 18': 0,
+    '16-17': 0,
     '18-24': 0,
     '25-34': 0,
     '35+': 0,
@@ -236,16 +236,16 @@ function AdminDashboard({ profile }) {
         supabase.from('profiles').select('id').eq('role', 'student'),
         supabase.from('student_profiles').select('student_id, age'),
       ]);
-      const counts = { 'Under 18': 0, '18-24': 0, '25-34': 0, '35+': 0 };
+      const counts = { '16-17': 0, '18-24': 0, '25-34': 0, '35+': 0 };
       const studentIds = new Set((students || []).map((student) => student.id));
 
       for (const studentProfile of studentProfiles || []) {
         const age = Number(studentProfile.age);
         if (!studentIds.has(studentProfile.student_id) || studentProfile.age == null || !Number.isFinite(age) || age < 0) continue;
-        if (age < 18) counts['Under 18'] += 1;
-        else if (age <= 24) counts['18-24'] += 1;
-        else if (age <= 34) counts['25-34'] += 1;
-        else counts['35+'] += 1;
+        if (age >= 16 && age < 18) counts['16-17'] += 1;
+        else if (age >= 18 && age <= 24) counts['18-24'] += 1;
+        else if (age >= 25 && age <= 34) counts['25-34'] += 1;
+        else if (age >= 35) counts['35+'] += 1;
       }
 
       if (active) setAgeGroups(counts);
