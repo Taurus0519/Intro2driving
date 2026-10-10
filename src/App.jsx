@@ -10,6 +10,7 @@ const ResetPassword = lazy(() => import('./ResetPassword'));
 const Students = lazy(() => import('./Students'));
 const Admins = lazy(() => import('./admins'));
 const Lessons = lazy(() => import('./lessons'));
+const Assignments = lazy(() => import('./assignments'));
 const Messages = lazy(() => import('./messages'));
 const Profile = lazy(() => import('./Profile'));
 const Achievements = lazy(() => import('./Achievements'));
