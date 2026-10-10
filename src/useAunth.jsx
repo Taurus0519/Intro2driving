@@ -36,10 +36,16 @@ export function AuthProvider({ children }) {
   const signIn = (email, password) =>
     supabase.auth.signInWithPassword({ email, password });
 
-  const resetPassword = (email) =>
-    supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}reset-password`,
+  const resetPassword = (email) => {
+    const appUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/+$/, '');
+    const basePath = import.meta.env.BASE_URL === '/'
+      ? ''
+      : import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}${basePath}/reset-password`,
     });
+  };
 
   const updatePassword = (password) =>
     supabase.auth.updateUser({ password });
