@@ -1,17 +1,19 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './useAunth';
 import Layout from './Layout';
-import Dashboard from './Dashboard';
-import LoginPage from './Loginpage';
-import ResetPassword from './ResetPassword';
-import Students from './Students';
-import Admins from './admins';
-import Lessons from './lessons';
-import Assignments from './assignments';
-import Messages from './messages';
-import Profile from './Profile';
-import Achievements from './Achievements';
 import './App.css';
+
+const Dashboard = lazy(() => import('./Dashboard'));
+const LoginPage = lazy(() => import('./Loginpage'));
+const ResetPassword = lazy(() => import('./ResetPassword'));
+const Students = lazy(() => import('./Students'));
+const Admins = lazy(() => import('./admins'));
+const Lessons = lazy(() => import('./lessons'));
+const Messages = lazy(() => import('./messages'));
+const Profile = lazy(() => import('./Profile'));
+const Achievements = lazy(() => import('./Achievements'));
+const PdcChecklist = lazy(() => import('./PdcChecklist'));
 
 function Protected() {
   const { user, profile, loading } = useAuth();
@@ -30,7 +32,9 @@ function Guest({ children }) {
   return user ? <Navigate to="/" replace /> : children;
 }
 export default function App() {
-  return <AuthProvider><BrowserRouter><Routes>
+  const basename = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/$/, '');
+
+  return <AuthProvider><BrowserRouter basename={basename}><Suspense fallback={<div className="loading-screen">Loading page...</div>}><Routes>
     <Route path="/login" element={<Guest><LoginPage /></Guest>} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route element={<Protected />}>
@@ -38,6 +42,9 @@ export default function App() {
       <Route path="assignments" element={<Assignments />} />
       <Route path="messages" element={<Messages />} />
       <Route path="achievements" element={<Achievements />} />
+      <Route element={<Role allow={['student', 'admin', 'superadmin']} />}>
+        <Route path="pdc-checklist" element={<PdcChecklist />} />
+      </Route>
       <Route element={<Role allow={['student']} />}><Route path="profile" element={<Profile />} /></Route>
       <Route element={<Role allow={['student', 'admin', 'superadmin']} />}>
         <Route path="quiz" element={<Lessons />} />
@@ -49,5 +56,5 @@ export default function App() {
       <Route element={<Role allow={['superadmin']} />}><Route path="admins" element={<Admins />} /></Route>
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes></BrowserRouter></AuthProvider>;
+  </Routes></Suspense></BrowserRouter></AuthProvider>;
 }
