@@ -6,54 +6,54 @@
 @media print {
   .pdc-checklist-page {
     width: 100%;
-    font-size: 7px !important;
+    font-size: 9px !important;
   }
 
   .pdc-print-heading .pdc-school-name {
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 
   .pdc-print-heading > p:not(.pdc-school-name) {
-    font-size: 7px;
-    margin: 0;
+    font-size: 8px;
+    margin: 1px 0;
   }
 
   .pdc-print-heading h2 {
-    margin: 1px 0;
-    font-size: 11px !important;
+    margin: 2px 0;
+    font-size: 14px !important;
   }
 
   .pdc-print-heading h3 {
-    margin: 0 0 3px;
-    font-size: 8px !important;
+    margin: 0 0 5px;
+    font-size: 10px !important;
   }
 
   .pdc-student-fields {
-    gap: 1px;
-    margin: 2px 0 4px;
+    gap: 2px;
+    margin: 4px 0 6px;
   }
 
   .pdc-student-fields > div {
-    min-height: 12px;
+    min-height: 16px;
   }
 
   .pdc-student-fields strong {
-    font-size: 7px;
+    font-size: 9px;
   }
 
   .pdc-student-fields span {
-    min-height: 9px;
+    min-height: 12px;
   }
 
   .pdc-progress {
-    gap: 4px;
-    margin-bottom: 3px;
-    padding: 1px 3px;
-    font-size: 7px;
+    gap: 6px;
+    margin-bottom: 5px;
+    padding: 3px 5px;
+    font-size: 9px;
   }
 
   .pdc-progress span {
-    font-size: 6px;
+    font-size: 8px;
   }
 
   .pdc-table-wrap {
@@ -62,8 +62,8 @@
 
   .pdc-table {
     table-layout: fixed;
-    font-size: 6.5px !important;
-    line-height: 1;
+    font-size: 8.5px !important;
+    line-height: 1.1;
   }
 
   .pdc-table th:nth-child(1),
@@ -85,7 +85,7 @@
 
   .pdc-table th,
   .pdc-table td {
-    padding: 1px 2px !important;
+    padding: 2px 3px !important;
   }
 
   .pdc-table td:first-child {
@@ -93,35 +93,35 @@
   }
 
   .pdc-table textarea {
-    height: 3.5mm;
-    min-height: 3.5mm !important;
-    max-height: 3.5mm;
-    padding: 0;
-    font-size: 6.5px;
-    line-height: 1;
+    height: 5mm;
+    min-height: 5mm !important;
+    max-height: 5mm;
+    padding: 1px;
+    font-size: 8px;
+    line-height: 1.1;
   }
 
   .pdc-result-check {
-    font-size: 8px;
+    font-size: 11px;
   }
 
   .pdc-section-row th {
-    padding: 1px 2px !important;
-    font-size: 6.5px;
+    padding: 2px 3px !important;
+    font-size: 8.5px;
   }
 
   .pdc-signatures {
-    gap: 28px;
-    margin: 6px 0 0;
+    gap: 32px;
+    margin: 10px 0 0;
     break-inside: avoid;
   }
 
   .pdc-signatures span {
-    height: 10px;
+    height: 16px;
   }
 
   .pdc-signatures strong {
-    font-size: 6.5px;
+    font-size: 8px;
   }
 
   .pdc-checklist-page,
