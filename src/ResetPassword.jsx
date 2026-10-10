@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAunth.jsx';
 
 export default function ResetPassword() {
-  const { updatePassword, user, loading: authLoading } = useAuth();
+  const { updatePassword, signOut, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const [message, setMessage] = useState('');
   const [error, setError] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const description = params.get('error_description');
@@ -16,45 +15,103 @@ export default function ResetPassword() {
       : '';
   });
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
 
   async function submit(event) {
     event.preventDefault();
     setError('');
-    setMessage('');
     if (password !== confirmation) {
       setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
-    const { error: updateError } = await updatePassword(password);
-    if (updateError) setError(updateError.message);
-    else setMessage('Password updated. You can now sign in.');
-    setLoading(false);
+    try {
+      const { error: updateError } = await updatePassword(password);
+      if (updateError) {
+        setError(updateError.message);
+      } else {
+        setPasswordUpdated(true);
+      }
+    } catch (updateError) {
+      setError(updateError.message || 'Your password could not be updated. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function goToSignIn() {
+    setError('');
+    setSigningOut(true);
+    try {
+      const { error: signOutError } = await signOut();
+      if (signOutError) {
+        setError(`Your password was changed, but we could not end this reset session: ${signOutError.message}`);
+        return;
+      }
+      navigate('/login', { replace: true });
+    } catch (signOutError) {
+      setError(`Your password was changed, but we could not end this reset session: ${signOutError.message || 'Please try again.'}`);
+    } finally {
+      setSigningOut(false);
+    }
   }
 
   return (
     <div className="login-view">
       <div className="login-card">
         <div className="brand-mark">R</div>
-        <h1>Choose a new password</h1>
-        <p className="muted">Use a password with at least 6 characters.</p>
+        <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
+        <h1>{passwordUpdated ? 'Password changed' : 'Create a new password'}</h1>
+        <p className="muted">
+          {passwordUpdated
+            ? 'Your password has been updated. Sign in with your new password.'
+            : 'Choose a new password with at least 6 characters, then confirm it below.'}
+        </p>
         {error && <p className="error" role="alert">{error}</p>}
-        {message && <p className="success" role="status">{message}</p>}
         {authLoading ? (
           <p className="muted">Verifying your reset link...</p>
+        ) : passwordUpdated ? (
+          <button type="button" className="button primary full" onClick={goToSignIn} disabled={signingOut}>
+            {signingOut ? 'Please wait...' : 'Continue to sign in'}
+          </button>
         ) : user ? (
           <form onSubmit={submit}>
-            <label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={6} required /></label>
-            <label>Confirm password<input type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={6} required /></label>
+            <label>
+              Create new password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </label>
+            <label>
+              Confirm new password
+              <input
+                type="password"
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </label>
             <button type="submit" className="button primary full" disabled={loading}>
-              {loading ? 'Updating...' : 'Update password'}
+              {loading ? 'Changing password...' : 'Change password'}
             </button>
           </form>
         ) : (
           <p className="muted">This reset link is invalid or expired. Request a new one from the sign-in page.</p>
         )}
-        <button type="button" className="text-button" onClick={() => navigate('/login')}>Back to sign in</button>
+        {!passwordUpdated && (
+          <button type="button" className="text-button" onClick={() => navigate('/login')}>
+            Back to sign in
+          </button>
+        )}
       </div>
     </div>
   );
