@@ -1,13 +1,18 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const basePath = (process.env.VITE_BASE_PATH || '/intro2driving-system').replace(/\/+$/, '') || '/';
+const configuredBasePath = process.env.VITE_BASE_PATH || (
+  process.env.VERCEL ? '/' : '/intro2driving-system'
+);
+const basePath = configuredBasePath === '/'
+  ? '/'
+  : `/${configuredBasePath.replace(/^\/+|\/+$/g, '')}/`;
 
 export default defineConfig({
   plugins: [
     react({ include: /\.[jt]sx?$/ }),
   ],
-  base: `${basePath}/`,
+  base: basePath,
   server: {
     host: '0.0.0.0',
     port: 5173,
