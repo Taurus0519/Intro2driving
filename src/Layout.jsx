@@ -34,13 +34,15 @@ export default function Layout() {
   const items = NAV[profile.role] || [];
   const location = useLocation();
   const pageTitle = items.find((item) => item.to === location.pathname)?.label || 'Dashboard';
+  const roleLabel = profile.role === 'superadmin'
+    ? 'Super Admin'
+    : profile.role === 'admin' ? 'Admin' : 'Student';
 
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand-mark">R</div>
         <div className="brand-name">Riteway</div>
-        <div className="role-badge">{profile.role.toUpperCase()}</div>
         <nav>
           {items.map((item) => (
             <NavLink
@@ -62,8 +64,16 @@ export default function Layout() {
             <h2>{pageTitle}</h2>
           </div>
           <div className="top-actions">
-            <button className="button logout" onClick={signOut}>Log out</button>
-            <span className="user-chip">{profile.name}</span>
+            <details className="account-menu">
+              <summary className="user-chip">
+                <span className="account-menu-name">{profile.name}</span>
+                <span className="account-menu-chevron" aria-hidden="true">▾</span>
+              </summary>
+              <div className="account-menu-panel">
+                <span className="account-menu-role">{roleLabel}</span>
+                <button type="button" className="button logout" onClick={signOut}>Log out</button>
+              </div>
+            </details>
           </div>
         </header>
         <Outlet />
