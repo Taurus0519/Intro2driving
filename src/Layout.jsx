@@ -58,7 +58,7 @@ export default function Layout() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="portal-eyebrow">DRIVING SCHOOL PORTAL</span>
+            <span className="portal-eyebrow">RITEWAY DRIVING SCHOOL PORTAL</span>
             <h2>{pageTitle}</h2>
           </div>
           <div className="top-actions">

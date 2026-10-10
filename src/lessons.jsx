@@ -2,62 +2,48 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './useAunth';
 import { supabase } from './supabase_Client';
 
-const STORAGE_KEY = 'riteway-quiz-questions';
-
-const defaultQuestions = [
-  {
-    id: 'quiz-1',
-    question: 'What is the safest action when driving in wet conditions?',
-    options: [
-      'Speed up to reach your destination faster',
-      'Slow down and increase your following distance',
-      'Ignore the road conditions',
-      'Brake hard at every turn',
-    ],
-    correctIndex: 1,
-  },
-  {
-    id: 'quiz-2',
-    question: 'What should you do before changing lanes?',
-    options: [
-      'Signal, check mirrors, and look over your shoulder',
-      'Turn without warning',
-      'Change lanes immediately without checking',
-      'Only check your mirrors',
-    ],
-    correctIndex: 0,
-  },
-];
-
 const emptyForm = { id: null, question: '', options: ['', '', '', ''], correctIndex: 0 };
-
-function loadQuestions() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultQuestions;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : defaultQuestions;
-  } catch {
-    return defaultQuestions;
-  }
-}
 
 export default function Lessons() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
   const isStudent = profile?.role === 'student';
-  const [questions, setQuestions] = useState(() => loadQuestions());
+  const [questions, setQuestions] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [savingQuestion, setSavingQuestion] = useState(false);
+  const [questionError, setQuestionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
-  }, [questions]);
+    async function loadQuestions() {
+      setLoadingQuestions(true);
+      setQuestionError('');
+
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('id, question, options, correct_index')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        setQuestionError(`Quiz questions could not be loaded: ${error.message}`);
+      } else {
+        setQuestions(data.map(({ correct_index: correctIndex, ...question }) => ({
+          ...question,
+          correctIndex,
+        })));
+      }
+
+      setLoadingQuestions(false);
+    }
+
+    loadQuestions();
+  }, []);
 
   function resetForm() {
     setForm(emptyForm);
@@ -72,7 +58,7 @@ export default function Lessons() {
     });
   }
 
-  function saveQuestion(e) {
+  async function saveQuestion(e) {
     e.preventDefault();
     const trimmedQuestion = form.question.trim();
     const cleanedOptions = form.options.map((option) => option.trim());
@@ -81,20 +67,37 @@ export default function Lessons() {
       return;
     }
 
-    const nextQuestion = {
-      id: form.id || `quiz-${Date.now()}`,
+    const questionData = {
       question: trimmedQuestion,
       options: cleanedOptions,
-      correctIndex: form.correctIndex,
+      correct_index: form.correctIndex,
     };
 
+    setSavingQuestion(true);
+    setQuestionError('');
+    const query = form.id
+      ? supabase.from('quiz_questions').update(questionData).eq('id', form.id)
+      : supabase.from('quiz_questions').insert(questionData);
+    const { data, error } = await query
+      .select('id, question, options, correct_index')
+      .single();
+    setSavingQuestion(false);
+
+    if (error) {
+      setQuestionError(`Question could not be saved: ${error.message}`);
+      return;
+    }
+
+    const savedQuestion = {
+      ...data,
+      correctIndex: data.correct_index,
+    };
     setQuestions((current) => {
       if (form.id) {
-        return current.map((question) => (question.id === form.id ? nextQuestion : question));
+        return current.map((question) => (question.id === form.id ? savedQuestion : question));
       }
-      return [...current, nextQuestion];
+      return [...current, savedQuestion];
     });
-
     resetForm();
   }
 
@@ -108,7 +111,14 @@ export default function Lessons() {
     setShowForm(true);
   }
 
-  function deleteQuestion(id) {
+  async function deleteQuestion(id) {
+    setQuestionError('');
+    const { error } = await supabase.from('quiz_questions').delete().eq('id', id);
+    if (error) {
+      setQuestionError(`Question could not be deleted: ${error.message}`);
+      return;
+    }
+
     setQuestions((current) => current.filter((question) => question.id !== id));
   }
 
@@ -159,8 +169,9 @@ export default function Lessons() {
 
   const currentQuestion = questions[currentIndex];
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const nextActionLabel = submitting ? 'Saving…' : currentIndex === questions.length - 1 ? 'Submit' : 'Continue';
 
-  function moveNext() {
+  async function moveNext() {
     if (!currentQuestion || selectedAnswer === undefined) return;
 
     if (currentIndex < questions.length - 1) {
@@ -168,7 +179,7 @@ export default function Lessons() {
       return;
     }
 
-    submitQuiz();
+    await submitQuiz();
   }
 
   return (
@@ -176,19 +187,22 @@ export default function Lessons() {
       <div className="toolbar">
         <div>
           <h3>Quiz</h3>
-          <p>{isAdmin ? 'Edit quiz questions and answer keys.' : 'Take the latest driver safety quiz.'}</p>
+          <p>{isAdmin ? 'Manage quiz questions and answer keys.' : 'Take the latest driver safety quiz.'}</p>
         </div>
-        {isAdmin && (
+        {isAdmin && !loadingQuestions && (
           <button type="button" className="button primary small-button" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? 'Cancel' : '+ Add question'}
           </button>
         )}
       </div>
 
+      {questionError && <p role="alert" className="panel">{questionError}</p>}
+      {loadingQuestions && <p className="panel">Loading quiz questions...</p>}
+
       {isAdmin && showForm && (
         <form className="panel" onSubmit={saveQuestion} style={{ marginBottom: 20 }}>
           <label>
-            Question
+            Question{" "}
             <textarea
               value={form.question}
               onChange={(e) => setForm({ ...form, question: e.target.value })}
@@ -198,7 +212,7 @@ export default function Lessons() {
           </label>
 
           {form.options.map((option, index) => (
-            <label key={`option-${index}`}>
+            <label key={`option-${option || 'empty'}-${index}`}>
               Option {index + 1}
               <input
                 value={option}
@@ -209,26 +223,26 @@ export default function Lessons() {
           ))}
 
           <label>
-            Correct answer
+            Correct answer {' '}
             <select
               value={form.correctIndex}
               onChange={(e) => setForm({ ...form, correctIndex: Number(e.target.value) })}
             >
               {form.options.map((option, index) => (
-                <option key={`answer-${index}`} value={index}>
+                <option key={`answer-${option || 'empty'}-${index}`} value={index}>
                   Option {index + 1}
                 </option>
               ))}
             </select>
           </label>
 
-          <button type="submit" className="button primary">
-            {form.id ? 'Update question' : 'Save question'}
+          <button type="submit" className="button primary" disabled={savingQuestion}>
+            {savingQuestion ? 'Saving...' : form.id ? 'Update question' : 'Save question'}
           </button>
         </form>
       )}
 
-      {isAdmin && (
+      {isAdmin && !loadingQuestions && (
         <div className="panel table-wrap">
           <table className="data-table">
             <thead>
@@ -241,25 +255,31 @@ export default function Lessons() {
               </tr>
             </thead>
             <tbody>
-              {questions.map((question, index) => (
-                <tr key={question.id}>
-                  <td>{index + 1}</td>
-                  <td>{question.question}</td>
-                  <td>{question.options.join(' / ')}</td>
-                  <td>{question.options[question.correctIndex]}</td>
-                  <td>
-                    <button type="button" className="button small-button" onClick={() => editQuestion(question)}>
-                      Edit
-                    </button>
-                    <button type="button" className="button small-button" onClick={() => deleteQuestion(question.id)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {questions.length ? questions.map((question, index) => (
+                  <tr key={question.id}>
+                    <td>{index + 1}</td>
+                    <td>{question.question}</td>
+                    <td>{question.options.join(' / ')}</td>
+                    <td>{question.options[question.correctIndex]}</td>
+                    <td>
+                      <button type="button" className="button small-button" onClick={() => editQuestion(question)}>
+                        Edit
+                      </button>
+                      <button type="button" className="button small-button" onClick={() => deleteQuestion(question.id)}>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="5">No quiz questions yet. Add the first question to publish the quiz.</td></tr>
+                )}
             </tbody>
           </table>
         </div>
+      )}
+
+      {isStudent && !loadingQuestions && !questionError && !questions.length && (
+        <div className="panel">The quiz is not available yet. Please check back later.</div>
       )}
 
       {isStudent && currentQuestion && !result && (

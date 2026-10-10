@@ -7,22 +7,33 @@ const port = Number(process.env.PORT || 3001);
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const publishableKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const missingSupabaseConfig = [
+  !supabaseUrl && 'SUPABASE_URL or VITE_SUPABASE_URL',
+  !publishableKey && 'SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY',
+  !serviceRoleKey && 'SUPABASE_SERVICE_ROLE_KEY',
+].filter(Boolean);
 const authClient = supabaseUrl && publishableKey
   ? createClient(supabaseUrl, publishableKey, { auth: { autoRefreshToken: false, persistSession: false } })
   : null;
 const adminClient = supabaseUrl && serviceRoleKey
   ? createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } })
   : null;
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
 const allowedOrigins = new Set(
-  (process.env.ACCOUNT_API_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  [...defaultAllowedOrigins, ...((process.env.ACCOUNT_API_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean))],
 );
 
 app.use((request, response, next) => {
   const origin = request.headers.origin;
-  if (origin && allowedOrigins.has(origin)) {
+  const isAllowedOrigin = origin && (allowedOrigins.has(origin) || /^https?:\/\/localhost:\d+$/.test(origin) || /^https?:\/\/127\.0\.0\.1:\d+$/.test(origin));
+  if (isAllowedOrigin) {
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Vary', 'Origin');
     response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
@@ -133,7 +144,9 @@ app.post('/api/create-account', async (request, response) => {
   const parsed = parseAccountInput(request.body);
   if ('error' in parsed) return response.status(parsed.status).json({ error: parsed.error });
   if (!authClient || !adminClient) {
-    return response.status(500).json({ error: 'The account API requires Supabase URL, publishable, and service-role keys.' });
+    return response.status(500).json({
+      error: `The account API is missing required configuration: ${missingSupabaseConfig.join(', ')}. Add it to the root .env file and restart the API.`,
+    });
   }
 
   const token = getBearerToken(request.get('authorization'));

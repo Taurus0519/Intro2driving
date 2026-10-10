@@ -1,55 +1,168 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
+import { ACHIEVEMENTS } from './achievementData';
 import './Achievements.css';
 
-const emptyForm = { title: '', description: '', icon: '🌟' };
 export default function Achievements() {
   const { profile, user } = useAuth();
-  const isSuperAdmin = profile.role === 'superadmin';
-  const [items, setItems] = useState([]);
+  const isSuperAdmin = profile?.role === 'superadmin';
   const [students, setStudents] = useState([]);
   const [awards, setAwards] = useState([]);
-  const [form, setForm] = useState(emptyForm);
-  const [editId, setEditId] = useState(null);
   const [studentId, setStudentId] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  async function load() {
-    const [achievements, earned] = await Promise.all([
-      supabase.from('achievements').select('*').order('created_at', { ascending: false }),
-      supabase.from('student_achievements').select('achievement_id, student_id, awarded_at').order('awarded_at', { ascending: false }),
-    ]);
-    if (achievements.error || earned.error) setError(achievements.error?.message || earned.error?.message);
-    else { setItems(achievements.data); setAwards(earned.data); }
+  const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [busyAchievementId, setBusyAchievementId] = useState('');
+
+  async function loadAwards() {
+    let query = supabase
+      .from('player_achievements')
+      .select('user_id, achievement_id, unlocked_at')
+      .order('unlocked_at', { ascending: false });
+
+    if (!isSuperAdmin) query = query.eq('user_id', user.id);
+
+    const { data, error: awardsError } = await query;
+    if (awardsError) {
+      setError(awardsError.message);
+      setLoadFailed(true);
+      return;
+    }
+    setLoadFailed(false);
+    setAwards(data || []);
   }
-  useEffect(() => { load(); if (isSuperAdmin) supabase.from('profiles').select('id,name').eq('role','student').order('name').then(({ data, error }) => { if (error) setError(error.message); else setStudents(data || []); }); }, [isSuperAdmin]);
-  async function submit(event) {
-    event.preventDefault(); setBusy(true); setError('');
-    const payload = { title: form.title.trim(), description: form.description.trim(), icon: form.icon.trim() || '🌟' };
-    const result = editId ? await supabase.from('achievements').update(payload).eq('id', editId) : await supabase.from('achievements').insert(payload);
-    if (result.error) setError(result.error.message);
-    else { setForm(emptyForm); setEditId(null); await load(); }
-    setBusy(false);
-  }
-  async function remove(id) {
-    if (!window.confirm('Delete this achievement and its student awards?')) return;
-    const { error } = await supabase.from('achievements').delete().eq('id', id);
-    if (error) setError(error.message); else await load();
-  }
-  async function toggleAward(id, awarded) {
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPage() {
+      setLoading(true);
+      setError('');
+      setLoadFailed(false);
+      const awardsQuery = supabase
+        .from('player_achievements')
+        .select('user_id, achievement_id, unlocked_at')
+        .order('unlocked_at', { ascending: false });
+      const results = await Promise.all([
+        isSuperAdmin ? awardsQuery : awardsQuery.eq('user_id', user.id),
+        isSuperAdmin
+          ? supabase.from('profiles').select('id, name').eq('role', 'student').order('name')
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      const [awardsResult, studentsResult] = results;
+
+      if (!active) return;
+      if (awardsResult.error || studentsResult.error) {
+        setError(awardsResult.error?.message || studentsResult.error?.message);
+        setLoadFailed(true);
+      } else {
+        setAwards(awardsResult.data || []);
+        setStudents(studentsResult.data || []);
+      }
+      setLoading(false);
+    }
+
+    void loadPage();
+    return () => {
+      active = false;
+    };
+  }, [isSuperAdmin, user.id]);
+
+  async function toggleAchievement(achievementId, isUnlocked) {
     if (!studentId) return;
-    const result = awarded ? await supabase.from('student_achievements').delete().eq('student_id', studentId).eq('achievement_id', id) : await supabase.from('student_achievements').insert({ student_id: studentId, achievement_id: id });
-    if (result.error) setError(result.error.message); else await load();
+
+    setBusyAchievementId(achievementId);
+    setError('');
+    const result = isUnlocked
+      ? await supabase
+        .from('player_achievements')
+        .delete()
+        .eq('user_id', studentId)
+        .eq('achievement_id', achievementId)
+      : await supabase
+        .from('player_achievements')
+        .insert({ user_id: studentId, achievement_id: achievementId });
+
+    if (result.error) {
+      setError(result.error.message);
+    } else {
+      await loadAwards();
+    }
+    setBusyAchievementId('');
   }
-  const visible = isSuperAdmin ? items : items.filter(item => awards.some(a => a.achievement_id === item.id && a.student_id === user.id));
-  const latest = visible.find(item => awards.some(a => a.achievement_id === item.id && (!isSuperAdmin || a.student_id === studentId)));
-  return <div className="achievements-page">
-    <section className="achievement-latest"><h3>Latest Achievement</h3><div>{latest ? <><span>{latest.icon}</span> {latest.title}</> : 'No achievement unlocked yet'}</div></section>
-    {isSuperAdmin && <><form className="achievement-editor" onSubmit={submit}><h3>{editId ? 'Edit achievement' : 'Add achievement'}</h3><label>Title<input required maxLength="100" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></label><label>Description<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label><label>Icon<input maxLength="8" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} /></label><button className="button primary" disabled={busy}>{editId ? 'Save achievement' : 'Add achievement'}</button>{editId && <button type="button" className="button" onClick={() => { setEditId(null); setForm(emptyForm); }}>Cancel</button>}</form>
-    <label className="award-select">Award achievements to student<select value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">Select a student</option>{students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label></>}
-    <h3>{isSuperAdmin ? 'Achievements' : 'Your Achievements'}</h3>
-    {error && <p className="error" role="alert">{error}</p>}
-    <div className="achievement-list">{visible.length === 0 && <p>No achievements yet.</p>}{visible.map(item => { const awarded = awards.some(a => a.achievement_id === item.id && a.student_id === studentId); return <article key={item.id} className="achievement-row"><span className="achievement-icon">{item.icon || '🌟'}</span><div><strong>{item.title}</strong><p>{item.description}</p></div>{isSuperAdmin && <div className="achievement-actions"><button onClick={() => { setEditId(item.id); setForm({ title: item.title, description: item.description || '', icon: item.icon || '🌟' }); }}>Edit</button><button onClick={() => remove(item.id)}>Delete</button><button disabled={!studentId} onClick={() => toggleAward(item.id, awarded)}>{awarded ? 'Revoke' : 'Award'}</button></div>}</article>; })}</div>
-  </div>;
+
+  const visibleAwards = isSuperAdmin
+    ? awards.filter((award) => award.user_id === studentId)
+    : awards;
+  const latestAward = visibleAwards[0];
+  const latestAchievement = ACHIEVEMENTS.find((item) => item.id === latestAward?.achievement_id);
+  const studentName = students.find((student) => student.id === studentId)?.name;
+
+  return (
+    <div className="achievements-page">
+      <section className="achievement-latest">
+        <h3>{isSuperAdmin && studentName ? `Latest for ${studentName}` : 'Latest Achievement'}</h3>
+        <div>
+          {latestAchievement
+            ? <><span>{latestAchievement.icon}</span> {latestAchievement.title}</>
+            : 'No achievement unlocked yet'}
+        </div>
+      </section>
+
+      {isSuperAdmin && (
+        <label className="award-select">
+          View achievements for student
+          <select value={studentId} onChange={(event) => setStudentId(event.target.value)}>
+            <option value="">Select a student</option>
+            {students.map((student) => (
+              <option key={student.id} value={student.id}>{student.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      <h3>{isSuperAdmin ? 'Student Achievements' : 'Your Achievements'}</h3>
+      {error && <p className="error" role="alert">{error}</p>}
+      {loading ? (
+        <p>Loading achievements...</p>
+      ) : loadFailed ? null : (
+        <div className="achievement-list">
+          {ACHIEVEMENTS.map((achievement) => {
+            const award = visibleAwards.find((item) => item.achievement_id === achievement.id);
+            const isUnlocked = Boolean(award);
+
+            return (
+              <article key={achievement.id} className={`achievement-row${isUnlocked ? ' is-unlocked' : ''}`}>
+                <span className="achievement-icon" aria-hidden="true">{achievement.icon}</span>
+                <div className="achievement-details">
+                  <strong>{achievement.title}</strong>
+                  <p>{achievement.description}</p>
+                  {award && (
+                    <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                  )}
+                </div>
+                <span className={`achievement-status${isUnlocked ? ' is-unlocked' : ''}`}>
+                  {isUnlocked ? 'Completed' : 'Not completed'}
+                </span>
+                {isSuperAdmin && (
+                  <div className="achievement-actions">
+                    <button
+                      type="button"
+                      disabled={!studentId || busyAchievementId === achievement.id}
+                      onClick={() => toggleAchievement(achievement.id, isUnlocked)}
+                    >
+                      {busyAchievementId === achievement.id
+                        ? 'Saving...'
+                        : isUnlocked ? 'Revoke' : 'Mark complete'}
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }

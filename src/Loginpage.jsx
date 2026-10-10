@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   async function superAdminAccess() {
     const code = window.prompt('Enter Super Admin access code');
-    if (code === null || !code.trim()) return;
+    if (!code?.trim()) return;
     setLoading(true);
     setError('');
     // The code is the password of the dedicated Super Admin Auth account.
@@ -42,6 +42,12 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  let submitButtonLabel = 'Sign in';
+  if (loading) {
+    submitButtonLabel = 'Please wait...';
+  } else if (forgotPassword) {
+    submitButtonLabel = 'Send reset link';
+  }
 
   return (
     <div className="login-view">
