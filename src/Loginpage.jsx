@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from './useAunth.jsx';
-import { supabase } from './supabase_Client';
 
 export default function LoginPage() {
-  const { signIn, signOut, resetPassword } = useAuth();
+  const { signIn, resetPassword } = useAuth();
   const [forgotPassword, setForgotPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -22,26 +21,6 @@ export default function LoginPage() {
     setLoading(false);
   }
 
-  async function superAdminAccess() {
-    const code = window.prompt('Enter Super Admin access code');
-    if (!code?.trim()) return;
-    setLoading(true);
-    setError('');
-    // The code is the password of the dedicated Super Admin Auth account.
-    // Authorization still comes from the server-side profile role and RLS policies.
-    const { data, error: authError } = await signIn('superadmin@riteway.local', code);
-    if (authError) {
-      setError('Super Admin sign-in failed. Check the access code and Supabase Auth account.');
-    } else {
-      const { data: adminProfile, error: profileError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-      if (profileError || adminProfile?.role !== 'superadmin') {
-        await signOut();
-        setError('This account does not have Super Admin access.');
-      }
-    }
-    setLoading(false);
-  }
-
   let submitButtonLabel = 'Sign in';
   if (loading) {
     submitButtonLabel = 'Please wait...';
@@ -55,7 +34,11 @@ export default function LoginPage() {
         <div className="brand-mark">R</div>
         <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
         <h1>{forgotPassword ? 'Reset your password' : 'Welcome!'}</h1>
-        <p className="muted">{forgotPassword ? 'Enter your email and we will send you a reset link.' : 'Sign in to your learning portal.'}</p>
+        <p className="muted">
+          {forgotPassword
+            ? 'Enter your email and we will send you a reset link.'
+            : 'Sign in with your assigned email and password. Super Admin uses this same sign-in form.'}
+        </p>
 
         <form onSubmit={submit}>
           <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Enter email" required /></label>
@@ -89,7 +72,6 @@ export default function LoginPage() {
           <button type="button" className="text-button" onClick={() => { setForgotPassword(!forgotPassword); setError(''); }}>
             {forgotPassword ? 'Back to sign in' : 'Forgot password?'}
           </button>
-          {!forgotPassword && <button type="button" className="text-button" disabled={loading} onClick={superAdminAccess}>Super Admin access</button>}
         </div>
       </div>
     </div>
