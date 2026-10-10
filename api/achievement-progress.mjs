@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function respond(res, status, body) {
@@ -13,9 +14,9 @@ export default async function handler(req, res) {
     return respond(res, 405, { error: 'Method not allowed.' });
   }
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !publishableKey || !serviceRoleKey) {
     return respond(res, 500, {
-      error: 'Achievement progress is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      error: 'Achievement progress is not configured. Set VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
     });
   }
 
@@ -23,17 +24,22 @@ export default async function handler(req, res) {
   const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return respond(res, 401, { error: 'Sign in before viewing achievement progress.' });
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  const authClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
   try {
-    const { data: { user: caller }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user: caller }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !caller) {
-      return respond(res, 401, { error: 'Your session is invalid or expired. Sign in again.' });
+      return respond(res, 401, {
+        error: `Your session could not be verified: ${authError?.message || 'sign in again.'}`,
+      });
     }
 
-    const { data: callerProfile, error: callerProfileError } = await supabase
+    const { data: callerProfile, error: callerProfileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', caller.id)
@@ -42,7 +48,7 @@ export default async function handler(req, res) {
       return respond(res, 403, { error: 'Only an admin can view student achievement progress.' });
     }
 
-    const { data: awards, error: awardsError } = await supabase
+    const { data: awards, error: awardsError } = await adminClient
       .from('player_achievements')
       .select('user_id, achievement_id');
     if (awardsError) {

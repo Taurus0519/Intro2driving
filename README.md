@@ -20,11 +20,11 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Account creation API
 
-Account creation runs through the Node API in `server/index.mjs`. It requires `SUPABASE_SERVICE_ROLE_KEY` in the root `.env` file in addition to the Supabase URL and publishable key. Get the service-role key from your Supabase project's API settings, keep it server-side, and do not use a `VITE_` prefix. The API uses the existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` values when `SUPABASE_URL` and `SUPABASE_ANON_KEY` are not set. After adding the key, restart the API (or run `npm run dev` again).
+Account creation runs through the Node API in `server/index.mjs`. It requires `SUPABASE_SERVICE_ROLE_KEY` in the root `.env` file in addition to the Supabase URL and publishable key. Get the service-role key from your Supabase project's API settings, keep it server-side, and do not use a `VITE_` prefix. The API prefers `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` so its auth checks use the same Supabase project as the frontend; `SUPABASE_URL` and `SUPABASE_ANON_KEY` are fallbacks. After adding the key, restart the API (or run `npm run dev` again).
 
 Run `npm install` and then `npm run dev` to start the API and Vite client together. The API listens on port 3001. Set `ACCOUNT_API_ORIGINS` to the comma-separated frontend origins when deploying the API, and set `VITE_ACCOUNT_API_URL` to the API's base URL when building the client for production.
 
-Student deletion and achievement progress use Vercel serverless functions in `api/`. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
+Student deletion and achievement progress use Vercel serverless functions in `api/`. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables for the same Supabase project. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
 
 ## Quiz results
 

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function respond(res, status, body) {
@@ -13,9 +14,9 @@ export default async function handler(req, res) {
     return respond(res, 405, { error: 'Method not allowed.' });
   }
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !publishableKey || !serviceRoleKey) {
     return respond(res, 500, {
-      error: 'Account deletion is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      error: 'Account deletion is not configured. Set VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
     });
   }
 
@@ -28,17 +29,22 @@ export default async function handler(req, res) {
     return respond(res, 400, { error: 'A valid student user ID is required.' });
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  const authClient = createClient(supabaseUrl, publishableKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
   try {
-    const { data: { user: caller }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user: caller }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !caller) {
-      return respond(res, 401, { error: 'Your session is invalid or expired. Sign in again.' });
+      return respond(res, 401, {
+        error: `Your session could not be verified: ${authError?.message || 'sign in again.'}`,
+      });
     }
 
-    const { data: callerProfile, error: callerProfileError } = await supabase
+    const { data: callerProfile, error: callerProfileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', caller.id)
@@ -47,7 +53,7 @@ export default async function handler(req, res) {
       return respond(res, 403, { error: 'Only an admin can delete student accounts.' });
     }
 
-    const { data: studentProfile, error: studentProfileError } = await supabase
+    const { data: studentProfile, error: studentProfileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', userId)
@@ -56,7 +62,7 @@ export default async function handler(req, res) {
       return respond(res, 404, { error: 'The requested student account was not found.' });
     }
 
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
     if (deleteError) {
       console.error('Student account deletion failed:', deleteError);
       return respond(res, 500, { error: `Student account could not be deleted: ${deleteError.message}` });

@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const app = express();
 app.disable('x-powered-by');
 const port = Number(process.env.PORT || 3001);
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const publishableKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const missingSupabaseConfig = [
   !supabaseUrl && 'SUPABASE_URL or VITE_SUPABASE_URL',
