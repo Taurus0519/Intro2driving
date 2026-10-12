@@ -379,10 +379,6 @@ function AdminDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
-          <div className="progress-heading">
-            <h3>Student Age Groups</h3>
-          </div>
-
           <div className="progress-cards">
             <ProgressCard
               icon="✓"
