@@ -359,7 +359,7 @@ export default function Lessons() {
           </div>
 
           {form.options.map((option, index) => (
-            <label key={`option-${option || 'empty'}-${index}`}>
+            <label key={`option-${index}`}>
               Option {index + 1}
               <input
                 value={option}
@@ -376,7 +376,7 @@ export default function Lessons() {
               onChange={(e) => setForm({ ...form, correctIndex: Number(e.target.value) })}
             >
               {form.options.map((option, index) => (
-                <option key={`answer-${option || 'empty'}-${index}`} value={index}>
+                <option key={`answer-${index}`} value={index}>
                   Option {index + 1}
                 </option>
               ))}
