@@ -3,14 +3,46 @@ import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
 import './Profile.css';
 
-const fields = ['nickname', 'age', 'gender', 'date_of_birth', 'address'];
+const fields = ['nickname', 'gender', 'date_of_birth', 'address'];
 const labels = {
   nickname: 'Nickname',
-  age: 'Age',
   gender: 'Gender',
   date_of_birth: 'Date of birth',
   address: 'Address'
 };
+
+function getAge(dateOfBirth) {
+  if (!dateOfBirth) return null;
+
+  const [year, month, day] = dateOfBirth.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const birthDate = new Date(year, month - 1, day);
+  if (
+    birthDate.getFullYear() !== year ||
+    birthDate.getMonth() + 1 !== month ||
+    birthDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (
+    today.getMonth() + 1 < month ||
+    (today.getMonth() + 1 === month && today.getDate() < day)
+  ) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
+}
+
+function getTodayDate() {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+}
 
 export default function Profile() {
   const { user, profile, refreshProfile } = useAuth();
@@ -44,7 +76,6 @@ export default function Profile() {
         setForm({
           name: profile.name || '',
           nickname: data?.nickname || '',
-          age: data?.age ?? '',
           gender: data?.gender || '',
           date_of_birth: data?.date_of_birth || '',
           address: data?.address || '',
@@ -82,7 +113,7 @@ export default function Profile() {
     const payload = {
       student_id: user.id,
       nickname: form.nickname || null,
-      age: form.age === '' ? null : Number(form.age),
+      age: getAge(form.date_of_birth),
       gender: form.gender || null,
       date_of_birth: form.date_of_birth || null,
       address: form.address || null,
@@ -128,17 +159,20 @@ export default function Profile() {
               <input value={user.email || ''} disabled />
             </label>
 
+            <label>
+              <span>Age</span>
+              <input value={getAge(form.date_of_birth) ?? '—'} readOnly />
+            </label>
+
             {fields.map((key) => {
-              let inputType = 'text';
-              if (key === 'date_of_birth') inputType = 'date';
-              if (key === 'age') inputType = 'number';
+              const inputType = key === 'date_of_birth' ? 'date' : 'text';
 
               return (
                 <label key={key}>
                   {labels[key]}
                   <input
                     type={inputType}
-                    min={key === 'age' ? '0' : undefined}
+                    max={key === 'date_of_birth' ? getTodayDate() : undefined}
                     value={form[key] ?? ''}
                     onChange={e => setForm({ ...form, [key]: e.target.value })}
                   />
@@ -170,7 +204,7 @@ export default function Profile() {
         {[
           ['Nickname', details?.nickname],
           ['Email', user.email],
-          ['Age', details?.age],
+          ['Age', getAge(details?.date_of_birth)],
           ['Gender', details?.gender],
           ['Date of birth', details?.date_of_birth],
           ['Address', details?.address]
