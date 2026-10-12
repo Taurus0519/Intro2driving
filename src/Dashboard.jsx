@@ -10,6 +10,12 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistDat
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
+const AGE_GROUP_COLORS = {
+  '16-17': '#3b82f6',
+  '18-24': '#14b8a6',
+  '25-34': '#f59e0b',
+  '35+': '#8b5cf6',
+};
 
 async function fetchAllRows(buildQuery) {
   const pageSize = 1000;
@@ -34,6 +40,20 @@ function ProgressCard({ icon, count, title, hint }) {
       <small>{hint}</small>
     </div>
   );
+}
+
+function getAgeGroupGradient(ageGroups) {
+  const total = Object.values(ageGroups).reduce((sum, count) => sum + count, 0);
+  if (!total) return 'conic-gradient(#e8eef3 0deg 360deg)';
+
+  let currentAngle = 0;
+  const slices = Object.entries(ageGroups).map(([group, count]) => {
+    const startAngle = currentAngle;
+    currentAngle += (count / total) * 360;
+    return `${AGE_GROUP_COLORS[group]} ${startAngle}deg ${currentAngle}deg`;
+  });
+
+  return `conic-gradient(${slices.join(', ')})`;
 }
 
 function StudentDashboard({ profile }) {
@@ -227,6 +247,7 @@ function AdminDashboard({ profile }) {
     '25-34': 0,
     '35+': 0,
   });
+  const [ageGroupsError, setAgeGroupsError] = useState('');
   const [quizTakeCount, setQuizTakeCount] = useState(0);
   const [quizAttempts, setQuizAttempts] = useState([]);
   const [quizAttemptsError, setQuizAttemptsError] = useState('');
@@ -238,14 +259,23 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadAgeGroups() {
-      const [{ data: students }, { data: studentProfiles }] = await Promise.all([
-        supabase.from('profiles').select('id').eq('role', 'student'),
-        supabase.from('student_profiles').select('student_id, age'),
+      const [studentsResult, studentProfilesResult] = await Promise.all([
+        fetchAllRows(() => supabase.from('profiles').select('id').eq('role', 'student')),
+        fetchAllRows(() => supabase.from('student_profiles').select('student_id, age')),
       ]);
-      const counts = { '16-17': 0, '18-24': 0, '25-34': 0, '35+': 0 };
-      const studentIds = new Set((students || []).map((student) => student.id));
+      if (!active) return;
+      if (studentsResult.error || studentProfilesResult.error) {
+        setAgeGroupsError(
+          `Student age groups could not be loaded: ${studentsResult.error?.message || studentProfilesResult.error?.message}`,
+        );
+        return;
+      }
+      setAgeGroupsError('');
 
-      for (const studentProfile of studentProfiles || []) {
+      const counts = { '16-17': 0, '18-24': 0, '25-34': 0, '35+': 0 };
+      const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
+
+      for (const studentProfile of studentProfilesResult.data || []) {
         const age = Number(studentProfile.age);
         if (!studentIds.has(studentProfile.student_id) || studentProfile.age == null || !Number.isFinite(age) || age < 0) continue;
         if (age >= 16 && age < 18) counts['16-17'] += 1;
@@ -364,6 +394,33 @@ function AdminDashboard({ profile }) {
               hint={pdcStatsError ? 'Count unavailable' : `of ${pdcStudentCount} students`}
             />
           </div>
+          <section className="dash-card age-distribution">
+            <div className="card-heading">
+              <h3>Student Age Distribution</h3>
+              <span>{Object.values(ageGroups).reduce((sum, count) => sum + count, 0)} students with age data</span>
+            </div>
+            {ageGroupsError ? (
+              <p role="alert" className="quiz-results-error">{ageGroupsError}</p>
+            ) : (
+              <div className="age-distribution-content">
+                <div
+                  className="age-pie-chart"
+                  role="img"
+                  aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
+                  style={{ background: getAgeGroupGradient(ageGroups) }}
+                />
+                <ul className="age-pie-legend">
+                  {Object.entries(ageGroups).map(([group, count]) => (
+                    <li key={group}>
+                      <span className="age-pie-swatch" style={{ background: AGE_GROUP_COLORS[group] }} />
+                      <span>{group} years</span>
+                      <strong>{count}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
           {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
 
           <section className="dash-card quiz-results-panel">
