@@ -1,0 +1,151 @@
+.quiz-image-field {
+  display: grid;
+  gap: 8px;
+}
+
+.quiz-image-field input[type="file"] {
+  min-height: auto;
+  padding: 8px;
+}
+
+.quiz-image-preview,
+.quiz-question-image {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border: 1px solid #d5dce8;
+  border-radius: 12px;
+  background: #f1f4fa;
+}
+
+.quiz-image-preview img,
+.quiz-question-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+.quiz-image-remove {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-image-indicator {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quiz-question-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 24px 24px;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
+}
+
+.quiz-question-image {
+  min-height: 180px;
+  margin-bottom: 20px;
+}
+
+.quiz-question-image img {
+  max-height: 360px;
+}
+
+.quiz-question-text {
+  margin-bottom: 18px;
+  color: #202124;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.quiz-question-text span {
+  margin-left: 4px;
+  color: #d93025;
+}
+
+.quiz-answer-list {
+  display: grid;
+  gap: 10px;
+}
+
+.quiz-answer-option {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border: 1px solid #d5dce8;
+  border-radius: 12px;
+  background: #f7f8fc;
+  color: #202124;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.quiz-answer-option.selected {
+  border-color: #6687c4;
+  background: #edf2fb;
+}
+
+.quiz-answer-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.quiz-answer-option:focus-within {
+  outline: 2px solid #275dad;
+  outline-offset: 2px;
+}
+
+.quiz-answer-letter {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 1px solid #d5dce8;
+  border-radius: 50%;
+  background: #fff;
+  color: #315985;
+  font-size: 13px;
+}
+
+.quiz-answer-actions {
+  padding-top: 18px;
+}
+
+.quiz-answer-actions button {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #315fb2;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.quiz-answer-actions button:disabled {
+  background: #8ca5d1;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .quiz-question-card {
+    padding: 16px;
+  }
+}

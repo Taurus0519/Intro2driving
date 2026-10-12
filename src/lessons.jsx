@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './useAunth';
 import { supabase } from './supabase_Client';
+import './Quiz.css';
 
-const emptyForm = { id: null, question: '', options: ['', '', '', ''], correctIndex: 0 };
+const ATTACHMENT_BUCKET = 'quiz-question-images';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const emptyForm = {
+  id: null,
+  question: '',
+  options: ['', '', '', ''],
+  correctIndex: 0,
+  imagePath: null,
+  imageFile: null,
+  removeImage: false,
+};
+
+function getImageUrl(path) {
+  return path ? supabase.storage.from(ATTACHMENT_BUCKET).getPublicUrl(path).data.publicUrl : '';
+}
 
 export default function Lessons() {
   const { profile } = useAuth();
@@ -17,25 +33,51 @@ export default function Lessons() {
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState('');
+  const [imageAttachmentsEnabled, setImageAttachmentsEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+
+  useEffect(() => {
+    if (!form.imageFile) {
+      setImagePreviewUrl('');
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(form.imageFile);
+    setImagePreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [form.imageFile]);
 
   useEffect(() => {
     async function loadQuestions() {
       setLoadingQuestions(true);
       setQuestionError('');
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('quiz_questions')
-        .select('id, question, options, correct_index')
+        .select('id, question, options, correct_index, image_path')
         .order('created_at', { ascending: true });
+
+      if (error?.code === '42703') {
+        setImageAttachmentsEnabled(false);
+        const fallback = await supabase
+          .from('quiz_questions')
+          .select('id, question, options, correct_index')
+          .order('created_at', { ascending: true });
+        data = fallback.data;
+        error = fallback.error;
+      } else if (!error) {
+        setImageAttachmentsEnabled(true);
+      }
 
       if (error) {
         setQuestionError(`Quiz questions could not be loaded: ${error.message}`);
       } else {
-        setQuestions(data.map(({ correct_index: correctIndex, ...question }) => ({
+        setQuestions(data.map(({ correct_index: correctIndex, image_path: imagePath, ...question }) => ({
           ...question,
           correctIndex,
+          imagePath,
         })));
       }
 
@@ -48,6 +90,7 @@ export default function Lessons() {
   function resetForm() {
     setForm(emptyForm);
     setShowForm(false);
+    setQuestionError('');
   }
 
   function handleOptionChange(index, value) {
@@ -66,31 +109,68 @@ export default function Lessons() {
     if (!trimmedQuestion || cleanedOptions.some((option) => !option)) {
       return;
     }
+    if (!imageAttachmentsEnabled && (form.imageFile || form.removeImage)) {
+      setQuestionError('Run supabase/quiz_question_images.sql in the Supabase SQL Editor to enable quiz image attachments.');
+      return;
+    }
+
+    setSavingQuestion(true);
+    setQuestionError('');
+
+    let uploadedImagePath = null;
+    if (form.imageFile) {
+      const safeName = form.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      uploadedImagePath = `${profile.id}/${crypto.randomUUID()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .upload(uploadedImagePath, form.imageFile, {
+          contentType: form.imageFile.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        setQuestionError(`Image could not be uploaded: ${uploadError.message}`);
+        setSavingQuestion(false);
+        return;
+      }
+    }
 
     const questionData = {
       question: trimmedQuestion,
       options: cleanedOptions,
       correct_index: form.correctIndex,
+      ...(imageAttachmentsEnabled
+        ? { image_path: form.removeImage ? null : uploadedImagePath || form.imagePath }
+        : {}),
     };
 
-    setSavingQuestion(true);
-    setQuestionError('');
     const query = form.id
       ? supabase.from('quiz_questions').update(questionData).eq('id', form.id)
       : supabase.from('quiz_questions').insert(questionData);
     const { data, error } = await query
-      .select('id, question, options, correct_index')
+      .select(imageAttachmentsEnabled
+        ? 'id, question, options, correct_index, image_path'
+        : 'id, question, options, correct_index')
       .single();
     setSavingQuestion(false);
 
     if (error) {
-      setQuestionError(`Question could not be saved: ${error.message}`);
+      let cleanupNote = '';
+      if (uploadedImagePath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(ATTACHMENT_BUCKET)
+          .remove([uploadedImagePath]);
+        if (cleanupError) cleanupNote = ` The uploaded image could not be cleaned up: ${cleanupError.message}`;
+      }
+      setQuestionError(`Question could not be saved: ${error.message}${cleanupNote}`);
       return;
     }
 
+    const oldImagePath = form.imagePath;
     const savedQuestion = {
       ...data,
       correctIndex: data.correct_index,
+      imagePath: data.image_path,
     };
     setQuestions((current) => {
       if (form.id) {
@@ -99,6 +179,15 @@ export default function Lessons() {
       return [...current, savedQuestion];
     });
     resetForm();
+
+    if (oldImagePath && oldImagePath !== data.image_path) {
+      const { error: cleanupError } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .remove([oldImagePath]);
+      if (cleanupError) {
+        setQuestionError(`Question saved, but its previous image could not be removed: ${cleanupError.message}`);
+      }
+    }
   }
 
   function editQuestion(question) {
@@ -107,12 +196,16 @@ export default function Lessons() {
       question: question.question,
       options: [...question.options],
       correctIndex: question.correctIndex,
+      imagePath: question.imagePath || null,
+      imageFile: null,
+      removeImage: false,
     });
     setShowForm(true);
   }
 
   async function deleteQuestion(id) {
     setQuestionError('');
+    const question = questions.find((item) => item.id === id);
     const { error } = await supabase.from('quiz_questions').delete().eq('id', id);
     if (error) {
       setQuestionError(`Question could not be deleted: ${error.message}`);
@@ -120,6 +213,14 @@ export default function Lessons() {
     }
 
     setQuestions((current) => current.filter((question) => question.id !== id));
+    if (question?.imagePath) {
+      const { error: attachmentError } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .remove([question.imagePath]);
+      if (attachmentError) {
+        setQuestionError(`Question deleted, but its image could not be removed: ${attachmentError.message}`);
+      }
+    }
   }
 
   async function submitQuiz(e) {
@@ -198,6 +299,11 @@ export default function Lessons() {
 
       {questionError && <p role="alert" className="panel">{questionError}</p>}
       {loadingQuestions && <p className="panel">Loading quiz questions...</p>}
+      {isAdmin && !loadingQuestions && !imageAttachmentsEnabled && (
+        <p className="panel" role="status">
+          Run supabase/quiz_question_images.sql in the Supabase SQL Editor to enable image attachments.
+        </p>
+      )}
 
       {isAdmin && showForm && (
         <form className="panel" onSubmit={saveQuestion} style={{ marginBottom: 20 }}>
@@ -210,6 +316,47 @@ export default function Lessons() {
               required
             />
           </label>
+
+          <div className="quiz-image-field">
+            <label htmlFor="quiz-image-upload">Image attachment (optional)</label>
+            <input
+              id="quiz-image-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={!imageAttachmentsEnabled}
+              onChange={(event) => {
+                const imageFile = event.target.files?.[0] || null;
+                if (!imageFile) return;
+                if (!ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
+                  event.target.value = '';
+                  setQuestionError('Choose a JPEG, PNG, WebP, or GIF image.');
+                  return;
+                }
+                if (imageFile.size > MAX_IMAGE_SIZE) {
+                  event.target.value = '';
+                  setQuestionError('The image must be 5 MB or smaller.');
+                  return;
+                }
+                setQuestionError('');
+                setForm((current) => ({ ...current, imageFile, removeImage: false }));
+              }}
+            />
+            {(imagePreviewUrl || (!form.removeImage && form.imagePath)) && (
+              <div className="quiz-image-preview">
+                <img src={imagePreviewUrl || getImageUrl(form.imagePath)} alt="Question attachment preview" />
+              </div>
+            )}
+            {form.imagePath && !form.imageFile && (
+              <label className="quiz-image-remove">
+                <input
+                  type="checkbox"
+                  checked={form.removeImage}
+                  onChange={(event) => setForm((current) => ({ ...current, removeImage: event.target.checked }))}
+                />
+                Remove current image
+              </label>
+            )}
+          </div>
 
           {form.options.map((option, index) => (
             <label key={`option-${option || 'empty'}-${index}`}>
@@ -258,7 +405,10 @@ export default function Lessons() {
               {questions.length ? questions.map((question, index) => (
                   <tr key={question.id}>
                     <td>{index + 1}</td>
-                    <td>{question.question}</td>
+                    <td>
+                      {question.question}
+                      {question.imagePath && <div className="quiz-image-indicator">Image attached</div>}
+                    </td>
                     <td>{question.options.join(' / ')}</td>
                     <td>{question.options[question.correctIndex]}</td>
                     <td>
@@ -283,76 +433,44 @@ export default function Lessons() {
       )}
 
       {isStudent && currentQuestion && !result && (
-        <div
-          className="panel"
-          style={{
-            maxWidth: 760,
-            margin: '0 auto',
-            background: '#fff',
-            border: '1px solid #dadce0',
-            borderRadius: 8,
-            padding: '20px 24px',
-            boxShadow: '0 1px 2px rgb(60 64 67 / 15%)',
-          }}
-        >
-          <div style={{ marginBottom: 18, fontSize: 18, lineHeight: 1.5, color: '#202124' }}>
+        <div className="quiz-question-card">
+          {currentQuestion.imagePath && (
+            <div className="quiz-question-image">
+              <img src={getImageUrl(currentQuestion.imagePath)} alt="Quiz question attachment" />
+            </div>
+          )}
+          <div className="quiz-question-text">
             {currentQuestion.question}
-            <span aria-label="required" style={{ color: '#d93025', marginLeft: 4 }}>*</span>
+            <span aria-label="required">*</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="quiz-answer-list">
             {currentQuestion.options.map((option, optionIndex) => {
               return (
                 <label
                   key={`${currentQuestion.id}-${optionIndex}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    minHeight: 44,
-                    padding: '6px 0',
-                    color: '#202124',
-                    fontSize: 16,
-                    cursor: 'pointer',
-                  }}
+                  className={`quiz-answer-option${selectedAnswer === optionIndex ? ' selected' : ''}`}
                 >
                   <input
                     type="radio"
                     name={`question-${currentQuestion.id}`}
                     checked={selectedAnswer === optionIndex}
                     onChange={() => setAnswers((current) => ({ ...current, [currentQuestion.id]: optionIndex }))}
-                    style={{
-                      width: 20,
-                      height: 20,
-                      margin: '0 12px 0 0',
-                      accentColor: '#1a73e8',
-                    }}
                   />
+                  <span className="quiz-answer-letter">{String.fromCharCode(65 + optionIndex)}</span>
                   <span>{option}</span>
                 </label>
               );
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 18 }}>
+          <div className="quiz-answer-actions">
             <button
               type="button"
               onClick={moveNext}
               disabled={selectedAnswer === undefined || submitting}
-              style={{
-                appearance: 'none',
-                border: 'none',
-                borderRadius: 8,
-                background: selectedAnswer === undefined || submitting ? '#9ab8d0' : '#0d7ab8',
-                color: '#fff',
-                fontSize: 18,
-                fontWeight: 700,
-                padding: '10px 22px',
-                cursor: selectedAnswer === undefined || submitting ? 'not-allowed' : 'pointer',
-                minWidth: 150,
-              }}
             >
-              {submitting ? 'Saving…' : currentIndex === questions.length - 1 ? 'Submit' : 'Continue'} <span aria-hidden="true">›</span>
+              {submitting ? 'Saving…' : currentIndex === questions.length - 1 ? 'Submit Answer' : 'Continue'}
             </button>
           </div>
           {submitError && <p role="alert" style={{ color: '#b3261e', marginTop: 12 }}>{submitError}</p>}

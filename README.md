@@ -30,6 +30,10 @@ Student deletion and achievement progress use Vercel serverless functions in `ap
 
 Before students can submit recorded quiz results, run [`supabase/quiz_attempts.sql`](./supabase/quiz_attempts.sql) in the Supabase SQL Editor. It creates the attempt table and the row-level security policies that allow students to record their own results and admins to view them. Admin and super admin dashboards show the total number of takes and the 20 most recent results.
 
+## Quiz question images
+
+Run [`supabase/quiz_question_images.sql`](./supabase/quiz_question_images.sql) in the Supabase SQL Editor to add optional image attachments to quiz questions and configure the public image bucket. Admins and super admins can attach JPEG, PNG, WebP, or GIF images up to 5 MB; students see the image above the question.
+
 ## Message replies and attachments
 
 Run [`supabase/message_replies_attachments.sql`](./supabase/message_replies_attachments.sql) in the Supabase SQL Editor to enable replies and private message attachments. Senders and recipients can reply to messages and share up to five images, videos, or other files per message, up to 50 MB each. The storage bucket is private; only the two message participants can access its attachments. The recipient list is loaded from the authenticated `/api/message-recipients` endpoint; configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and the server-only `SUPABASE_SERVICE_ROLE_KEY` in Vercel for the same Supabase project.
