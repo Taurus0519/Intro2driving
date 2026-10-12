@@ -384,9 +384,6 @@ function AdminDashboard({ profile }) {
           </div>
 
           <div className="progress-cards">
-            {Object.entries(ageGroups).map(([group, count]) => (
-              <ProgressCard key={group} icon="◷" count={count} title={group} hint="Students" />
-            ))}
             <ProgressCard
               icon="✓"
               count={pdcStatsError ? '—' : pdcCompletedCount}
