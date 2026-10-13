@@ -41,7 +41,7 @@ export default function Layout() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand-mark">R</div>
+        <img className="sidebar-logo" src="/riteway-logo.png" alt="Riteway Driving School" />
         <div className="brand-name">Riteway</div>
         <details className="account-menu sidebar-account-menu">
           <summary className="user-chip">

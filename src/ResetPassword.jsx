@@ -61,7 +61,7 @@ export default function ResetPassword() {
   return (
     <div className="login-view">
       <div className="login-card">
-        <div className="brand-mark">R</div>
+        <img className="brand-mark-image" src="/riteway-logo.png" alt="Riteway Driving School" />
         <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
         <h1>{passwordUpdated ? 'Password changed' : 'Create a new password'}</h1>
         <p className="muted">

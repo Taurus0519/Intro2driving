@@ -313,6 +313,14 @@ form.panel {
 .login-card > .brand-mark {
   margin-bottom: 20px;
 }
+.login-card > .brand-mark-image {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 .login-card .eyebrow {
   margin: 0 0 7px;
   color: #718392;
