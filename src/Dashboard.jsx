@@ -248,6 +248,7 @@ function AdminDashboard({ profile }) {
     '35+': 0,
   });
   const [ageGroupsError, setAgeGroupsError] = useState('');
+  const [agePieHover, setAgePieHover] = useState(null);
   const [quizTakeCount, setQuizTakeCount] = useState(0);
   const [quizAttempts, setQuizAttempts] = useState([]);
   const [quizAttemptsError, setQuizAttemptsError] = useState('');
@@ -261,6 +262,33 @@ function AdminDashboard({ profile }) {
   const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
   const [studentAchievementsError, setStudentAchievementsError] = useState('');
   const [studentProgressLive, setStudentProgressLive] = useState(false);
+
+  function handleAgePieMouseMove(event) {
+    const chart = event.currentTarget;
+    const bounds = chart.getBoundingClientRect();
+    const dx = event.clientX - (bounds.left + bounds.width / 2);
+    const dy = event.clientY - (bounds.top + bounds.height / 2);
+    const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    const total = Object.values(ageGroups).reduce((sum, count) => sum + count, 0);
+
+    let currentAngle = 0;
+    for (const [group, count] of Object.entries(ageGroups)) {
+      if (!count) continue;
+      currentAngle += (count / total) * 360;
+      if (angle < currentAngle) {
+        setAgePieHover({
+          group,
+          count,
+          percentage: (count / total) * 100,
+          x: event.clientX - bounds.left,
+          y: event.clientY - bounds.top,
+        });
+        return;
+      }
+    }
+
+    setAgePieHover(null);
+  }
 
   useEffect(() => {
     let active = true;
@@ -527,12 +555,30 @@ function AdminDashboard({ profile }) {
               <p role="alert" className="quiz-results-error">{ageGroupsError}</p>
             ) : (
               <div className="age-distribution-content">
-                <div
-                  className="age-pie-chart"
-                  role="img"
-                  aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
-                  style={{ background: getAgeGroupGradient(ageGroups) }}
-                />
+                <div className="age-pie-wrap">
+                  <div
+                    className="age-pie-chart"
+                    role="img"
+                    aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
+                    aria-describedby={agePieHover ? 'age-pie-tooltip' : undefined}
+                    style={{ background: getAgeGroupGradient(ageGroups) }}
+                    onMouseMove={handleAgePieMouseMove}
+                    onMouseLeave={() => setAgePieHover(null)}
+                  />
+                  {agePieHover && (
+                    <div
+                      id="age-pie-tooltip"
+                      className="age-pie-tooltip"
+                      role="tooltip"
+                      style={{ left: agePieHover.x, top: agePieHover.y }}
+                    >
+                      <span>{agePieHover.group} years</span>
+                      <strong>
+                        {agePieHover.count} {agePieHover.count === 1 ? 'student' : 'students'} ({agePieHover.percentage.toFixed(1)}%)
+                      </strong>
+                    </div>
+                  )}
+                </div>
                 <ul className="age-pie-legend">
                   {Object.entries(ageGroups).map(([group, count]) => (
                     <li key={group}>
