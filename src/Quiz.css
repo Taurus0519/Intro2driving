@@ -40,6 +40,22 @@
   font-size: 12px;
 }
 
+.quiz-start-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px;
+  text-align: center;
+}
+
+.quiz-start-card h3 {
+  margin: 0 0 8px;
+}
+
+.quiz-start-card p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
 .quiz-question-card {
   max-width: 760px;
   margin: 0 auto;

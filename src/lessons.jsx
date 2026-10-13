@@ -30,6 +30,7 @@ export default function Lessons() {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [quizStarted, setQuizStarted] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState('');
@@ -432,7 +433,17 @@ export default function Lessons() {
         <div className="panel">The quiz is not available yet. Please check back later.</div>
       )}
 
-      {isStudent && currentQuestion && !result && (
+      {isStudent && !loadingQuestions && !questionError && questions.length > 0 && !quizStarted && !result && (
+        <section className="quiz-start-card panel">
+          <h3>Ready to take the quiz?</h3>
+          <p>This quiz has {questions.length} {questions.length === 1 ? 'question' : 'questions'}.</p>
+          <button type="button" className="button primary" onClick={() => setQuizStarted(true)}>
+            Start Quiz
+          </button>
+        </section>
+      )}
+
+      {isStudent && quizStarted && currentQuestion && !result && (
         <div className="quiz-question-card">
           {currentQuestion.imagePath && (
             <div className="quiz-question-image">
