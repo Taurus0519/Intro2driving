@@ -151,34 +151,34 @@ function StudentDashboard({ profile }) {
         <span className="welcome-stars" aria-hidden="true">★ ✦</span>
       </section>
 
-      <div className="progress-heading">
-        <h3>Game Progress</h3>
-        <span>0% complete</span>
-      </div>
-
-      <div className="progress-cards">
-        <ProgressCard
-          icon="✓"
-          count={progress.quizzes}
-          title="Quizzes Completed"
-          hint="Start your first quiz!"
-        />
-        <ProgressCard
-          icon="★"
-          count={completedAchievements.length}
-          title="Achievements Completed"
-          hint="Keep working toward your next achievement."
-        />
-        <ProgressCard
-          icon="✓"
-          count={`${pdcProgress.answered}/${PDC_CHECKLIST_ITEM_COUNT}`}
-          title="PDC Checklist"
-          hint={pdcError ? 'Status unavailable' : pdcProgress.complete ? 'Completed' : 'In progress'}
-        />
-      </div>
-
       <div className="dashboard-columns">
         <div className="dashboard-primary">
+          <div className="progress-heading">
+            <h3>Game Progress</h3>
+            <span>0% complete</span>
+          </div>
+
+          <div className="progress-cards">
+            <ProgressCard
+              icon="✓"
+              count={progress.quizzes}
+              title="Quizzes Completed"
+              hint="Start your first quiz!"
+            />
+            <ProgressCard
+              icon="★"
+              count={completedAchievements.length}
+              title="Achievements Completed"
+              hint="Keep working toward your next achievement."
+            />
+            <ProgressCard
+              icon="✓"
+              count={`${pdcProgress.answered}/${PDC_CHECKLIST_ITEM_COUNT}`}
+              title="PDC Checklist"
+              hint={pdcError ? 'Status unavailable' : pdcProgress.complete ? 'Completed' : 'In progress'}
+            />
+          </div>
+
           <section className="dash-card pdc-dashboard-card">
             <div className="card-heading">
               <h3>PDC Checklist</h3>
@@ -377,17 +377,17 @@ function AdminDashboard({ profile }) {
         <span className="welcome-stars" aria-hidden="true">★ ✦</span>
       </section>
 
-      <div className="progress-cards admin-progress-cards">
-        <ProgressCard
-          icon="✓"
-          count={pdcStatsError ? '—' : pdcCompletedCount}
-          title="PDC Checklist Completed"
-          hint={pdcStatsError ? 'Count unavailable' : `of ${pdcStudentCount} students`}
-        />
-      </div>
-
       <div className="dashboard-columns">
         <div className="dashboard-primary">
+          <div className="progress-cards admin-progress-cards">
+            <ProgressCard
+              icon="✓"
+              count={pdcStatsError ? '—' : pdcCompletedCount}
+              title="PDC Checklist Completed"
+              hint={pdcStatsError ? 'Count unavailable' : `of ${pdcStudentCount} students`}
+            />
+          </div>
+
           <section className="dash-card age-distribution">
             <div className="card-heading">
               <h3>Student Age Distribution</h3>
