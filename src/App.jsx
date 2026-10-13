@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./Loginpage'));
 const ResetPassword = lazy(() => import('./ResetPassword'));
 const Students = lazy(() => import('./Students'));
 const Admins = lazy(() => import('./admins'));
+const Lessons = lazy(() => import('./lessons'));
 const Assignments = lazy(() => import('./assignments'));
 const Messages = lazy(() => import('./messages'));
 const Profile = lazy(() => import('./Profile'));
@@ -46,6 +47,10 @@ export default function App() {
         <Route path="pdc-checklist" element={<PdcChecklist />} />
       </Route>
       <Route element={<Role allow={['student']} />}><Route path="profile" element={<Profile />} /></Route>
+      <Route element={<Role allow={['student', 'admin', 'superadmin']} />}>
+        <Route path="quiz" element={<Lessons />} />
+        <Route path="lessons" element={<Navigate to="/quiz" replace />} />
+      </Route>
       <Route element={<Role allow={['admin', 'superadmin']} />}>
         <Route path="students" element={<Students />} />
       </Route>
