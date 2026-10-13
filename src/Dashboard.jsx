@@ -413,7 +413,7 @@ function AdminDashboard({ profile }) {
         supabase.from('quiz_attempts').select('id', { count: 'exact', head: true }),
         supabase
           .from('quiz_attempts')
-          .select('id, score, total_questions, percentage, created_at, profiles!quiz_attempts_student_id_fkey(name)')
+          .select('id, score, total_questions, percentage, chapter_number, created_at, profiles!quiz_attempts_student_id_fkey(name)')
           .order('created_at', { ascending: false })
           .limit(20),
       ]);
@@ -606,6 +606,7 @@ function AdminDashboard({ profile }) {
                   <thead>
                     <tr>
                       <th>Student</th>
+                      <th>Chapter</th>
                       <th>Score</th>
                       <th>Result</th>
                       <th>Taken</th>
@@ -615,6 +616,7 @@ function AdminDashboard({ profile }) {
                     {quizAttempts.map((attempt) => (
                       <tr key={attempt.id}>
                         <td>{attempt.profiles?.name || 'Student'}</td>
+                        <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
                         <td>{attempt.score}/{attempt.total_questions}</td>
                         <td>{attempt.percentage}%</td>
                         <td>{new Date(attempt.created_at).toLocaleString()}</td>

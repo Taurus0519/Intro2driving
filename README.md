@@ -30,6 +30,10 @@ Student deletion and achievement progress use Vercel serverless functions in `ap
 
 Before students can submit recorded quiz results, run [`supabase/quiz_attempts.sql`](./supabase/quiz_attempts.sql) in the Supabase SQL Editor. It creates the attempt table and the row-level security policies that allow students to record their own results and admins to view them. Admin and super admin dashboards show the total number of takes and the 20 most recent results.
 
+## Chaptered quizzes
+
+Before deploying chaptered quizzes, run [`supabase/quiz_chapters.sql`](./supabase/quiz_chapters.sql) in the Supabase SQL Editor after the quiz questions and attempts tables exist. Existing questions are assigned in creation order to chapters in groups of 10. The migration requires no more than 70 unassigned questions. Admins and super admins can manage up to 7 chapters with 10 questions each. Students complete chapters in order; each chapter's question order is shuffled when they start, and submitting it unlocks the next chapter regardless of score.
+
 ## Quiz question images
 
 Run [`supabase/quiz_question_images.sql`](./supabase/quiz_question_images.sql) in the Supabase SQL Editor to add optional image attachments to quiz questions and configure the public image bucket. Admins and super admins can attach JPEG, PNG, WebP, or GIF images up to 5 MB; students see the image above the question.

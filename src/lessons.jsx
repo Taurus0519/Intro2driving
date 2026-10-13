@@ -9,6 +9,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif
 const emptyForm = {
   id: null,
   question: '',
+  chapterNumber: 1,
   options: ['', '', '', ''],
   correctIndex: 0,
   imagePath: null,
@@ -20,17 +21,31 @@ function getImageUrl(path) {
   return path ? supabase.storage.from(ATTACHMENT_BUCKET).getPublicUrl(path).data.publicUrl : '';
 }
 
+function shuffleQuestions(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
 export default function Lessons() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
   const isStudent = profile?.role === 'student';
   const [questions, setQuestions] = useState([]);
+  const [activeQuestions, setActiveQuestions] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [quizStarted, setQuizStarted] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState(1);
+  const [completedChapters, setCompletedChapters] = useState([]);
+  const [loadingChapterProgress, setLoadingChapterProgress] = useState(true);
+  const [chapterProgressError, setChapterProgressError] = useState('');
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState('');
@@ -57,14 +72,14 @@ export default function Lessons() {
 
       let { data, error } = await supabase
         .from('quiz_questions')
-        .select('id, question, options, correct_index, image_path')
+        .select('id, question, options, correct_index, image_path, chapter_number')
         .order('created_at', { ascending: true });
 
       if (error?.code === '42703') {
         setImageAttachmentsEnabled(false);
         const fallback = await supabase
           .from('quiz_questions')
-          .select('id, question, options, correct_index')
+          .select('id, question, options, correct_index, chapter_number')
           .order('created_at', { ascending: true });
         data = fallback.data;
         error = fallback.error;
@@ -73,12 +88,13 @@ export default function Lessons() {
       }
 
       if (error) {
-        setQuestionError(`Quiz questions could not be loaded: ${error.message}`);
+        setQuestionError(`Quiz questions could not be loaded: ${error.message}. Confirm that supabase/quiz_chapters.sql has been run.`);
       } else {
-        setQuestions(data.map(({ correct_index: correctIndex, image_path: imagePath, ...question }) => ({
+        setQuestions(data.map(({ correct_index: correctIndex, image_path: imagePath, chapter_number: chapterNumber, ...question }) => ({
           ...question,
           correctIndex,
           imagePath,
+          chapterNumber,
         })));
       }
 
@@ -87,6 +103,37 @@ export default function Lessons() {
 
     loadQuestions();
   }, []);
+
+  useEffect(() => {
+    if (!isStudent || !profile?.id) {
+      setLoadingChapterProgress(false);
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadChapterProgress() {
+      setLoadingChapterProgress(true);
+      setChapterProgressError('');
+      const { data, error } = await supabase
+        .from('quiz_chapter_progress')
+        .select('chapter_number')
+        .eq('student_id', profile.id);
+
+      if (!active) return;
+      if (error) {
+        setChapterProgressError(`Chapter progress could not be loaded: ${error.message}. Confirm that supabase/quiz_chapters.sql has been run.`);
+      } else {
+        setCompletedChapters(data.map(({ chapter_number: chapterNumber }) => chapterNumber));
+      }
+      setLoadingChapterProgress(false);
+    }
+
+    void loadChapterProgress();
+    return () => {
+      active = false;
+    };
+  }, [isStudent, profile?.id]);
 
   function resetForm() {
     setForm(emptyForm);
@@ -140,6 +187,7 @@ export default function Lessons() {
       question: trimmedQuestion,
       options: cleanedOptions,
       correct_index: form.correctIndex,
+      chapter_number: form.chapterNumber,
       ...(imageAttachmentsEnabled
         ? { image_path: form.removeImage ? null : uploadedImagePath || form.imagePath }
         : {}),
@@ -150,8 +198,8 @@ export default function Lessons() {
       : supabase.from('quiz_questions').insert(questionData);
     const { data, error } = await query
       .select(imageAttachmentsEnabled
-        ? 'id, question, options, correct_index, image_path'
-        : 'id, question, options, correct_index')
+        ? 'id, question, options, correct_index, image_path, chapter_number'
+        : 'id, question, options, correct_index, chapter_number')
       .single();
     setSavingQuestion(false);
 
@@ -172,6 +220,7 @@ export default function Lessons() {
       ...data,
       correctIndex: data.correct_index,
       imagePath: data.image_path,
+      chapterNumber: data.chapter_number,
     };
     setQuestions((current) => {
       if (form.id) {
@@ -195,6 +244,7 @@ export default function Lessons() {
     setForm({
       id: question.id,
       question: question.question,
+      chapterNumber: question.chapterNumber,
       options: [...question.options],
       correctIndex: question.correctIndex,
       imagePath: question.imagePath || null,
@@ -227,34 +277,32 @@ export default function Lessons() {
   async function submitQuiz(e) {
     if (e) e.preventDefault();
 
-    if (!questions.length || submitting) {
+    if (activeQuestions.length !== 10 || submitting) {
       return;
     }
-
-    let score = 0;
-    questions.forEach((question) => {
-      if (answers[question.id] === question.correctIndex) {
-        score += 1;
-      }
-    });
-
-    const attemptResult = {
-      score,
-      total: questions.length,
-      percentage: Math.round((score / questions.length) * 100),
-    };
 
     setSubmitting(true);
     setSubmitError('');
     let errorMessage = '';
+    let attemptResult = null;
     try {
-      const { error } = await supabase.from('quiz_attempts').insert({
-        student_id: profile.id,
-        score: attemptResult.score,
-        total_questions: attemptResult.total,
-        percentage: attemptResult.percentage,
+      const { data, error } = await supabase.rpc('complete_quiz_chapter', {
+        p_chapter_number: selectedChapter,
+        p_answers: answers,
       });
       errorMessage = error?.message || '';
+      if (!error) {
+        const savedAttempt = Array.isArray(data) ? data[0] : null;
+        if (!savedAttempt) {
+          errorMessage = 'The chapter was submitted, but its result could not be returned. Refresh the page to check your progress.';
+        } else {
+          attemptResult = {
+            score: savedAttempt.score,
+            total: savedAttempt.total_questions,
+            percentage: savedAttempt.percentage,
+          };
+        }
+      }
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : 'Unknown error';
     } finally {
@@ -267,16 +315,44 @@ export default function Lessons() {
     }
 
     setResult(attemptResult);
+    setCompletedChapters((current) => (
+      current.includes(selectedChapter) ? current : [...current, selectedChapter]
+    ));
   }
 
-  const currentQuestion = questions[currentIndex];
+  const chapterCounts = Array.from({ length: 7 }, (_, index) => (
+    questions.filter((question) => question.chapterNumber === index + 1).length
+  ));
+  const selectedChapterReady = chapterCounts[selectedChapter - 1] === 10;
+  const currentQuestion = activeQuestions[currentIndex];
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
-  const nextActionLabel = submitting ? 'Saving…' : currentIndex === questions.length - 1 ? 'Submit' : 'Continue';
+  const nextActionLabel = submitting ? 'Saving…' : currentIndex === activeQuestions.length - 1 ? 'Submit' : 'Continue';
+
+  function selectChapter(chapterNumber) {
+    setSelectedChapter(chapterNumber);
+    setActiveQuestions([]);
+    setQuizStarted(false);
+    setCurrentIndex(0);
+    setAnswers({});
+    setResult(null);
+    setSubmitError('');
+  }
+
+  function startChapterQuiz() {
+    const chapterQuestions = questions.filter((question) => question.chapterNumber === selectedChapter);
+    if (chapterQuestions.length !== 10) return;
+
+    setActiveQuestions(shuffleQuestions(chapterQuestions));
+    setAnswers({});
+    setCurrentIndex(0);
+    setSubmitError('');
+    setQuizStarted(true);
+  }
 
   async function moveNext() {
     if (!currentQuestion || selectedAnswer === undefined) return;
 
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < activeQuestions.length - 1) {
       setCurrentIndex((index) => index + 1);
       return;
     }
@@ -289,9 +365,9 @@ export default function Lessons() {
       <div className="toolbar">
         <div>
           <h3>Quiz</h3>
-          <p>{isAdmin ? 'Manage quiz questions and answer keys.' : 'Take the latest driver safety quiz.'}</p>
+          <p>{isAdmin ? 'Manage up to 7 chapters with 10 questions each.' : 'Complete each 10-question chapter to unlock the next.'}</p>
         </div>
-        {isAdmin && !loadingQuestions && (
+        {isAdmin && !loadingQuestions && questions.length < 70 && (
           <button type="button" className="button primary small-button" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? 'Cancel' : '+ Add question'}
           </button>
@@ -299,7 +375,9 @@ export default function Lessons() {
       </div>
 
       {questionError && <p role="alert" className="panel">{questionError}</p>}
+      {chapterProgressError && <p role="alert" className="panel">{chapterProgressError}</p>}
       {loadingQuestions && <p className="panel">Loading quiz questions...</p>}
+      {isStudent && loadingChapterProgress && <p className="panel">Loading chapter progress...</p>}
       {isAdmin && !loadingQuestions && !imageAttachmentsEnabled && (
         <p className="panel" role="status">
           Run supabase/quiz_question_images.sql in the Supabase SQL Editor to enable image attachments.
@@ -316,6 +394,29 @@ export default function Lessons() {
               rows={3}
               required
             />
+          </label>
+
+          <label>
+            Chapter
+            <select
+              value={form.chapterNumber}
+              onChange={(event) => setForm((current) => ({ ...current, chapterNumber: Number(event.target.value) }))}
+            >
+              {chapterCounts.map((count, index) => {
+                const chapterNumber = index + 1;
+                const isCurrentChapter = form.id
+                  && questions.find((question) => question.id === form.id)?.chapterNumber === chapterNumber;
+                return (
+                  <option
+                    key={chapterNumber}
+                    value={chapterNumber}
+                    disabled={count >= 10 && !isCurrentChapter}
+                  >
+                    Chapter {chapterNumber} ({count}/10 questions)
+                  </option>
+                );
+              })}
+            </select>
           </label>
 
           <div className="quiz-image-field">
@@ -384,7 +485,13 @@ export default function Lessons() {
             </select>
           </label>
 
-          <button type="submit" className="button primary" disabled={savingQuestion}>
+          <button
+            type="submit"
+            className="button primary"
+            disabled={savingQuestion || chapterCounts[form.chapterNumber - 1] >= 10 && !(
+              form.id && questions.find((question) => question.id === form.id)?.chapterNumber === form.chapterNumber
+            )}
+          >
             {savingQuestion ? 'Saving...' : form.id ? 'Update question' : 'Save question'}
           </button>
         </form>
@@ -402,49 +509,87 @@ export default function Lessons() {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {questions.length ? questions.map((question, index) => (
-                  <tr key={question.id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      {question.question}
-                      {question.imagePath && <div className="quiz-image-indicator">Image attached</div>}
-                    </td>
-                    <td>{question.options.join(' / ')}</td>
-                    <td>{question.options[question.correctIndex]}</td>
-                    <td>
-                      <button type="button" className="button small-button" onClick={() => editQuestion(question)}>
-                        Edit
-                      </button>
-                      <button type="button" className="button small-button" onClick={() => deleteQuestion(question.id)}>
-                        Delete
-                      </button>
-                    </td>
+            {Array.from({ length: 7 }, (_, chapterIndex) => {
+              const chapterNumber = chapterIndex + 1;
+              const chapterQuestions = questions.filter((question) => question.chapterNumber === chapterNumber);
+              return (
+                <tbody key={chapterNumber}>
+                  <tr className="quiz-chapter-heading">
+                    <th colSpan="5">Chapter {chapterNumber} <span>{chapterQuestions.length}/10 questions</span></th>
                   </tr>
-                )) : (
-                  <tr><td colSpan="5">No quiz questions yet. Add the first question to publish the quiz.</td></tr>
-                )}
-            </tbody>
+                  {chapterQuestions.length ? chapterQuestions.map((question, index) => (
+                    <tr key={question.id}>
+                      <td>{index + 1}</td>
+                      <td>
+                        {question.question}
+                        {question.imagePath && <div className="quiz-image-indicator">Image attached</div>}
+                      </td>
+                      <td>{question.options.join(' / ')}</td>
+                      <td>{question.options[question.correctIndex]}</td>
+                      <td>
+                        <button type="button" className="button small-button" onClick={() => editQuestion(question)}>
+                          Edit
+                        </button>
+                        <button type="button" className="button small-button" onClick={() => deleteQuestion(question.id)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="5">No questions assigned to this chapter yet.</td></tr>
+                  )}
+                </tbody>
+              );
+            })}
           </table>
         </div>
       )}
 
-      {isStudent && !loadingQuestions && !questionError && !questions.length && (
-        <div className="panel">The quiz is not available yet. Please check back later.</div>
-      )}
+      {isStudent && !loadingQuestions && !loadingChapterProgress && !questionError && !chapterProgressError && (
+        <>
+          <section className="quiz-chapter-list" aria-label="Quiz chapters">
+            {chapterCounts.map((count, index) => {
+              const chapterNumber = index + 1;
+              const completed = completedChapters.includes(chapterNumber);
+              const unlocked = chapterNumber === 1 || completedChapters.includes(chapterNumber - 1);
+              const ready = count === 10;
+              return (
+                <button
+                  key={chapterNumber}
+                  type="button"
+                  className={`quiz-chapter-option${selectedChapter === chapterNumber ? ' selected' : ''}`}
+                  disabled={!unlocked || !ready}
+                  onClick={() => selectChapter(chapterNumber)}
+                  aria-current={selectedChapter === chapterNumber ? 'step' : undefined}
+                >
+                  <strong>Chapter {chapterNumber}</strong>
+                  <span>{completed ? 'Completed' : !unlocked ? 'Locked' : `${count}/10 questions`}</span>
+                </button>
+              );
+            })}
+          </section>
 
-      {isStudent && !loadingQuestions && !questionError && questions.length > 0 && !quizStarted && !result && (
-        <section className="quiz-start-card panel">
-          <h3>Ready to take the quiz?</h3>
-          <p>This quiz has {questions.length} {questions.length === 1 ? 'question' : 'questions'}.</p>
-          <button type="button" className="button primary" onClick={() => setQuizStarted(true)}>
-            Start Quiz
-          </button>
-        </section>
+          {!quizStarted && !result && (
+            <section className="quiz-start-card panel">
+              <h3>Chapter {selectedChapter}</h3>
+              <p>
+                {!selectedChapterReady
+                  ? `This chapter needs ${10 - chapterCounts[selectedChapter - 1]} more ${10 - chapterCounts[selectedChapter - 1] === 1 ? 'question' : 'questions'} before it is available.`
+                  : completedChapters.includes(selectedChapter)
+                  ? 'You have completed this chapter. You can take it again.'
+                  : `Complete all 10 questions to finish this chapter${selectedChapter < 7 ? ' and unlock the next' : ''}.`}
+              </p>
+              <button type="button" className="button primary" onClick={startChapterQuiz} disabled={!selectedChapterReady}>
+                {completedChapters.includes(selectedChapter) ? 'Retake Chapter' : 'Start Chapter'}
+              </button>
+            </section>
+          )}
+        </>
       )}
 
       {isStudent && quizStarted && currentQuestion && !result && (
         <div className="quiz-question-card">
+          <p className="quiz-question-progress">Chapter {selectedChapter} · Question {currentIndex + 1} of {activeQuestions.length}</p>
           {currentQuestion.imagePath && (
             <div className="quiz-question-image">
               <img src={getImageUrl(currentQuestion.imagePath)} alt="Quiz question attachment" />
@@ -481,7 +626,7 @@ export default function Lessons() {
               onClick={moveNext}
               disabled={selectedAnswer === undefined || submitting}
             >
-              {submitting ? 'Saving…' : currentIndex === questions.length - 1 ? 'Submit Answer' : 'Continue'}
+              {nextActionLabel === 'Submit' ? 'Submit Chapter' : nextActionLabel === 'Continue' ? 'Continue' : nextActionLabel}
             </button>
           </div>
           {submitError && <p role="alert" style={{ color: '#b3261e', marginTop: 12 }}>{submitError}</p>}
@@ -489,10 +634,17 @@ export default function Lessons() {
       )}
 
       {isStudent && result && (
-        <div className="panel" style={{ maxWidth: 700, margin: '0 auto', background: '#f6f5f2', border: '1px solid #d9d7d2', borderRadius: 12, padding: 32 }}>
-          <h3 style={{ marginTop: 0, marginBottom: 12 }}>Quiz complete</h3>
+        <div className="panel quiz-result-card">
+          <h3>Chapter {selectedChapter} complete</h3>
           <p style={{ fontSize: 20, margin: '0 0 8px' }}>Your score: <strong>{result.score}/{result.total}</strong></p>
           <p style={{ fontSize: 18, margin: 0 }}>{result.percentage}% correct</p>
+          <button
+            type="button"
+            className="button primary"
+            onClick={() => selectChapter(selectedChapter < 7 ? selectedChapter + 1 : selectedChapter)}
+          >
+            {selectedChapter < 7 ? 'Continue to chapters' : 'Back to chapters'}
+          </button>
         </div>
       )}
     </>

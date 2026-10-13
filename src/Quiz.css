@@ -56,6 +56,74 @@
   color: var(--muted);
 }
 
+.quiz-chapter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 10px;
+  margin: 0 auto 18px;
+}
+
+.quiz-chapter-option {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid #d5dce8;
+  border-radius: 10px;
+  background: #fff;
+  color: #315985;
+  text-align: left;
+}
+
+.quiz-chapter-option span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quiz-chapter-option.selected {
+  border-color: #315fb2;
+  box-shadow: 0 0 0 1px #315fb2;
+}
+
+.quiz-chapter-option:disabled {
+  background: #f1f4fa;
+  color: #718392;
+  cursor: not-allowed;
+}
+
+.quiz-chapter-heading th {
+  padding: 12px 10px;
+  background: #f1f6fa;
+  text-align: left;
+}
+
+.quiz-chapter-heading span {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.quiz-question-progress {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quiz-result-card {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.quiz-result-card h3 {
+  margin: 0 0 12px;
+}
+
+.quiz-result-card button {
+  margin-top: 20px;
+}
+
 .quiz-question-card {
   max-width: 760px;
   margin: 0 auto;
