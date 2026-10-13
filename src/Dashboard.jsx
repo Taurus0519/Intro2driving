@@ -254,6 +254,88 @@ function AdminDashboard({ profile }) {
   const [pdcStudentCount, setPdcStudentCount] = useState(0);
   const [pdcCompletedCount, setPdcCompletedCount] = useState(0);
   const [pdcStatsError, setPdcStatsError] = useState('');
+  const [studentProgress, setStudentProgress] = useState([]);
+  const [studentProgressLoading, setStudentProgressLoading] = useState(true);
+  const [studentProgressError, setStudentProgressError] = useState('');
+  const [studentAchievements, setStudentAchievements] = useState({});
+  const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
+  const [studentAchievementsError, setStudentAchievementsError] = useState('');
+  const [studentProgressLive, setStudentProgressLive] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadStudentProgress() {
+      const [studentsResult, sessionResult] = await Promise.all([
+        supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
+        supabase.auth.getSession(),
+      ]);
+      if (!active) return;
+
+      if (studentsResult.error) {
+        setStudentProgressError(`Student progress could not be loaded: ${studentsResult.error.message}`);
+      } else {
+        setStudentProgress(studentsResult.data || []);
+        setStudentProgressError('');
+      }
+      setStudentProgressLoading(false);
+
+      if (sessionResult.error || !sessionResult.data?.session?.access_token) {
+        setStudentAchievementsError(
+          sessionResult.error?.message || 'Your session has expired. Sign in again to view achievements.',
+        );
+        setStudentAchievementsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/achievement-progress', {
+          headers: { Authorization: `Bearer ${sessionResult.data.session.access_token}` },
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error || 'Achievement progress could not be loaded.');
+
+        const knownAchievementIds = new Set(ACHIEVEMENTS.map((achievement) => achievement.id));
+        const completedByStudent = new Map();
+        for (const award of result?.awards || []) {
+          if (!knownAchievementIds.has(award.achievement_id)) continue;
+          const completed = completedByStudent.get(award.user_id) || new Set();
+          completed.add(award.achievement_id);
+          completedByStudent.set(award.user_id, completed);
+        }
+        if (active) {
+          setStudentAchievements(
+            Object.fromEntries([...completedByStudent].map(([userId, completed]) => [userId, completed.size])),
+          );
+          setStudentAchievementsError('');
+        }
+      } catch (error) {
+        if (active) setStudentAchievementsError(error.message || 'Achievement progress could not be loaded.');
+      } finally {
+        if (active) setStudentAchievementsLoading(false);
+      }
+    }
+
+    void loadStudentProgress();
+    const refreshInterval = window.setInterval(() => void loadStudentProgress(), 30000);
+    const channel = supabase
+      .channel(`dashboard-student-progress-${profile?.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        void loadStudentProgress();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_achievements' }, () => {
+        void loadStudentProgress();
+      })
+      .subscribe((status) => {
+        if (active) setStudentProgressLive(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      active = false;
+      window.clearInterval(refreshInterval);
+      void supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     let active = true;
@@ -379,6 +461,52 @@ function AdminDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
+          <section className="dash-card student-progress-panel">
+            <div className="card-heading">
+              <h3>Student Progress &amp; Achievements</h3>
+              <span>{studentProgressLive ? 'Live updates on' : 'Refreshes every 30 seconds'}</span>
+            </div>
+            {studentProgressError ? (
+              <p role="alert" className="quiz-results-error">{studentProgressError}</p>
+            ) : studentProgressLoading ? (
+              <p className="quiz-results-empty">Loading student progress...</p>
+            ) : studentProgress.length ? (
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Progress</th>
+                      <th>Achievements</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentProgress.map((student) => (
+                      <tr key={student.id}>
+                        <td>{student.name || 'Student'}</td>
+                        <td>{student.progress ?? 0}%</td>
+                        <td>
+                          {studentAchievementsLoading
+                            ? 'Loading...'
+                            : studentAchievementsError
+                              ? 'Unavailable'
+                              : `${studentAchievements[student.id] || 0}/${ACHIEVEMENTS.length}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="quiz-results-empty">No students found.</p>
+            )}
+            {studentAchievementsError && (
+              <p role="alert" className="quiz-results-error">
+                Student achievements could not be loaded: {studentAchievementsError}
+              </p>
+            )}
+          </section>
+
           <div className="progress-cards admin-progress-cards">
             <ProgressCard
               icon="✓"
