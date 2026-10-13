@@ -266,22 +266,18 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadStudentProgress() {
-      const [studentsResult, attemptsResult, sessionResult] = await Promise.all([
+      const [studentsResult, sessionResult] = await Promise.all([
         supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
-        fetchAllRows(() => supabase.from('quiz_attempts').select('student_id')),
         supabase.auth.getSession(),
       ]);
       if (!active) return;
 
-      if (studentsResult.error || attemptsResult.error) {
-        setStudentProgressError(
-          `Student progress could not be loaded: ${studentsResult.error?.message || attemptsResult.error?.message}`,
-        );
+      if (studentsResult.error) {
+        setStudentProgressError(`Student progress could not be loaded: ${studentsResult.error.message}`);
       } else {
-        const studentsWithQuizActivity = new Set(
-          (attemptsResult.data || []).map((attempt) => attempt.student_id),
+        setStudentProgress(
+          (studentsResult.data || []).filter((student) => Number(student.progress) > 0),
         );
-        setStudentProgress((studentsResult.data || []).filter((student) => studentsWithQuizActivity.has(student.id)));
         setStudentProgressError('');
       }
       setStudentProgressLoading(false);
@@ -330,9 +326,6 @@ function AdminDashboard({ profile }) {
         void loadStudentProgress();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'player_achievements' }, () => {
-        void loadStudentProgress();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_attempts' }, () => {
         void loadStudentProgress();
       })
       .subscribe((status) => {
@@ -472,7 +465,7 @@ function AdminDashboard({ profile }) {
         <div className="dashboard-primary">
           <section className="dash-card student-progress-panel">
             <div className="card-heading">
-              <h3>Quiz-Taking Students: Progress &amp; Achievements</h3>
+              <h3>Game Progress &amp; Achievements</h3>
               <span>{studentProgressLive ? 'Live updates on' : 'Refreshes every 30 seconds'}</span>
             </div>
             {studentProgressError ? (
@@ -507,7 +500,7 @@ function AdminDashboard({ profile }) {
                 </table>
               </div>
             ) : (
-              <p className="quiz-results-empty">Student progress will appear here after they submit their first quiz.</p>
+              <p className="quiz-results-empty">Game progress will appear here when a student’s progress is recorded.</p>
             )}
             {studentAchievementsError && (
               <p role="alert" className="quiz-results-error">
