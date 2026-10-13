@@ -365,7 +365,6 @@ export default function Lessons() {
       <div className="toolbar">
         <div>
           <h3>Quiz</h3>
-          <p>{isAdmin ? 'Manage up to 7 chapters with 10 questions each.' : 'Complete each 10-question chapter to unlock the next.'}</p>
         </div>
         {isAdmin && !loadingQuestions && questions.length < 70 && (
           <button type="button" className="button primary small-button" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
