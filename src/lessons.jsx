@@ -461,7 +461,7 @@ export default function Lessons() {
 
           {form.options.map((option, index) => (
             <label key={`option-${index}`}>
-              Option {index + 1}
+              {String.fromCharCode(97 + index).toUpperCase()} option
               <input
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
@@ -478,7 +478,7 @@ export default function Lessons() {
             >
               {form.options.map((option, index) => (
                 <option key={`answer-${index}`} value={index}>
-                  Option {index + 1}
+                  {String.fromCharCode(97 + index).toUpperCase()}
                 </option>
               ))}
             </select>
@@ -612,7 +612,7 @@ export default function Lessons() {
                     checked={selectedAnswer === optionIndex}
                     onChange={() => setAnswers((current) => ({ ...current, [currentQuestion.id]: optionIndex }))}
                   />
-                  <span className="quiz-answer-letter">{String.fromCharCode(65 + optionIndex)}</span>
+                  <span className="quiz-answer-letter">{String.fromCharCode(97 + optionIndex)}</span>
                   <span>{option}</span>
                 </label>
               );

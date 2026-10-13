@@ -43,7 +43,7 @@ export default function LoginPage() {
         <form onSubmit={submit}>
           <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Enter email" required /></label>
           {!forgotPassword && <label>
-            Password
+            Password{' '}
             <input
               type={showPassword ? 'text' : 'password'}
               value={form.password}
@@ -64,7 +64,7 @@ export default function LoginPage() {
           {error && <p className="error">{error}</p>}
 
           <button type="submit" className="button primary full" disabled={loading}>
-            {loading ? 'Please wait...' : forgotPassword ? 'Send reset link' : 'Sign in'}
+            {submitButtonLabel}
           </button>
         </form>
 

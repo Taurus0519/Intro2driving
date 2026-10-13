@@ -7,7 +7,6 @@ const NAV = {
     { to: '/', label: 'Dashboard', end: true },
     { to: '/admins', label: 'Admins' },
     { to: '/students', label: 'Students' },
-    { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
     { to: '/achievements', label: 'Achievements' },
     { to: '/pdc-checklist', label: 'PDC Checklist' },
@@ -15,13 +14,11 @@ const NAV = {
   admin: [
     { to: '/', label: 'Dashboard', end: true },
     { to: '/students', label: 'Students' },
-    { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
     { to: '/pdc-checklist', label: 'PDC Checklist' },
   ],
   student: [
     { to: '/', label: 'Dashboard', end: true },
-    { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
     { to: '/profile', label: 'Profile' },
     { to: '/achievements', label: 'Achievements' },
