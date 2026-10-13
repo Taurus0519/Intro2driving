@@ -363,9 +363,6 @@ export default function Lessons() {
   return (
     <>
       <div className="toolbar">
-        <div>
-          <h3>Quiz</h3>
-        </div>
         {isAdmin && !loadingQuestions && questions.length < 70 && (
           <button type="button" className="button primary small-button" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? 'Cancel' : '+ Add question'}
