@@ -10,29 +10,6 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistDat
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
-function getAgeFromDateOfBirth(dateOfBirth) {
-  if (typeof dateOfBirth !== 'string') return null;
-
-  const [year, month, day] = dateOfBirth.split('-').map(Number);
-  if (!year || !month || !day) return null;
-
-  const birthDate = new Date(year, month - 1, day);
-  if (
-    birthDate.getFullYear() !== year
-    || birthDate.getMonth() + 1 !== month
-    || birthDate.getDate() !== day
-  ) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  if (
-    today.getMonth() + 1 < month
-    || (today.getMonth() + 1 === month && today.getDate() < day)
-  ) age -= 1;
-
-  return age >= 0 ? age : null;
-}
-
 const AGE_GROUP_COLORS = {
   '16-17': '#3b82f6',
   '18-24': '#14b8a6',
@@ -441,33 +418,33 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadAgeGroups() {
-      const [studentsResult, studentProfilesResult] = await Promise.all([
-        fetchAllRows(() => supabase.from('profiles').select('id').eq('role', 'student')),
-        fetchAllRows(() => supabase.from('student_profiles').select('student_id, age, date_of_birth')),
-      ]);
       if (!active) return;
-      if (studentsResult.error || studentProfilesResult.error) {
-        setAgeGroupsError(
-          `Student age groups could not be loaded: ${studentsResult.error?.message || studentProfilesResult.error?.message}`,
-        );
-        return;
+
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+
+        const response = await fetch('/api/student-age-distribution', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || 'Student age distribution could not be loaded.');
+        }
+        if (!result?.ageGroups || !Object.values(result.ageGroups).every(Number.isFinite)) {
+          throw new Error('Student age distribution returned invalid data.');
+        }
+
+        if (active) {
+          setAgeGroups(result.ageGroups);
+          setAgeGroupsError('');
+        }
+      } catch (error) {
+        if (active) {
+          setAgeGroupsError(error.message || 'Student age distribution could not be loaded.');
+        }
       }
-      setAgeGroupsError('');
-
-      const counts = { '16-17': 0, '18-24': 0, '25-34': 0, '35+': 0 };
-      const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
-
-      for (const studentProfile of studentProfilesResult.data || []) {
-        const ageFromDateOfBirth = getAgeFromDateOfBirth(studentProfile.date_of_birth);
-        const age = ageFromDateOfBirth ?? (studentProfile.age == null ? null : Number(studentProfile.age));
-        if (!studentIds.has(studentProfile.student_id) || age == null || !Number.isFinite(age) || age < 0) continue;
-        if (age >= 16 && age < 18) counts['16-17'] += 1;
-        else if (age >= 18 && age <= 24) counts['18-24'] += 1;
-        else if (age >= 25 && age <= 34) counts['25-34'] += 1;
-        else if (age >= 35) counts['35+'] += 1;
-      }
-
-      if (active) setAgeGroups(counts);
     }
 
     void loadAgeGroups();

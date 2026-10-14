@@ -24,7 +24,7 @@ Account creation uses the local Node API in `server/index.mjs` during developmen
 
 Run `npm install` and then `npm run dev` to start the local API and Vite client together. The API listens on port 3001. In production, account creation always uses the same-origin Vercel function.
 
-Student deletion and achievement progress use Vercel serverless functions in `api/`. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables for the same Supabase project. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
+Student deletion, achievement progress, and the admin student age distribution use Vercel serverless functions in `api/`. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables for the same Supabase project. The service-role key must remain server-side and must never use a `VITE_` prefix. The Students page shows each student's completed achievements out of the six configured achievements.
 
 ## Quiz results
 
