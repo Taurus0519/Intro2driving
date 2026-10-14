@@ -58,10 +58,56 @@ function getAgeGroupGradient(ageGroups) {
 
 function StudentDashboard({ profile }) {
   const [progress, setProgress] = useState({ quizzes: 0 });
+  const [gameProgress, setGameProgress] = useState(Number(profile?.progress) || 0);
+  const [gameProgressError, setGameProgressError] = useState('');
   const [completedAchievements, setCompletedAchievements] = useState([]);
   const [achievementError, setAchievementError] = useState('');
   const [pdcProgress, setPdcProgress] = useState({ answered: 0, complete: false });
   const [pdcError, setPdcError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadGameProgress() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('progress')
+        .eq('id', profile.id)
+        .single();
+
+      if (!active) return;
+      if (error) {
+        setGameProgressError(`Game progress could not be loaded: ${error.message}`);
+        return;
+      }
+
+      const value = Number(data.progress);
+      if (!Number.isFinite(value)) {
+        setGameProgressError('Game progress could not be loaded: the saved value is not a number.');
+        return;
+      }
+
+      setGameProgress(value);
+      setGameProgressError('');
+    }
+
+    void loadGameProgress();
+    const refreshInterval = window.setInterval(() => void loadGameProgress(), 30000);
+    const channel = supabase
+      .channel(`student-game-progress-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${profile.id}` },
+        () => void loadGameProgress(),
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      window.clearInterval(refreshInterval);
+      void supabase.removeChannel(channel);
+    };
+  }, [profile.id]);
 
   useEffect(() => {
     let active = true;
@@ -155,8 +201,9 @@ function StudentDashboard({ profile }) {
         <div className="dashboard-primary">
           <div className="progress-heading">
             <h3>Game Progress</h3>
-            <span>0% complete</span>
+            <span>{gameProgressError ? 'Progress unavailable' : `${gameProgress}% complete`}</span>
           </div>
+          {gameProgressError && <p role="alert" className="quiz-results-error">{gameProgressError}</p>}
 
           <div className="progress-cards">
             <ProgressCard
