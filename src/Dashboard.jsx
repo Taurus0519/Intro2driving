@@ -10,6 +10,29 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistDat
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
+function getAgeFromDateOfBirth(dateOfBirth) {
+  if (typeof dateOfBirth !== 'string') return null;
+
+  const [year, month, day] = dateOfBirth.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  const birthDate = new Date(year, month - 1, day);
+  if (
+    birthDate.getFullYear() !== year
+    || birthDate.getMonth() + 1 !== month
+    || birthDate.getDate() !== day
+  ) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (
+    today.getMonth() + 1 < month
+    || (today.getMonth() + 1 === month && today.getDate() < day)
+  ) age -= 1;
+
+  return age >= 0 ? age : null;
+}
+
 const AGE_GROUP_COLORS = {
   '16-17': '#3b82f6',
   '18-24': '#14b8a6',
@@ -420,7 +443,7 @@ function AdminDashboard({ profile }) {
     async function loadAgeGroups() {
       const [studentsResult, studentProfilesResult] = await Promise.all([
         fetchAllRows(() => supabase.from('profiles').select('id').eq('role', 'student')),
-        fetchAllRows(() => supabase.from('student_profiles').select('student_id, age')),
+        fetchAllRows(() => supabase.from('student_profiles').select('student_id, age, date_of_birth')),
       ]);
       if (!active) return;
       if (studentsResult.error || studentProfilesResult.error) {
@@ -435,8 +458,9 @@ function AdminDashboard({ profile }) {
       const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
 
       for (const studentProfile of studentProfilesResult.data || []) {
-        const age = Number(studentProfile.age);
-        if (!studentIds.has(studentProfile.student_id) || studentProfile.age == null || !Number.isFinite(age) || age < 0) continue;
+        const ageFromDateOfBirth = getAgeFromDateOfBirth(studentProfile.date_of_birth);
+        const age = ageFromDateOfBirth ?? (studentProfile.age == null ? null : Number(studentProfile.age));
+        if (!studentIds.has(studentProfile.student_id) || age == null || !Number.isFinite(age) || age < 0) continue;
         if (age >= 16 && age < 18) counts['16-17'] += 1;
         else if (age >= 18 && age <= 24) counts['18-24'] += 1;
         else if (age >= 25 && age <= 34) counts['25-34'] += 1;
