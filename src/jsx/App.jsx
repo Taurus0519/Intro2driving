@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './useAunth';
 import Layout from './Layout';
-import './App.css';
+import '../css/App.css';
 
 const Dashboard = lazy(() => import('./Dashboard'));
 const LoginPage = lazy(() => import('./Loginpage'));

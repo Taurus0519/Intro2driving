@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
-import './Messages.css';
+import '../css/Messages.css';
 
 const ATTACHMENT_BUCKET = 'message-attachments';
 const MAX_ATTACHMENTS = 5;

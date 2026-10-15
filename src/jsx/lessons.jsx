@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './useAunth';
 import { supabase } from './supabase_Client';
-import './Quiz.css';
+import '../css/Quiz.css';
 
 const ATTACHMENT_BUCKET = 'quiz-question-images';
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;

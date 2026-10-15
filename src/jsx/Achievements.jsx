@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
-import { ACHIEVEMENTS } from './achievementData';
-import './Achievements.css';
+import { ACHIEVEMENTS } from '../js/achievementData';
+import '../css/Achievements.css';
 
 export default function Achievements() {
   const { profile, user } = useAuth();

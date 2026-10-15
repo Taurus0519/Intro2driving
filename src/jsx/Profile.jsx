@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
-import './Profile.css';
+import '../css/Profile.css';
 
 const fields = ['nickname', 'gender', 'date_of_birth', 'address'];
 const labels = {

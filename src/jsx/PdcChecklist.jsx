@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './useAunth.jsx';
 import { supabase } from './supabase_Client';
-import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_SECTIONS } from './pdcChecklistData';
-import './PdcChecklist.css';
-import './PdcChecklistPrint.css';
+import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_SECTIONS } from '../js/pdcChecklistData';
+import '../css/PdcChecklist.css';
+import '../css/PdcChecklistPrint.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),

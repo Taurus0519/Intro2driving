@@ -1,11 +1,11 @@
 import Calendar from './Calendar';
 import { useEffect, useState } from 'react';
-import './Dashboard.css';
+import '../css/Dashboard.css';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth.jsx';
-import { ACHIEVEMENTS } from './achievementData';
+import { ACHIEVEMENTS } from '../js/achievementData';
 import { Link } from 'react-router-dom';
-import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from './pdcChecklistData';
+import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklistData';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),

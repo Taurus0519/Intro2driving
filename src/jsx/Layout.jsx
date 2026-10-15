@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './useAunth.jsx';
-import './Layout.css';
+import '../css/Layout.css';
 
 const NAV = {
   superadmin: [

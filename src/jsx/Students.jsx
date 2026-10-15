@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { createAccount } from './accounts';
 import { useAuth } from './useAunth.jsx';
-import { ACHIEVEMENTS } from './achievementData.js';
+import { ACHIEVEMENTS } from '../js/achievementData.js';
 
 function summarizeGameScores(scores) {
   if (!Array.isArray(scores) || !scores.length) return 'No scores yet';
