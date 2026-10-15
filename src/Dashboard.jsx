@@ -379,6 +379,8 @@ function AdminDashboard({ profile }) {
   const [studentProgress, setStudentProgress] = useState([]);
   const [studentProgressLoading, setStudentProgressLoading] = useState(true);
   const [studentProgressError, setStudentProgressError] = useState('');
+  const [studentGameScores, setStudentGameScores] = useState({});
+  const [studentGameScoresError, setStudentGameScoresError] = useState('');
   const [studentAchievements, setStudentAchievements] = useState({});
   const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
   const [studentAchievementsError, setStudentAchievementsError] = useState('');
@@ -415,8 +417,14 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadStudentProgress() {
-      const [studentsResult, sessionResult] = await Promise.all([
+      const [studentsResult, scoresResult, sessionResult] = await Promise.all([
         supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
+        fetchAllRows(() =>
+          supabase
+            .from('game_scores')
+            .select('player_id, level, score, max_score, recorded_at')
+            .order('recorded_at', { ascending: false })
+        ),
         supabase.auth.getSession(),
       ]);
       if (!active) return;
@@ -428,6 +436,28 @@ function AdminDashboard({ profile }) {
         setStudentProgressError('');
       }
       setStudentProgressLoading(false);
+
+      if (scoresResult.error) {
+        setStudentGameScoresError(
+          scoresResult.error.code === '42P01'
+            ? 'Game scores have not been configured in Supabase yet.'
+            : `Game scores could not be loaded: ${scoresResult.error.message}`,
+        );
+      } else {
+        const scoresByStudent = new Map();
+        for (const row of scoresResult.data || []) {
+          if (!row?.player_id) continue;
+          const rows = scoresByStudent.get(row.player_id) || [];
+          rows.push(row);
+          scoresByStudent.set(row.player_id, rows);
+        }
+        setStudentGameScores(
+          Object.fromEntries(
+            [...scoresByStudent].map(([studentId, rows]) => [studentId, summarizeGameScores(rows)]),
+          ),
+        );
+        setStudentGameScoresError('');
+      }
 
       if (sessionResult.error || !sessionResult.data?.session?.access_token) {
         setStudentAchievementsError(
@@ -473,6 +503,9 @@ function AdminDashboard({ profile }) {
         void loadStudentProgress();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'player_achievements' }, () => {
+        void loadStudentProgress();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_scores' }, () => {
         void loadStudentProgress();
       })
       .subscribe((status) => {
@@ -626,7 +659,7 @@ function AdminDashboard({ profile }) {
                   <thead>
                     <tr>
                       <th>Student</th>
-                      <th>Progress</th>
+                      <th>Game Scores</th>
                       <th>Earned Achievements</th>
                     </tr>
                   </thead>
@@ -634,9 +667,15 @@ function AdminDashboard({ profile }) {
                     {studentProgress.map((student) => (
                       <tr key={student.id}>
                         <td>{student.name || 'Student'}</td>
-                        <td>{student.progress === null || student.progress === '' || !Number.isFinite(Number(student.progress))
-                          ? 'Not recorded'
-                          : `${Number(student.progress)}%`}</td>
+                        <td>
+                          {studentGameScoresError
+                            ? 'Unavailable'
+                            : studentGameScores[student.id]?.length
+                              ? studentGameScores[student.id]
+                                .map((score) => `Level ${score.level}: ${score.score}/${score.maxScore}`)
+                                .join(', ')
+                              : 'No scores yet'}
+                        </td>
                         <td>
                           {studentAchievementsLoading
                             ? 'Loading...'
@@ -672,6 +711,11 @@ function AdminDashboard({ profile }) {
             {studentAchievementsError && (
               <p role="alert" className="quiz-results-error">
                 Student achievements could not be loaded: {studentAchievementsError}
+              </p>
+            )}
+            {studentGameScoresError && (
+              <p role="alert" className="quiz-results-error">
+                {studentGameScoresError}
               </p>
             )}
           </section>
