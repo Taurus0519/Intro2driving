@@ -31,6 +31,26 @@ async function fetchAllRows(buildQuery) {
   }
 }
 
+function summarizeGameScores(rows) {
+  if (!Array.isArray(rows) || !rows.length) return [];
+
+  const latestByLevel = new Map();
+  for (const row of rows) {
+    const level = Number(row.level);
+    const recordedAt = row.recorded_at ? new Date(row.recorded_at).getTime() : -Infinity;
+    if (!Number.isFinite(level)) continue;
+
+    const current = latestByLevel.get(level);
+    if (!current || recordedAt > new Date(current.recorded_at || 0).getTime()) {
+      latestByLevel.set(level, row);
+    }
+  }
+
+  return [...latestByLevel.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([level, row]) => ({ level, score: Number(row.score), maxScore: Number(row.max_score), recordedAt: row.recorded_at }));
+}
+
 function ProgressCard({ icon, count, title, hint }) {
   return (
     <div className="progress-card">
@@ -60,6 +80,8 @@ function StudentDashboard({ profile }) {
   const [progress, setProgress] = useState({ quizzes: 0 });
   const [gameProgress, setGameProgress] = useState(Number(profile?.progress) || 0);
   const [gameProgressError, setGameProgressError] = useState('');
+  const [gameScores, setGameScores] = useState([]);
+  const [gameScoresError, setGameScoresError] = useState('');
   const [completedAchievements, setCompletedAchievements] = useState([]);
   const [achievementError, setAchievementError] = useState('');
   const [pdcProgress, setPdcProgress] = useState({ answered: 0, complete: false });
@@ -135,6 +157,36 @@ function StudentDashboard({ profile }) {
   useEffect(() => {
     let active = true;
 
+    async function loadGameScores() {
+      const { data, error } = await supabase
+        .from('game_scores')
+        .select('level, score, max_score, recorded_at')
+        .eq('player_id', profile.id)
+        .order('recorded_at', { ascending: false });
+
+      if (!active) return;
+      if (error) {
+        if (error.code === '42P01') {
+          setGameScoresError('Game scores have not been configured in Supabase yet.');
+        } else {
+          setGameScoresError(`Game scores could not be loaded: ${error.message}`);
+        }
+        return;
+      }
+
+      setGameScores(summarizeGameScores(data || []));
+      setGameScoresError('');
+    }
+
+    void loadGameScores();
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+
+  useEffect(() => {
+    let active = true;
+
     async function loadPdcProgress() {
       const { data, error } = await supabase
         .from('pdc_checklist_responses')
@@ -200,7 +252,7 @@ function StudentDashboard({ profile }) {
       <div className="dashboard-columns">
         <div className="dashboard-primary">
           <div className="progress-heading">
-            <h3>Game Progress</h3>
+            <h3>Game Scores</h3>
             <span>{gameProgressError ? 'Progress unavailable' : `${gameProgress}% complete`}</span>
           </div>
           {gameProgressError && <p role="alert" className="quiz-results-error">{gameProgressError}</p>}
@@ -225,6 +277,28 @@ function StudentDashboard({ profile }) {
               hint={pdcError ? 'Status unavailable' : pdcProgress.complete ? 'Completed' : 'In progress'}
             />
           </div>
+
+          <section className="dash-card completed-achievements-panel">
+            <div className="card-heading">
+              <h3>Your Game Scores</h3>
+            </div>
+            {gameScoresError ? (
+              <p role="alert" className="quiz-results-error">{gameScoresError}</p>
+            ) : gameScores.length ? (
+              <ul className="completed-achievements-list">
+                {gameScores.map((item) => (
+                  <li key={`level-${item.level}`} className="completed-achievement-item">
+                    <div>
+                      <strong>Level {item.level}</strong>
+                      <small>{item.score}/{item.maxScore}</small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="quiz-results-empty">No game scores recorded yet.</p>
+            )}
+          </section>
 
           <section className="dash-card pdc-dashboard-card">
             <div className="card-heading">
@@ -305,6 +379,8 @@ function AdminDashboard({ profile }) {
   const [studentProgress, setStudentProgress] = useState([]);
   const [studentProgressLoading, setStudentProgressLoading] = useState(true);
   const [studentProgressError, setStudentProgressError] = useState('');
+  const [studentGameScores, setStudentGameScores] = useState({});
+  const [studentGameScoresError, setStudentGameScoresError] = useState('');
   const [studentAchievements, setStudentAchievements] = useState({});
   const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
   const [studentAchievementsError, setStudentAchievementsError] = useState('');
@@ -341,8 +417,9 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadStudentProgress() {
-      const [studentsResult, sessionResult] = await Promise.all([
+      const [studentsResult, scoresResult, sessionResult] = await Promise.all([
         supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
+        supabase.from('game_scores').select('player_id, level, score, max_score, recorded_at').order('recorded_at', { ascending: false }),
         supabase.auth.getSession(),
       ]);
       if (!active) return;
@@ -357,6 +434,26 @@ function AdminDashboard({ profile }) {
       }
       setStudentProgressLoading(false);
 
+      if (scoresResult.error) {
+        if (scoresResult.error.code === '42P01') {
+          setStudentGameScoresError('Game scores have not been configured in Supabase yet.');
+        } else {
+          setStudentGameScoresError(`Game scores could not be loaded: ${scoresResult.error.message}`);
+        }
+      } else {
+        const grouped = new Map();
+        for (const row of scoresResult.data || []) {
+          if (!row?.player_id) continue;
+          const existing = grouped.get(row.player_id) || [];
+          existing.push(row);
+          grouped.set(row.player_id, existing);
+        }
+        setStudentGameScores(
+          Object.fromEntries([...grouped].map(([playerId, scores]) => [playerId, summarizeGameScores(scores)])),
+        );
+        setStudentGameScoresError('');
+      }
+
       if (sessionResult.error || !sessionResult.data?.session?.access_token) {
         setStudentAchievementsError(
           sessionResult.error?.message || 'Your session has expired. Sign in again to view achievements.',
@@ -367,7 +464,7 @@ function AdminDashboard({ profile }) {
 
       try {
         const response = await fetch('/api/achievement-progress', {
-          headers: { Authorization: `Bearer ${sessionResult.data.session.access_token}` },
+          headers: { Authorization: ['Bearer', sessionResult.data.session.access_token].join(' ') },
         });
         const result = await response.json().catch(() => null);
         if (!response.ok) throw new Error(result?.error || 'Achievement progress could not be loaded.');
@@ -426,7 +523,7 @@ function AdminDashboard({ profile }) {
         if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
 
         const response = await fetch('/api/student-age-distribution', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: ['Bearer', session.access_token].join(' ') },
         });
         const result = await response.json().catch(() => null);
         if (!response.ok) {

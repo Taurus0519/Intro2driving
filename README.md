@@ -50,6 +50,10 @@ Run [`supabase/player_achievements.sql`](./supabase/player_achievements.sql) in 
 
 Run [`supabase/pdc_checklist.sql`](./supabase/pdc_checklist.sql) in the Supabase SQL Editor to enable the per-student practical driving checklist. Admins and super admins can select a student, record a Yes/No result and optional remarks for each item, and print the checklist or save it as a PDF. Students can view and print their results. A checklist is counted as completed when all 20 items have a Yes/No result. Re-run the SQL after this update so a saved Yes or No can be cleared.
 
+## Game score tracking
+
+Run [`supabase/game_scores.sql`](./supabase/game_scores.sql) in the Supabase SQL Editor to store Unity game results for each student. Each row keeps the student account, level number, score earned, maximum possible score, and timestamp. The website displays the most recent score for each level and keeps the table available for admin review.
+
 ## Password recovery on Vercel
 
 In Supabase Authentication URL Configuration, set the Site URL to `https://intro2driving-system.vercel.app` and add `https://intro2driving-system.vercel.app/reset-password` to the Redirect URLs allow-list. Production builds use the current deployed site origin for reset links, so do not set a localhost `VITE_APP_URL` in Vercel. For local recovery testing, optionally set `VITE_APP_URL=http://localhost:5173` and allow `http://localhost:5173/reset-password` in Supabase. Always request a fresh reset email after changing these settings.

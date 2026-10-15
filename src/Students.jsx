@@ -4,6 +4,27 @@ import { createAccount } from './accounts';
 import { useAuth } from './useAunth.jsx';
 import { ACHIEVEMENTS } from './achievementData.js';
 
+function summarizeGameScores(scores) {
+  if (!Array.isArray(scores) || !scores.length) return 'No scores yet';
+
+  const latestByLevel = new Map();
+  for (const entry of scores) {
+    const level = Number(entry.level);
+    const recordedAt = entry.recorded_at ? new Date(entry.recorded_at).getTime() : -Infinity;
+    if (!Number.isFinite(level)) continue;
+
+    const current = latestByLevel.get(level);
+    if (!current || recordedAt > new Date(current.recorded_at || 0).getTime()) {
+      latestByLevel.set(level, entry);
+    }
+  }
+
+  return [...latestByLevel.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([level, entry]) => `L${level}: ${entry.score}/${entry.max_score}`)
+    .join(', ');
+}
+
 export default function Students() {
   const { isAdmin } = useAuth();
   const [students, setStudents] = useState([]);
@@ -13,6 +34,8 @@ export default function Students() {
   const [achievementError, setAchievementError] = useState('');
   const [achievementProgress, setAchievementProgress] = useState({});
   const [achievementProgressLoading, setAchievementProgressLoading] = useState(true);
+  const [gameScoreError, setGameScoreError] = useState('');
+  const [gameScoresByStudent, setGameScoresByStudent] = useState({});
   const [loading, setLoading] = useState(false);
   const [studentsLoading, setStudentsLoading] = useState(true);
 
@@ -22,6 +45,7 @@ export default function Students() {
     setStudentsLoading(true);
     setError('');
     setAchievementError('');
+    setGameScoreError('');
     setAchievementProgressLoading(true);
     try {
       const { data, error: loadError } = await supabase
@@ -35,6 +59,32 @@ export default function Students() {
       return;
     }
     setStudentsLoading(false);
+
+    try {
+      const { data: scoreRows, error: scoreError } = await supabase
+        .from('game_scores')
+        .select('player_id, level, score, max_score, recorded_at')
+        .order('recorded_at', { ascending: false });
+
+      if (scoreError) {
+        if (scoreError.code === '42P01') {
+          setGameScoreError('Game scores have not been configured in Supabase yet.');
+        } else {
+          setGameScoreError(`Game scores could not be loaded: ${scoreError.message}`);
+        }
+      } else {
+        const grouped = new Map();
+        for (const row of scoreRows || []) {
+          if (!row?.player_id) continue;
+          const existing = grouped.get(row.player_id) || [];
+          existing.push(row);
+          grouped.set(row.player_id, existing);
+        }
+        setGameScoresByStudent(Object.fromEntries([...grouped].map(([playerId, scores]) => [playerId, summarizeGameScores(scores)])));
+      }
+    } catch (gameScoreLoadError) {
+      setGameScoreError(gameScoreLoadError.message || 'Game scores could not be loaded.');
+    }
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -147,7 +197,7 @@ export default function Students() {
       <div className="panel table-wrap">
         <table className="data-table">
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Status</th><th>Progress</th><th>Achievements</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Status</th><th>Game Scores</th><th>Achievements</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {studentsLoading ? (
@@ -159,7 +209,11 @@ export default function Students() {
                 <td>{s.name}</td>
                 <td>{s.email}</td>
                 <td><span className={`status ${status.toLowerCase()}`}>{status}</span></td>
-                <td>{s.progress ?? 0}%</td>
+                <td>
+                  {gameScoreError
+                    ? 'Unavailable'
+                    : gameScoresByStudent[s.id] || 'No scores yet'}
+                </td>
                 <td>
                   {achievementProgressLoading
                     ? 'Loading...'
@@ -179,6 +233,7 @@ export default function Students() {
           </tbody>
         </table>
       </div>
+      {gameScoreError && <p className="error" role="alert">Game scores could not be loaded: {gameScoreError}</p>}
       {achievementError && <p className="error" role="alert">Achievement progress could not be loaded: {achievementError}</p>}
     </>
   );
