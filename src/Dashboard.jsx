@@ -379,8 +379,6 @@ function AdminDashboard({ profile }) {
   const [studentProgress, setStudentProgress] = useState([]);
   const [studentProgressLoading, setStudentProgressLoading] = useState(true);
   const [studentProgressError, setStudentProgressError] = useState('');
-  const [studentGameScores, setStudentGameScores] = useState({});
-  const [studentGameScoresError, setStudentGameScoresError] = useState('');
   const [studentAchievements, setStudentAchievements] = useState({});
   const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
   const [studentAchievementsError, setStudentAchievementsError] = useState('');
@@ -417,9 +415,8 @@ function AdminDashboard({ profile }) {
     let active = true;
 
     async function loadStudentProgress() {
-      const [studentsResult, scoresResult, sessionResult] = await Promise.all([
+      const [studentsResult, sessionResult] = await Promise.all([
         supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
-        supabase.from('game_scores').select('player_id, level, score, max_score, recorded_at').order('recorded_at', { ascending: false }),
         supabase.auth.getSession(),
       ]);
       if (!active) return;
@@ -427,32 +424,10 @@ function AdminDashboard({ profile }) {
       if (studentsResult.error) {
         setStudentProgressError(`Student progress could not be loaded: ${studentsResult.error.message}`);
       } else {
-        setStudentProgress(
-          (studentsResult.data || []).filter((student) => Number(student.progress) > 0),
-        );
+        setStudentProgress(studentsResult.data || []);
         setStudentProgressError('');
       }
       setStudentProgressLoading(false);
-
-      if (scoresResult.error) {
-        if (scoresResult.error.code === '42P01') {
-          setStudentGameScoresError('Game scores have not been configured in Supabase yet.');
-        } else {
-          setStudentGameScoresError(`Game scores could not be loaded: ${scoresResult.error.message}`);
-        }
-      } else {
-        const grouped = new Map();
-        for (const row of scoresResult.data || []) {
-          if (!row?.player_id) continue;
-          const existing = grouped.get(row.player_id) || [];
-          existing.push(row);
-          grouped.set(row.player_id, existing);
-        }
-        setStudentGameScores(
-          Object.fromEntries([...grouped].map(([playerId, scores]) => [playerId, summarizeGameScores(scores)])),
-        );
-        setStudentGameScoresError('');
-      }
 
       if (sessionResult.error || !sessionResult.data?.session?.access_token) {
         setStudentAchievementsError(
@@ -473,13 +448,13 @@ function AdminDashboard({ profile }) {
         const completedByStudent = new Map();
         for (const award of result?.awards || []) {
           if (!knownAchievementIds.has(award.achievement_id)) continue;
-          const completed = completedByStudent.get(award.user_id) || new Set();
-          completed.add(award.achievement_id);
+          const completed = completedByStudent.get(award.user_id) || [];
+          completed.push(award);
           completedByStudent.set(award.user_id, completed);
         }
         if (active) {
           setStudentAchievements(
-            Object.fromEntries([...completedByStudent].map(([userId, completed]) => [userId, completed.size])),
+            Object.fromEntries([...completedByStudent]),
           );
           setStudentAchievementsError('');
         }
@@ -638,7 +613,7 @@ function AdminDashboard({ profile }) {
         <div className="dashboard-primary">
           <section className="dash-card student-progress-panel">
             <div className="card-heading">
-              <h3>Game Progress &amp; Achievements</h3>
+              <h3>Student Progress &amp; Earned Achievements</h3>
               <span>{studentProgressLive ? 'Live updates on' : 'Refreshes every 30 seconds'}</span>
             </div>
             {studentProgressError ? (
@@ -652,20 +627,39 @@ function AdminDashboard({ profile }) {
                     <tr>
                       <th>Student</th>
                       <th>Progress</th>
-                      <th>Achievements</th>
+                      <th>Earned Achievements</th>
                     </tr>
                   </thead>
                   <tbody>
                     {studentProgress.map((student) => (
                       <tr key={student.id}>
                         <td>{student.name || 'Student'}</td>
-                        <td>{student.progress ?? 0}%</td>
+                        <td>{student.progress === null || student.progress === '' || !Number.isFinite(Number(student.progress))
+                          ? 'Not recorded'
+                          : `${Number(student.progress)}%`}</td>
                         <td>
                           {studentAchievementsLoading
                             ? 'Loading...'
                             : studentAchievementsError
                               ? 'Unavailable'
-                              : `${studentAchievements[student.id] || 0}/${ACHIEVEMENTS.length}`}
+                              : studentAchievements[student.id]?.length
+                                ? (
+                                  <ul className="student-earned-achievements">
+                                    {studentAchievements[student.id].map((award) => {
+                                      const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
+                                      return (
+                                        <li key={award.achievement_id}>
+                                          <span aria-hidden="true">{achievement.icon}</span>
+                                          <span>
+                                            <strong>{achievement.title}</strong>
+                                            <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                                          </span>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                )
+                                : 'No achievements completed yet'}
                         </td>
                       </tr>
                     ))}
@@ -673,7 +667,7 @@ function AdminDashboard({ profile }) {
                 </table>
               </div>
             ) : (
-              <p className="quiz-results-empty">Game progress will appear here when a student’s progress is recorded.</p>
+              <p className="quiz-results-empty">No students are registered yet.</p>
             )}
             {studentAchievementsError && (
               <p role="alert" className="quiz-results-error">

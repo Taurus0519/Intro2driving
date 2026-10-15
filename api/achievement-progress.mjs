@@ -61,7 +61,8 @@ export default async function handler(req, res) {
 
     const { data: awards, error: awardsError } = await adminClient
       .from('player_achievements')
-      .select('user_id, achievement_id');
+      .select('user_id, achievement_id, unlocked_at')
+      .order('unlocked_at', { ascending: false });
     if (awardsError) {
       console.error('Student achievement progress could not be loaded:', awardsError);
       return respond(res, 500, {
