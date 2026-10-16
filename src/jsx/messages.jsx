@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
 import '../css/Messages.css';
@@ -109,6 +109,37 @@ function Attachment({ attachment }) {
   );
 }
 
+function groupConversations(messages) {
+  const messagesById = new Map(messages.map((message) => [message.id, message]));
+  const conversationsById = new Map();
+
+  for (const message of messages) {
+    let root = message;
+    const visited = new Set([message.id]);
+    while (root.parent_message_id && messagesById.has(root.parent_message_id)) {
+      if (visited.has(root.parent_message_id)) break;
+      visited.add(root.parent_message_id);
+      root = messagesById.get(root.parent_message_id);
+    }
+
+    const conversation = conversationsById.get(root.id) || { id: root.id, messages: [] };
+    conversation.messages.push(message);
+    conversationsById.set(root.id, conversation);
+  }
+
+  return [...conversationsById.values()]
+    .map((conversation) => ({
+      ...conversation,
+      messages: conversation.messages.sort((first, second) => (
+        new Date(first.sent_at || 0).getTime() - new Date(second.sent_at || 0).getTime()
+      )),
+    }))
+    .sort((first, second) => (
+      new Date(second.messages.at(-1)?.sent_at || 0).getTime()
+      - new Date(first.messages.at(-1)?.sent_at || 0).getTime()
+    ));
+}
+
 export default function Messages() {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -116,10 +147,24 @@ export default function Messages() {
   const [recipientId, setRecipientId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [replyToId, setReplyToId] = useState(null);
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recipientsLoading, setRecipientsLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const closeDialogButton = useRef(null);
+  const conversations = useMemo(() => groupConversations(messages), [messages]);
+  const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
+
+  useEffect(() => {
+    if (!selectedConversationId) return undefined;
+    closeDialogButton.current?.focus();
+    function closeOnEscape(event) {
+      if (event.key === 'Escape') setSelectedConversationId(null);
+    }
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [selectedConversation]);
 
   useEffect(() => {
     if (user?.id) void load();
@@ -357,48 +402,130 @@ export default function Messages() {
 
       <div className="panel message-list">
         {loading && <p className="empty">Loading messages...</p>}
-        {!loading && messages.length === 0 && <p className="empty">No messages yet.</p>}
-        {messages.map((message) => {
-          const isOwn = message.sender_id === user.id;
-          return (
-            <article key={message.id} className={`message-row ${isOwn ? 'message-own' : ''}`}>
-              <div className="message-heading">
-                <strong>{isOwn ? `To ${message.recipient?.name}` : `From ${message.sender?.name}`}</strong>
-                {message.sent_at && (
-                  <time dateTime={message.sent_at}>{new Date(message.sent_at).toLocaleString()}</time>
-                )}
-              </div>
-              {message.parent && (
-                <p className="message-reply-context">
-                  Replying to {message.parent.sender_id === user.id ? 'your' : 'their'} message: {message.parent.body}
-                </p>
-              )}
-              {message.body && <p className="message-body">{message.body}</p>}
-              {message.attachments.length > 0 && (
-                <div className="message-attachments">
-                  {message.attachments.map((attachment) => (
-                    <Attachment key={attachment.id} attachment={attachment} />
-                  ))}
-                </div>
-              )}
-              <button
-                type="button"
-                className="text-button message-reply-button"
-                onClick={() => { setReplyToId(replyToId === message.id ? null : message.id); setError(''); }}
-              >
-                {replyToId === message.id ? 'Cancel reply' : 'Reply'}
-              </button>
-              {replyToId === message.id && (
-                <MessageComposer
-                  onSend={(body, files) => sendReply(message, body, files)}
-                  sending={sending}
-                  submitLabel="Send reply"
-                />
-              )}
-            </article>
-          );
-        })}
+        {!loading && conversations.length === 0 && <p className="empty">No messages yet.</p>}
+        {!loading && conversations.length > 0 && (
+          <div className="message-table" role="table" aria-label="Conversations">
+            <div className="message-table-header" role="row">
+              <span role="columnheader">#</span>
+              <span role="columnheader">To / From</span>
+              <span role="columnheader">Message</span>
+              <span role="columnheader">Date</span>
+            </div>
+            {conversations.map((conversation, index) => {
+              const firstMessage = conversation.messages[0];
+              const latestMessage = conversation.messages.at(-1);
+              const counterpart = firstMessage.sender_id === user.id
+                ? firstMessage.recipient?.name
+                : firstMessage.sender?.name;
+              const direction = firstMessage.sender_id === user.id ? 'To' : 'From';
+              const preview = latestMessage.body?.trim() || 'Attachment';
+              return (
+                <button
+                  key={conversation.id}
+                  type="button"
+                  className="message-table-row"
+                  role="row"
+                  onClick={() => { setSelectedConversationId(conversation.id); setReplyToId(null); }}
+                >
+                  <span className="message-number" role="cell">{index + 1}</span>
+                  <span className="message-counterpart" role="cell">
+                    <span className="message-avatar" aria-hidden="true">{counterpart?.charAt(0)?.toUpperCase() || '?'}</span>
+                    <span>{direction} {counterpart || 'Unknown recipient'}</span>
+                  </span>
+                  <span className="message-preview" role="cell">
+                    {preview}
+                    {conversation.messages.length > 1 && (
+                      <small>{conversation.messages.length} messages</small>
+                    )}
+                  </span>
+                  <time role="cell" dateTime={latestMessage.sent_at || undefined}>
+                    {latestMessage.sent_at ? new Date(latestMessage.sent_at).toLocaleDateString() : ''}
+                  </time>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {selectedConversation && (
+        <div
+          className="message-dialog-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedConversationId(null);
+          }}
+        >
+          <section className="message-dialog" role="dialog" aria-modal="true" aria-label="Message conversation">
+            <header className="message-dialog-header">
+              <h2>Message from {selectedConversation.messages[0].sender?.name || 'Unknown sender'}</h2>
+              <button
+                ref={closeDialogButton}
+                type="button"
+                className="message-dialog-close"
+                aria-label="Close conversation"
+                onClick={() => setSelectedConversationId(null)}
+              >
+                ×
+              </button>
+            </header>
+            <div className="message-dialog-content">
+              <h3 className="message-dialog-subject">
+                {selectedConversation.messages[0].body?.trim().split('\n')[0] || 'Message with attachments'}
+              </h3>
+              {selectedConversation.messages.map((message) => {
+                return (
+                  <article key={message.id} className="message-thread-message">
+                    {message.parent && (
+                      <p className="message-reply-context">
+                        Replying to {message.parent.sender_id === user.id ? 'your' : 'their'} message: {message.parent.body}
+                      </p>
+                    )}
+                    <p>
+                      <strong>To</strong>
+                      <span className="message-dialog-avatar" aria-hidden="true">
+                        {message.recipient?.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
+                      <span className="message-dialog-name">{message.recipient?.name || 'Unknown recipient'}</span>
+                    </p>
+                    <p>
+                      <strong>From</strong>
+                      <span className="message-dialog-avatar" aria-hidden="true">
+                        {message.sender?.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
+                      <span className="message-dialog-name">{message.sender?.name || 'Unknown sender'}</span>
+                      {message.sent_at && (
+                        <time dateTime={message.sent_at}>@ {new Date(message.sent_at).toLocaleString()}</time>
+                      )}
+                    </p>
+                    {message.body && <p className="message-dialog-body">{message.body}</p>}
+                    {message.attachments.length > 0 && (
+                      <div className="message-attachments">
+                        {message.attachments.map((attachment) => (
+                          <Attachment key={attachment.id} attachment={attachment} />
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="text-button message-reply-button"
+                      onClick={() => { setReplyToId(replyToId === message.id ? null : message.id); setError(''); }}
+                    >
+                      {replyToId === message.id ? 'Cancel reply' : 'Reply'}
+                    </button>
+                    {replyToId === message.id && (
+                      <MessageComposer
+                        onSend={(body, files) => sendReply(message, body, files)}
+                        sending={sending}
+                        submitLabel="Send reply"
+                      />
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
