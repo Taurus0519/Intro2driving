@@ -295,11 +295,24 @@ form.panel {
   color: #506575;
 }
 .login-view {
+  position: relative;
   display: grid;
   min-height: 100vh;
   place-items: center;
   padding: 24px;
   background: var(--blue);
+}
+.login-public-nav {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  display: flex;
+  gap: 20px;
+  color: #173750;
+  font-weight: 700;
+}
+.login-public-nav a:hover {
+  text-decoration: underline;
 }
 .login-card {
   width: min(100%, 440px);
@@ -487,6 +500,13 @@ form.panel {
   }
 }
 @media (max-width: 600px) {
+  .login-public-nav {
+    top: 14px;
+    right: 18px;
+  }
+  .login-card {
+    margin-top: 44px;
+  }
   .app {
     display: block;
   }

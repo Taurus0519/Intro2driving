@@ -6,6 +6,7 @@ import '../css/App.css';
 
 const Dashboard = lazy(() => import('./Dashboard'));
 const LoginPage = lazy(() => import('./Loginpage'));
+const LandingPage = lazy(() => import('./LandingPage'));
 const ResetPassword = lazy(() => import('./ResetPassword'));
 const Students = lazy(() => import('./Students'));
 const Admins = lazy(() => import('./admins'));
@@ -25,21 +26,22 @@ function Protected() {
 }
 function Role({ allow }) {
   const { profile } = useAuth();
-  return allow.includes(profile?.role) ? <Outlet /> : <Navigate to="/" replace />;
+  return allow.includes(profile?.role) ? <Outlet /> : <Navigate to="/dashboard" replace />;
 }
 function Guest({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading portal...</div>;
-  return user ? <Navigate to="/" replace /> : children;
+  return user ? <Navigate to="/dashboard" replace /> : children;
 }
 export default function App() {
   const basename = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/$/, '');
 
   return <AuthProvider><BrowserRouter basename={basename}><Suspense fallback={<div className="loading-screen">Loading page...</div>}><Routes>
+    <Route index element={<LandingPage />} />
     <Route path="/login" element={<Guest><LoginPage /></Guest>} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route element={<Protected />}>
-      <Route index element={<Dashboard />} />
+      <Route path="dashboard" element={<Dashboard />} />
       <Route path="assignments" element={<Assignments />} />
       <Route path="messages" element={<Messages />} />
       <Route path="achievements" element={<Achievements />} />

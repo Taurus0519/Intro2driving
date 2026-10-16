@@ -4,7 +4,7 @@ import '../css/Layout.css';
 
 const NAV = {
   superadmin: [
-    { to: '/', label: 'Dashboard', end: true },
+    { to: '/dashboard', label: 'Dashboard', end: true },
     { to: '/admins', label: 'Admins' },
     { to: '/students', label: 'Students' },
     { to: '/quiz', label: 'Quiz' },
@@ -13,14 +13,14 @@ const NAV = {
     { to: '/pdc-checklist', label: 'PDC Checklist' },
   ],
   admin: [
-    { to: '/', label: 'Dashboard', end: true },
+    { to: '/dashboard', label: 'Dashboard', end: true },
     { to: '/students', label: 'Students' },
     { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
     { to: '/pdc-checklist', label: 'PDC Checklist' },
   ],
   student: [
-    { to: '/', label: 'Dashboard', end: true },
+    { to: '/dashboard', label: 'Dashboard', end: true },
     { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
     { to: '/profile', label: 'Profile' },
@@ -41,7 +41,7 @@ export default function Layout() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <img className="sidebar-logo" src="/riteway-logo.png" alt="Riteway Driving School" />
+        <img className="sidebar-logo" src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="Riteway Driving School" />
         <div className="brand-name">Riteway</div>
         <details className="account-menu sidebar-account-menu">
           <summary className="user-chip">

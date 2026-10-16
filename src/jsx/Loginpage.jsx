@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from './useAunth.jsx';
 
 export default function LoginPage() {
@@ -30,8 +31,12 @@ export default function LoginPage() {
 
   return (
     <div className="login-view">
+      <nav className="login-public-nav" aria-label="Public navigation">
+        <Link to="/">Home</Link>
+        <Link to="/#faq">FAQ</Link>
+      </nav>
       <div className="login-card">
-        <img className="brand-mark-image" src="/riteway-logo.png" alt="Riteway Driving School" />
+        <img className="brand-mark-image" src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="Riteway Driving School" />
         <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
         <h1>{forgotPassword ? 'Reset your password' : 'Welcome!'}</h1>
         <p className="muted">
@@ -72,6 +77,7 @@ export default function LoginPage() {
           <button type="button" className="text-button" onClick={() => { setForgotPassword(!forgotPassword); setError(''); }}>
             {forgotPassword ? 'Back to sign in' : 'Forgot password?'}
           </button>
+          <Link className="text-button" to="/#faq">Frequently asked questions</Link>
         </div>
       </div>
     </div>
