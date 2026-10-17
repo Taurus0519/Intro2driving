@@ -40,6 +40,7 @@ export default function App() {
   return <AuthProvider><BrowserRouter basename={basename}><Suspense fallback={<div className="loading-screen">Loading page...</div>}><Routes>
     <Route index element={<LandingPage />} />
     <Route path="/login" element={<Guest><LoginPage /></Guest>} />
+    <Route path="/forgot-password" element={<Guest><LoginPage /></Guest>} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route element={<Protected />}>
       <Route path="dashboard" element={<Dashboard />} />

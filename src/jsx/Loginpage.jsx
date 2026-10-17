@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './useAunth.jsx';
 
 export default function LoginPage() {
   const { signIn, resetPassword } = useAuth();
-  const [forgotPassword, setForgotPassword] = useState(false);
+  const forgotPassword = useLocation().pathname === '/forgot-password';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -74,9 +74,9 @@ export default function LoginPage() {
         </form>
 
         <div className="login-links">
-          <button type="button" className="text-button" onClick={() => { setForgotPassword(!forgotPassword); setError(''); }}>
+          <Link className="text-button" to={forgotPassword ? '/login' : '/forgot-password'}>
             {forgotPassword ? 'Back to sign in' : 'Forgot password?'}
-          </button>
+          </Link>
           <Link className="text-button" to="/#faq">Frequently asked questions</Link>
         </div>
       </div>
