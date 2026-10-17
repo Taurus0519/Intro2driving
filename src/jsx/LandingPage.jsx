@@ -4,20 +4,24 @@ import '../css/LandingPage.css';
 
 const faqs = [
   {
-    question: 'What is the Riteway learning portal?',
-    answer: 'It is the online portal for students and staff to access driving lessons, quizzes, progress, and school messages.',
+    question: 'How do you protect my personal data?',
+    answer: 'Your data is securely stored in encrypted digital databases and locked physical files. Only authorized school administrators and registrar staff have access to your information.',
   },
   {
     question: 'How do I sign in?',
     answer: 'Choose Log in and use the email and password assigned to your school account. If you do not have an account, contact your school administrator.',
   },
   {
-    question: 'I forgot my password. What should I do?',
-    answer: 'Open the Log in page and choose Forgot password? Enter your account email and follow the reset link sent to your inbox.',
+    question: 'What should I do if I forgot my password?',
+    answer: 'Click Forgot password on the sign-in page, enter your account email, and follow the reset link sent to your inbox.',
   },
   {
-    question: 'Where can I download the driving game?',
-    answer: 'The Android game download will be available here soon. Check back after the school posts the APK.',
+    question: 'Are you LTO-accredited?',
+    answer: 'Yes. Accredited driving schools are certified by the Land Transportation Office (LTO). You can verify a school’s accreditation on the LTO official website.',
+  },
+  {
+    question: 'What are the achievement badges on my profile dashboard?',
+    answer: 'These badges represent achievements collected in the driving game. Badges are earned in the game and appear there for students and instructors to see.',
   },
 ];
 
