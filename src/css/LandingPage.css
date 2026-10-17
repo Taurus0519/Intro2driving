@@ -6,7 +6,7 @@
 .landing-hero {
   display: grid;
   min-height: min(100vh, 900px);
-  grid-template-columns: minmax(0, 65fr) minmax(360px, 35fr);
+  grid-template-columns: minmax(0, 65fr) minmax(min(360px, 45vw), 35fr);
   overflow: hidden;
   background: #86c2f2;
 }
@@ -135,20 +135,16 @@
   padding: 0 5px;
 }
 .landing-art {
-  position: relative;
-  display: grid;
   width: 100%;
-  min-height: 0;
+  min-width: 0;
   align-self: center;
-  aspect-ratio: 768 / 1365;
-  place-items: center;
-  overflow: hidden;
   background: #ffdda1;
 }
 .landing-scene {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 768 / 1777;
 }
 .landing-faq {
   display: grid;
@@ -203,9 +199,6 @@
   }
   .landing-intro {
     margin: 65px 0;
-  }
-  .landing-art {
-    aspect-ratio: 768 / 1365;
   }
   .landing-faq {
     grid-template-columns: 1fr;

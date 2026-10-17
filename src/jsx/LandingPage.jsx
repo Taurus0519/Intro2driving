@@ -95,7 +95,7 @@ export default function LandingPage() {
             src={`${import.meta.env.BASE_URL}landing-driving-school.png`}
             alt="Drive the Right Way: a red car in front of Riteway Driving School"
             width="768"
-            height="1365"
+            height="1777"
           />
         </div>
       </section>
