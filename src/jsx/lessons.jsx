@@ -5,6 +5,7 @@ import '../css/Quiz.css';
 
 const ATTACHMENT_BUCKET = 'quiz-question-images';
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const QUESTIONS_PER_QUIZ = 10;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const emptyForm = {
   id: null,
@@ -277,7 +278,7 @@ export default function Lessons() {
   async function submitQuiz(e) {
     if (e) e.preventDefault();
 
-    if (activeQuestions.length !== 10 || submitting) {
+    if (activeQuestions.length !== QUESTIONS_PER_QUIZ || submitting) {
       return;
     }
 
@@ -323,7 +324,7 @@ export default function Lessons() {
   const chapterCounts = Array.from({ length: 7 }, (_, index) => (
     questions.filter((question) => question.chapterNumber === index + 1).length
   ));
-  const selectedChapterReady = chapterCounts[selectedChapter - 1] === 10;
+  const selectedChapterReady = chapterCounts[selectedChapter - 1] >= QUESTIONS_PER_QUIZ;
   const currentQuestion = activeQuestions[currentIndex];
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
   const nextActionLabel = submitting ? 'Saving…' : currentIndex === activeQuestions.length - 1 ? 'Submit' : 'Continue';
@@ -340,9 +341,9 @@ export default function Lessons() {
 
   function startChapterQuiz() {
     const chapterQuestions = questions.filter((question) => question.chapterNumber === selectedChapter);
-    if (chapterQuestions.length !== 10) return;
+    if (chapterQuestions.length < QUESTIONS_PER_QUIZ) return;
 
-    setActiveQuestions(shuffleQuestions(chapterQuestions));
+    setActiveQuestions(shuffleQuestions(chapterQuestions).slice(0, QUESTIONS_PER_QUIZ));
     setAnswers({});
     setCurrentIndex(0);
     setSubmitError('');
@@ -363,7 +364,7 @@ export default function Lessons() {
   return (
     <>
       <div className="toolbar">
-        {isAdmin && !loadingQuestions && questions.length < 70 && (
+        {isAdmin && !loadingQuestions && (
           <button type="button" className="button primary small-button" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? 'Cancel' : '+ Add question'}
           </button>
@@ -400,15 +401,12 @@ export default function Lessons() {
             >
               {chapterCounts.map((count, index) => {
                 const chapterNumber = index + 1;
-                const isCurrentChapter = form.id
-                  && questions.find((question) => question.id === form.id)?.chapterNumber === chapterNumber;
                 return (
                   <option
                     key={chapterNumber}
                     value={chapterNumber}
-                    disabled={count >= 10 && !isCurrentChapter}
                   >
-                    Chapter {chapterNumber} ({count}/10 questions)
+                    Chapter {chapterNumber} ({count} {count === 1 ? 'question' : 'questions'})
                   </option>
                 );
               })}
@@ -484,9 +482,7 @@ export default function Lessons() {
           <button
             type="submit"
             className="button primary"
-            disabled={savingQuestion || chapterCounts[form.chapterNumber - 1] >= 10 && !(
-              form.id && questions.find((question) => question.id === form.id)?.chapterNumber === form.chapterNumber
-            )}
+            disabled={savingQuestion}
           >
             {savingQuestion ? 'Saving...' : form.id ? 'Update question' : 'Save question'}
           </button>
@@ -511,7 +507,7 @@ export default function Lessons() {
               return (
                 <tbody key={chapterNumber}>
                   <tr className="quiz-chapter-heading">
-                    <th colSpan="5">Chapter {chapterNumber} <span>{chapterQuestions.length}/10 questions</span></th>
+                    <th colSpan="5">Chapter {chapterNumber} <span>{chapterQuestions.length} {chapterQuestions.length === 1 ? 'question' : 'questions'}</span></th>
                   </tr>
                   {chapterQuestions.length ? chapterQuestions.map((question, index) => (
                     <tr key={question.id}>
@@ -548,7 +544,7 @@ export default function Lessons() {
               const chapterNumber = index + 1;
               const completed = completedChapters.includes(chapterNumber);
               const unlocked = chapterNumber === 1 || completedChapters.includes(chapterNumber - 1);
-              const ready = count === 10;
+              const ready = count >= QUESTIONS_PER_QUIZ;
               return (
                 <button
                   key={chapterNumber}
@@ -559,7 +555,7 @@ export default function Lessons() {
                   aria-current={selectedChapter === chapterNumber ? 'step' : undefined}
                 >
                   <strong>Chapter {chapterNumber}</strong>
-                  <span>{completed ? 'Completed' : !unlocked ? 'Locked' : `${count}/10 questions`}</span>
+                  <span>{completed ? 'Completed' : !unlocked ? 'Locked' : `${count}/${QUESTIONS_PER_QUIZ} questions`}</span>
                 </button>
               );
             })}
@@ -570,10 +566,10 @@ export default function Lessons() {
               <h3>Chapter {selectedChapter}</h3>
               <p>
                 {!selectedChapterReady
-                  ? `This chapter needs ${10 - chapterCounts[selectedChapter - 1]} more ${10 - chapterCounts[selectedChapter - 1] === 1 ? 'question' : 'questions'} before it is available.`
+                  ? `This chapter needs ${QUESTIONS_PER_QUIZ - chapterCounts[selectedChapter - 1]} more ${QUESTIONS_PER_QUIZ - chapterCounts[selectedChapter - 1] === 1 ? 'question' : 'questions'} before it is available.`
                   : completedChapters.includes(selectedChapter)
                   ? 'You have completed this chapter. You can take it again.'
-                  : `Complete all 10 questions to finish this chapter${selectedChapter < 7 ? ' and unlock the next' : ''}.`}
+                  : `Complete all ${QUESTIONS_PER_QUIZ} questions to finish this chapter${selectedChapter < 7 ? ' and unlock the next' : ''}.`}
               </p>
               <button type="button" className="button primary" onClick={startChapterQuiz} disabled={!selectedChapterReady}>
                 {completedChapters.includes(selectedChapter) ? 'Retake Chapter' : 'Start Chapter'}
