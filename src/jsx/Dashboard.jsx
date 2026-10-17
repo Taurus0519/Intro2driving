@@ -634,6 +634,51 @@ function AdminDashboard({ profile }) {
       <div className="dashboard-columns">
         <div className="dashboard-primary">
           <SuccessRateCharts />
+          <section className="dash-card age-distribution">
+            <div className="card-heading">
+              <h3>Student Age Distribution</h3>
+              <span>{Object.values(ageGroups).reduce((sum, count) => sum + count, 0)} students with age data</span>
+            </div>
+            {ageGroupsError ? (
+              <p role="alert" className="quiz-results-error">{ageGroupsError}</p>
+            ) : (
+              <div className="age-distribution-content">
+                <div className="age-pie-wrap">
+                  <div
+                    className="age-pie-chart"
+                    role="img"
+                    aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
+                    aria-describedby={agePieHover ? 'age-pie-tooltip' : undefined}
+                    style={{ background: getAgeGroupGradient(ageGroups) }}
+                    onMouseMove={handleAgePieMouseMove}
+                    onMouseLeave={() => setAgePieHover(null)}
+                  />
+                  {agePieHover && (
+                    <div
+                      id="age-pie-tooltip"
+                      className="age-pie-tooltip"
+                      role="tooltip"
+                      style={{ left: agePieHover.x, top: agePieHover.y }}
+                    >
+                      <span>{agePieHover.group} years</span>
+                      <strong>
+                        {agePieHover.count} {agePieHover.count === 1 ? 'student' : 'students'} ({agePieHover.percentage.toFixed(1)}%)
+                      </strong>
+                    </div>
+                  )}
+                </div>
+                <ul className="age-pie-legend">
+                  {Object.entries(ageGroups).map(([group, count]) => (
+                    <li key={group}>
+                      <span className="age-pie-swatch" style={{ background: AGE_GROUP_COLORS[group] }} />
+                      <span>{group} years</span>
+                      <strong>{count}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
           <section className="dash-card student-progress-panel">
             <div className="card-heading">
               <h3>Student Progress &amp; Earned Achievements</h3>
@@ -719,51 +764,6 @@ function AdminDashboard({ profile }) {
             />
           </div>
 
-          <section className="dash-card age-distribution">
-            <div className="card-heading">
-              <h3>Student Age Distribution</h3>
-              <span>{Object.values(ageGroups).reduce((sum, count) => sum + count, 0)} students with age data</span>
-            </div>
-            {ageGroupsError ? (
-              <p role="alert" className="quiz-results-error">{ageGroupsError}</p>
-            ) : (
-              <div className="age-distribution-content">
-                <div className="age-pie-wrap">
-                  <div
-                    className="age-pie-chart"
-                    role="img"
-                    aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
-                    aria-describedby={agePieHover ? 'age-pie-tooltip' : undefined}
-                    style={{ background: getAgeGroupGradient(ageGroups) }}
-                    onMouseMove={handleAgePieMouseMove}
-                    onMouseLeave={() => setAgePieHover(null)}
-                  />
-                  {agePieHover && (
-                    <div
-                      id="age-pie-tooltip"
-                      className="age-pie-tooltip"
-                      role="tooltip"
-                      style={{ left: agePieHover.x, top: agePieHover.y }}
-                    >
-                      <span>{agePieHover.group} years</span>
-                      <strong>
-                        {agePieHover.count} {agePieHover.count === 1 ? 'student' : 'students'} ({agePieHover.percentage.toFixed(1)}%)
-                      </strong>
-                    </div>
-                  )}
-                </div>
-                <ul className="age-pie-legend">
-                  {Object.entries(ageGroups).map(([group, count]) => (
-                    <li key={group}>
-                      <span className="age-pie-swatch" style={{ background: AGE_GROUP_COLORS[group] }} />
-                      <span>{group} years</span>
-                      <strong>{count}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
           {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
 
           <section className="dash-card quiz-results-panel">
