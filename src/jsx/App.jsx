@@ -22,10 +22,7 @@ function Protected() {
   const { user, profile, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading portal...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (!profile) {
-    const name = user.user_metadata?.name || user.email?.split('@')[0] || 'there';
-    return <div className="loading-screen">Login Successful, Welcome back {name}!</div>;
-  }
+  if (!profile) return <div className="loading-screen">Your account has no profile. Contact your school administrator.</div>;
   return <Layout />;
 }
 function Role({ allow }) {

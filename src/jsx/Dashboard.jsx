@@ -817,28 +817,6 @@ function AdminDashboard({ profile }) {
 
 export default function Dashboard() {
   const { profile } = useAuth();
-  const [showLoginSuccess, setShowLoginSuccess] = useState(() => {
-    const isLoginSuccessPending = window.sessionStorage.getItem('riteway-login-success') === 'true';
-    if (isLoginSuccessPending) window.sessionStorage.removeItem('riteway-login-success');
-    return isLoginSuccessPending;
-  });
-
-  useEffect(() => {
-    if (!showLoginSuccess) return undefined;
-    const timeout = window.setTimeout(() => setShowLoginSuccess(false), 1600);
-    return () => window.clearTimeout(timeout);
-  }, [showLoginSuccess]);
-
-  if (showLoginSuccess) {
-    return (
-      <div className="loading-screen login-success-transition" role="status">
-        <p>
-          Login Successful, Welcome back {profile?.name?.trim() || 'there'}!
-        </p>
-      </div>
-    );
-  }
-
   return profile?.role === 'student'
     ? <StudentDashboard profile={profile} />
     : <AdminDashboard profile={profile} />;
