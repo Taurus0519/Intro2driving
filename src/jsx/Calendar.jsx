@@ -71,14 +71,14 @@ export default function Calendar() {
           );
         })}
       </div>
-      <p className="calendar-course-legend"><span aria-hidden="true" />Wednesday · Onsite theory course</p>
+      <p className="calendar-course-legend"><span aria-hidden="true" />Wednesday · Onsite theoretical driving course</p>
       <div className="calendar-note" aria-live="polite">
         <strong>Selected date</strong>
         <p>{selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         <p>{selectedDate.getDay() === 3 ? COURSE_TITLE : 'No theoretical driving course scheduled for this date.'}</p>
       </div>
       <div className={`course-reminder${courseToday ? ' course-reminder-today' : ''}`}>
-        <strong>{courseToday ? 'Today: attend your course onsite' : 'Every Wednesday: onsite theory course'}</strong>
+        <strong>{courseToday ? 'Today: attend your course onsite' : 'Every Wednesday: onsite theoretical driving course'}</strong>
         <p>Attend your theoretical driving course at Riteway Driving School.</p>
         <p>{courseToday ? 'Today' : 'Next class'}: {nextCourse.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         <p className="course-time-note">Confirm the class time with the school.</p>
