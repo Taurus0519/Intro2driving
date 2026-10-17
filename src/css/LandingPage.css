@@ -137,50 +137,18 @@
 .landing-art {
   position: relative;
   display: grid;
-  min-height: 580px;
+  width: 100%;
+  min-height: 0;
+  align-self: center;
+  aspect-ratio: 768 / 1365;
   place-items: center;
   overflow: hidden;
   background: #ffdda1;
 }
 .landing-scene {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-.landing-art-title {
-  position: absolute;
-  z-index: 1;
-  top: 6%;
-  left: 4%;
-  width: 92%;
-  color: #c3332b;
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: clamp(31px, 4.1vw, 56px);
-  font-style: italic;
-  font-weight: 900;
-  line-height: 0.9;
-  text-align: center;
-  text-shadow: 2px 3px 0 #fff, -2px -2px 0 #fff, 0 5px 0 rgba(52, 42, 53, 0.12);
-  transform: rotate(-4deg);
-}
-.landing-art-title span {
-  display: inline-block;
-  margin: 8px 0 0 32px;
-  color: #0754a3;
-}
-.landing-art-logo {
-  position: absolute;
-  top: 34%;
-  left: 50%;
-  width: clamp(88px, 14vw, 165px);
-  aspect-ratio: 1;
-  border: 6px solid rgba(255, 247, 225, 0.92);
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 8px 26px rgba(88, 63, 41, 0.19);
-  transform: translateX(-50%);
+  object-fit: contain;
 }
 .landing-faq {
   display: grid;
@@ -237,15 +205,7 @@
     margin: 65px 0;
   }
   .landing-art {
-    min-height: 0;
-    aspect-ratio: 411 / 670;
-  }
-  .landing-art-title {
-    font-size: clamp(36px, 9vw, 58px);
-  }
-  .landing-art-logo {
-    top: 35%;
-    width: 120px;
+    aspect-ratio: 768 / 1365;
   }
   .landing-faq {
     grid-template-columns: 1fr;
