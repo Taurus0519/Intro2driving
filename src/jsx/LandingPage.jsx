@@ -4,16 +4,12 @@ import '../css/LandingPage.css';
 
 const faqs = [
   {
-    question: 'How do you protect my personal data?',
-    answer: 'Your data is securely stored in encrypted digital databases and locked physical files. Only authorized school administrators and registrar staff have access to your information.',
-  },
-  {
     question: 'How do I sign in?',
     answer: 'Choose Log in and use the email and password assigned to your school account. If you do not have an account, contact your school administrator.',
   },
   {
     question: 'What should I do if I forgot my password?',
-    answer: 'Click Forgot password on the sign-in page, enter your account email, and follow the reset link sent to your inbox.',
+    answer: 'Click Forgot password on the sign-in page, enter your account email, and follow the reset link sent to your email.',
   },
   {
     question: 'Are you LTO-accredited?',
@@ -58,10 +54,10 @@ export default function LandingPage() {
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-copy">
           <header className="landing-header">
-            <Link className="landing-brand" to="/" aria-label="Riteway Driving School home">
+            <div className="landing-brand">
               <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" />
               <span>Riteway<br />Driving School</span>
-            </Link>
+            </div>
             <nav aria-label="Main navigation">
               <a href="#faq">FAQ</a>
               <Link className="landing-nav-login" to="/login">Log in</Link>
@@ -98,6 +94,8 @@ export default function LandingPage() {
             className="landing-scene"
             src={`${import.meta.env.BASE_URL}landing-driving-school.png`}
             alt="Drive the Right Way: a red car in front of Riteway Driving School"
+            width="768"
+            height="1365"
           />
         </div>
       </section>

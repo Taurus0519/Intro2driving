@@ -66,7 +66,7 @@
 }
 .landing-intro h1 {
   margin: 0;
-  color: #fff;
+  color: #e3242b;
   font-size: clamp(54px, 8vw, 100px);
   font-weight: 900;
   letter-spacing: -0.065em;
@@ -74,7 +74,7 @@
   text-shadow: 0 3px 0 rgba(28, 79, 116, 0.12);
 }
 .landing-intro h1 span {
-  color: #174f9d;
+  color: #064fb5;
 }
 .landing-description {
   max-width: 450px;
@@ -146,9 +146,9 @@
   background: #ffdda1;
 }
 .landing-scene {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
 }
 .landing-faq {
   display: grid;
