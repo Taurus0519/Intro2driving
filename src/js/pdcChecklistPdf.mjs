@@ -61,7 +61,7 @@ export async function createChecklistPdf({ studentName, sections, responses }) {
     theme: 'grid',
     head: [['Training item', 'Yes', 'No', 'Remarks']],
     body: rows,
-    styles: { fontSize: 8.5, cellPadding: 1.5, textColor: 0, lineColor: 60, lineWidth: 0.2, overflow: 'linebreak' },
+    styles: { fontSize: 8, cellPadding: 1, textColor: 0, lineColor: 60, lineWidth: 0.2, overflow: 'linebreak' },
     headStyles: { fillColor: [242, 246, 248], textColor: 0 },
     columnStyles: { 0: { cellWidth: 89 }, 1: { cellWidth: 12, halign: 'center' }, 2: { cellWidth: 12, halign: 'center' } },
     rowPageBreak: 'avoid',

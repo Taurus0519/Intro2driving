@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createChecklistPdf } from '../src/js/pdcChecklistPdf.mjs';
+import { PDC_CHECKLIST_SECTIONS } from '../src/js/pdcChecklistData.js';
 
 const sections = [{ title: 'Start Stop', items: [
   { id: 'checks', label: 'Pre-driving checks' },
@@ -44,4 +45,9 @@ test('long remarks flow across PDF pages with signature lines after the table', 
   const content = pdf.output();
   assert.ok(content.includes(`Page ${pdf.getNumberOfPages()} of ${pdf.getNumberOfPages()}`));
   assert.ok(content.includes('INSTRUCTOR SIGNATURE'));
+});
+
+test('the complete standard checklist fits on one A4 page without remarks', async () => {
+  const { pdf } = await createChecklistPdf({ studentName: 'Test Student', sections: PDC_CHECKLIST_SECTIONS, responses: [] });
+  assert.equal(pdf.getNumberOfPages(), 1);
 });
