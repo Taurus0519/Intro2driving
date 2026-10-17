@@ -318,7 +318,6 @@ function StudentDashboard({ profile }) {
 
                   return (
                     <li key={award.achievement_id}>
-                      <span aria-hidden="true">{achievement.icon}</span>
                       <div>
                         <strong>{achievement.title}</strong>
                         <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
@@ -723,7 +722,6 @@ function AdminDashboard({ profile }) {
                                       const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
                                       return (
                                         <li key={award.achievement_id}>
-                                          <span aria-hidden="true">{achievement.icon}</span>
                                           <span>
                                             <strong>{achievement.title}</strong>
                                             <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>

@@ -104,9 +104,7 @@ export default function Achievements() {
       <section className="achievement-latest">
         <h3>{isSuperAdmin && studentName ? `Latest for ${studentName}` : 'Latest Achievement'}</h3>
         <div>
-          {latestAchievement
-            ? <><span>{latestAchievement.icon}</span> {latestAchievement.title}</>
-            : 'No achievement unlocked yet'}
+          {latestAchievement ? latestAchievement.title : 'No achievement unlocked yet'}
         </div>
       </section>
 
@@ -134,7 +132,6 @@ export default function Achievements() {
 
             return (
               <article key={achievement.id} className={`achievement-row${isUnlocked ? ' is-unlocked' : ''}`}>
-                <span className="achievement-icon" aria-hidden="true">{achievement.icon}</span>
                 <div className="achievement-details">
                   <strong>{achievement.title}</strong>
                   <p>{achievement.description}</p>

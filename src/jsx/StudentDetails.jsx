@@ -107,7 +107,7 @@ export default function StudentDetails() {
             <SectionError message={errors.achievements} />
             {!errors.achievements && (earned.length ? <ul className="student-award-list">{earned.map((achievement) => {
               const award = achievements.find((item) => item.achievement_id === achievement.id);
-              return <li key={achievement.id}><span aria-hidden="true">{achievement.icon}</span><div><strong>{achievement.title}</strong>
+              return <li key={achievement.id}><div><strong>{achievement.title}</strong>
                 <small>Completed {displayDate(award.unlocked_at)}</small></div></li>;
             })}</ul> : <p className="empty">No achievements completed yet.</p>)}
           </section>
