@@ -25,6 +25,7 @@ export default function PdcChecklist() {
   const [draftResponses, setDraftResponses] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [savingPdf, setSavingPdf] = useState(false);
   const [savingItems, setSavingItems] = useState(() => new Set());
   const savingItemsRef = useRef(new Set());
 
@@ -125,6 +126,25 @@ export default function PdcChecklist() {
     window.print();
   }
 
+  async function saveChecklistPdf() {
+    if (savingPdf || loading || !studentId) return;
+    if (Object.keys(draftResponses).length || savingItemsRef.current.size) {
+      setError('Save your pending checklist changes before downloading a PDF.');
+      return;
+    }
+    setSavingPdf(true);
+    setError('');
+    try {
+      const { createChecklistPdf } = await import('../js/pdcChecklistPdf.mjs');
+      const { pdf, filename } = await createChecklistPdf({ studentName, sections: PDC_CHECKLIST_SECTIONS, responses });
+      await pdf.save(filename, { returnPromise: true });
+    } catch {
+      setError('The PDF could not be downloaded. Please try again.');
+    } finally {
+      setSavingPdf(false);
+    }
+  }
+
   async function saveResponse(itemId, response = responseByItem.get(itemId)) {
     if (!studentId) return;
     if (!response) return;
@@ -181,9 +201,6 @@ export default function PdcChecklist() {
           <h2>LIGHT VEHICLE</h2>
           <h3>8 HOURS PRACTICAL/ACTUAL DRIVING COURSE</h3>
         </div>
-        <button type="button" className="button primary pdc-print-button" onClick={printChecklist} disabled={isStaff && !studentId}>
-          Print / Save PDF
-        </button>
       </div>
 
       <div className="pdc-student-fields">
@@ -242,8 +259,11 @@ export default function PdcChecklist() {
         <div><span /><strong>INSTRUCTOR SIGNATURE OVER PRINTED NAME AND DATE</strong></div>
       </div>
       <div className="pdc-print-footer">
-        <button type="button" className="button primary" onClick={printChecklist} disabled={isStaff && !studentId}>
-          Print / Save PDF
+        <button type="button" className="button" onClick={printChecklist} disabled={loading || !studentId || savingPdf}>
+          Print
+        </button>
+        <button type="button" className="button primary" onClick={saveChecklistPdf} disabled={loading || !studentId || savingPdf}>
+          {savingPdf ? 'Saving PDF...' : 'Save PDF'}
         </button>
       </div>
     </div>
