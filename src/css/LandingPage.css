@@ -1,13 +1,17 @@
 .public-landing {
-  min-height: 100vh;
+  min-height: 100svh;
+  min-width: 0;
   color: #173750;
   background: #edf7fc;
+  overflow-wrap: anywhere;
+}
+body:has(.public-landing) {
+  min-width: 0;
 }
 .landing-hero {
   display: grid;
-  min-height: min(100vh, 900px);
-  grid-template-columns: minmax(0, 65fr) minmax(min(360px, 45vw), 35fr);
-  overflow: hidden;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
   background: #86c2f2;
 }
 .landing-copy {
@@ -15,13 +19,14 @@
   min-width: 0;
   flex-direction: column;
   justify-content: space-between;
-  padding: 30px clamp(24px, 6vw, 90px) 24px;
+  padding: clamp(1.25rem, 2.5vw, 2rem) clamp(1.25rem, 5vw, 5.625rem) 1.5rem;
 }
 .landing-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 .landing-brand {
   display: inline-flex;
@@ -33,15 +38,17 @@
   line-height: 1.2;
 }
 .landing-brand img {
-  width: 48px;
-  height: 48px;
+  width: clamp(2.5rem, 4vw, 3rem);
+  height: clamp(2.5rem, 4vw, 3rem);
+  flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
 }
 .landing-header nav {
   display: flex;
   align-items: center;
-  gap: clamp(14px, 3vw, 30px);
+  flex-wrap: wrap;
+  gap: clamp(0.75rem, 2vw, 1.875rem);
   font-weight: 700;
 }
 .landing-header nav a:hover,
@@ -54,20 +61,20 @@
   border-radius: 999px;
 }
 .landing-intro {
-  width: min(100%, 560px);
-  margin: 65px auto;
+  width: min(100%, 35rem);
+  margin: clamp(2.5rem, 8svh, 6rem) auto;
 }
 .landing-eyebrow {
   margin: 0 0 12px;
   color: #285f81;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 900;
   letter-spacing: 0.19em;
 }
 .landing-intro h1 {
   margin: 0;
   color: #e3242b;
-  font-size: clamp(54px, 8vw, 100px);
+  font-size: clamp(3rem, 6.5vw, 6.25rem);
   font-weight: 900;
   letter-spacing: -0.065em;
   line-height: 0.98;
@@ -80,7 +87,7 @@
   max-width: 450px;
   margin: 24px 0 25px;
   color: #244b66;
-  font-size: clamp(15px, 1.5vw, 18px);
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
 }
 .landing-actions {
   display: flex;
@@ -92,11 +99,13 @@
   min-height: 46px;
   align-items: center;
   justify-content: center;
-  padding: 10px 19px;
+  max-width: 100%;
+  padding: 0.625rem 1.1875rem;
   border: 1px solid transparent;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
+  text-align: center;
   transition: transform 140ms ease, box-shadow 140ms ease;
 }
 .landing-button:hover {
@@ -135,21 +144,29 @@
   padding: 0 5px;
 }
 .landing-art {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
   min-width: 0;
-  align-self: center;
-  background: #ffdda1;
+  min-height: 0;
+  align-self: stretch;
+  background: #fbd59a;
 }
 .landing-scene {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   aspect-ratio: 768 / 1777;
+  object-fit: contain;
+  object-position: center;
 }
 .landing-faq {
   display: grid;
   max-width: 1080px;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   align-items: start;
   gap: 28px 70px;
   margin: 0 auto;
@@ -188,32 +205,46 @@
   color: #17689f;
   font-weight: 800;
 }
-@media (max-width: 760px) {
+.public-landing a:focus-visible,
+.public-landing button:focus-visible,
+.public-landing summary:focus-visible {
+  outline: 3px solid #064fb5;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+@media (max-width: 52rem) {
   .landing-hero {
-    min-height: 100vh;
+    min-height: auto;
     grid-template-columns: 1fr;
   }
   .landing-copy {
-    min-height: 620px;
-    padding: 20px 24px;
+    padding: 1.5rem clamp(1rem, 5vw, 3rem);
   }
   .landing-intro {
-    margin: 65px 0;
+    margin: clamp(2.5rem, 8vw, 4rem) auto;
+  }
+  .landing-intro h1 {
+    font-size: clamp(3rem, 10vw, 5.5rem);
+  }
+  .landing-art {
+    padding-inline: max(0px, calc((100% - 32rem) / 2));
+  }
+  .landing-scene {
+    position: static;
+    height: auto;
   }
   .landing-faq {
     grid-template-columns: 1fr;
     gap: 28px;
-    padding: 64px 24px;
+    padding: 4rem clamp(1rem, 5vw, 3rem);
   }
   .landing-faq-login {
     grid-column: 1;
   }
 }
-@media (max-width: 430px) {
+@media (max-width: 30rem) {
   .landing-copy {
-    min-height: 640px;
-    padding-right: 18px;
-    padding-left: 18px;
+    padding: 1.25rem 1rem;
   }
   .landing-header {
     align-items: flex-start;
@@ -229,9 +260,6 @@
   .landing-brand img {
     width: 40px;
     height: 40px;
-  }
-  .landing-intro h1 {
-    font-size: 56px;
   }
   .landing-actions {
     align-items: stretch;

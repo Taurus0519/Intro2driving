@@ -96,6 +96,8 @@ export default function LandingPage() {
             alt="Drive the Right Way: a red car in front of Riteway Driving School"
             width="768"
             height="1777"
+            fetchPriority="high"
+            decoding="async"
           />
         </div>
       </section>
