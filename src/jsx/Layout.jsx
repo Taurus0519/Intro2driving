@@ -40,12 +40,6 @@ export default function Layout() {
     ? 'Super Admin'
     : profile.role === 'admin' ? 'Admin' : 'Student';
 
-  function handleLogout() {
-    if (window.confirm('Are you sure you want to log out?')) {
-      void signOut();
-    }
-  }
-
   return (
     <div className="app">
       <aside className="sidebar">
@@ -61,7 +55,7 @@ export default function Layout() {
           </summary>
           <div className="account-menu-panel">
             <span className="account-menu-role">{roleLabel}</span>
-            <button type="button" className="button logout" onClick={handleLogout}>Log out</button>
+            <button type="button" className="button logout" onClick={signOut}>Log out</button>
           </div>
         </details>
         <nav>
