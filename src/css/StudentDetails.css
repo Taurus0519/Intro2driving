@@ -1,6 +1,8 @@
 .student-name-link{color:#12659a;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .student-name-link:hover{color:#0b466d}
 .student-name-link:focus-visible{outline:2px solid #176ca6;outline-offset:4px;border-radius:2px}
+.students-table th:nth-child(2),.students-table td:nth-child(2){width:110px;text-align:right;white-space:nowrap}
+.students-table th:nth-child(3),.students-table td:nth-child(3){width:190px;text-align:right;white-space:nowrap}
 .student-details-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .student-details-heading h3,.student-details-page .panel h3{margin-top:0}
 .student-details-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:20px 0 0}

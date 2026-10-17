@@ -112,7 +112,7 @@ export default function Students() {
       )}
 
       <div className="panel table-wrap">
-        <table className="data-table">
+        <table className="data-table students-table">
           <thead>
             <tr><th>Name</th><th>Status</th><th>Actions</th></tr>
           </thead>
