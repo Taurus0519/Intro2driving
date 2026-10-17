@@ -817,25 +817,29 @@ function AdminDashboard({ profile }) {
 
 export default function Dashboard() {
   const { profile } = useAuth();
-  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(() => {
+    const isLoginSuccessPending = window.sessionStorage.getItem('riteway-login-success') === 'true';
+    if (isLoginSuccessPending) window.sessionStorage.removeItem('riteway-login-success');
+    return isLoginSuccessPending;
+  });
 
   useEffect(() => {
-    if (window.sessionStorage.getItem('riteway-login-success') === 'true') {
-      window.sessionStorage.removeItem('riteway-login-success');
-      setShowLoginSuccess(true);
-    }
-  }, []);
+    if (!showLoginSuccess) return undefined;
+    const timeout = window.setTimeout(() => setShowLoginSuccess(false), 1600);
+    return () => window.clearTimeout(timeout);
+  }, [showLoginSuccess]);
 
-  return (
-    <>
-      {showLoginSuccess && (
-        <p className="login-success-banner" role="status">
+  if (showLoginSuccess) {
+    return (
+      <div className="loading-screen login-success-transition" role="status">
+        <p>
           Login Successful, Welcome back {profile?.name?.trim() || 'there'}!
         </p>
-      )}
-      {profile?.role === 'student'
-        ? <StudentDashboard profile={profile} />
-        : <AdminDashboard profile={profile} />}
-    </>
-  );
+      </div>
+    );
+  }
+
+  return profile?.role === 'student'
+    ? <StudentDashboard profile={profile} />
+    : <AdminDashboard profile={profile} />;
 }
