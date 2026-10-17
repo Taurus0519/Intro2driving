@@ -19,6 +19,7 @@ export default function LoginPage() {
       : await signIn(form.email, form.password);
     if (error) setError(error.message);
     else if (forgotPassword) setError('Password reset email sent. Check your inbox.');
+    else window.sessionStorage.setItem('riteway-login-success', 'true');
     setLoading(false);
   }
 
