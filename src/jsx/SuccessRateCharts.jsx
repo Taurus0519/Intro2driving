@@ -61,17 +61,31 @@ export default function SuccessRateCharts({ studentId }) {
       if (pending) return;
       pending = true;
       try {
+        const quizRequest = async () => {
+          if (!studentId) {
+            return fetchAllRows(() => (
+              supabase.from('quiz_attempts').select('score, total_questions').order('created_at').order('id')
+            ));
+          }
+
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+
+          const response = await fetch('/api/student-quiz-attempts', {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          const result = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(result?.error || 'Quiz results could not be loaded.');
+          return { data: result?.attempts || [], error: null };
+        };
         const [gameResult, quizResult] = await Promise.allSettled([
           fetchAllRows(() => {
             let query = supabase.from('game_scores').select('score, max_score').order('recorded_at').order('id');
             if (studentId) query = query.eq('player_id', studentId);
             return query;
           }),
-          fetchAllRows(() => {
-            let query = supabase.from('quiz_attempts').select('score, total_questions').order('created_at').order('id');
-            if (studentId) query = query.eq('student_id', studentId);
-            return query;
-          }),
+          quizRequest(),
         ]);
         const game = gameResult.status === 'fulfilled' ? gameResult.value : { error: gameResult.reason };
         const quiz = quizResult.status === 'fulfilled' ? quizResult.value : { error: quizResult.reason };

@@ -1,6 +1,7 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import studentDetailsHandler from '../api/student-details.mjs';
+import studentQuizAttemptsHandler from '../api/student-quiz-attempts.mjs';
 
 const app = express();
 app.disable('x-powered-by');
@@ -45,6 +46,7 @@ app.use((request, response, next) => {
 });
 app.use(express.json({ limit: '16kb' }));
 app.get('/api/student-details', studentDetailsHandler);
+app.get('/api/student-quiz-attempts', studentQuizAttemptsHandler);
 
 app.get('/health', (_request, response) => {
   response.json({ ok: true, configured: Boolean(authClient && adminClient) });
