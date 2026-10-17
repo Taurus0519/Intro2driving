@@ -6,6 +6,9 @@ import { useAuth } from './useAunth.jsx';
 import { ACHIEVEMENTS } from '../js/achievementData';
 import { Link } from 'react-router-dom';
 import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklistData';
+import SuccessRateCharts from './SuccessRateCharts';
+import { fetchAllRows } from '../js/learningStats.mjs';
+import '../css/StudentDetails.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
@@ -16,20 +19,6 @@ const AGE_GROUP_COLORS = {
   '25-34': '#f59e0b',
   '35+': '#8b5cf6',
 };
-
-async function fetchAllRows(buildQuery) {
-  const pageSize = 1000;
-  const rows = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await buildQuery().range(offset, offset + pageSize - 1);
-    if (error) return { data: null, error };
-    rows.push(...(data || []));
-    if (!data || data.length < pageSize) return { data: rows, error: null };
-    offset += pageSize;
-  }
-}
 
 function summarizeGameScores(rows) {
   if (!Array.isArray(rows) || !rows.length) return [];
@@ -136,10 +125,9 @@ function StudentDashboard({ profile }) {
 
     async function loadProgress() {
       const { count } = await supabase
-        .from('lessons')
+        .from('quiz_attempts')
         .select('id', { count: 'exact', head: true })
-        .eq('student_id', profile.id)
-        .eq('status', 'Completed');
+        .eq('student_id', profile.id);
 
       if (active) {
         setProgress({
@@ -251,6 +239,7 @@ function StudentDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
+          <SuccessRateCharts studentId={profile.id} />
           <div className="progress-heading">
             <h3>Game Scores</h3>
             <span>{gameProgressError ? 'Progress unavailable' : `${gameProgress}% complete`}</span>
@@ -566,7 +555,7 @@ function AdminDashboard({ profile }) {
         supabase.from('quiz_attempts').select('id', { count: 'exact', head: true }),
         supabase
           .from('quiz_attempts')
-          .select('id, score, total_questions, percentage, chapter_number, created_at, profiles!quiz_attempts_student_id_fkey(name)')
+          .select('id, student_id, score, total_questions, percentage, chapter_number, created_at, profiles!quiz_attempts_student_id_fkey(name)')
           .order('created_at', { ascending: false })
           .limit(20),
       ]);
@@ -644,6 +633,7 @@ function AdminDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
+          <SuccessRateCharts />
           <section className="dash-card student-progress-panel">
             <div className="card-heading">
               <h3>Student Progress &amp; Earned Achievements</h3>
@@ -666,7 +656,7 @@ function AdminDashboard({ profile }) {
                   <tbody>
                     {studentProgress.map((student) => (
                       <tr key={student.id}>
-                        <td>{student.name || 'Student'}</td>
+                        <td><Link className="student-name-link" to={`/students/${student.id}`}>{student.name || 'Student'}</Link></td>
                         <td>
                           {studentGameScoresError
                             ? 'Unavailable'
@@ -798,7 +788,7 @@ function AdminDashboard({ profile }) {
                   <tbody>
                     {quizAttempts.map((attempt) => (
                       <tr key={attempt.id}>
-                        <td>{attempt.profiles?.name || 'Student'}</td>
+                        <td><Link className="student-name-link" to={`/students/${attempt.student_id}`}>{attempt.profiles?.name || 'Student'}</Link></td>
                         <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
                         <td>{attempt.score}/{attempt.total_questions}</td>
                         <td>{attempt.percentage}%</td>

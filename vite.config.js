@@ -17,6 +17,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: false,
+    proxy: {
+      '/api/student-details': 'http://127.0.0.1:3001',
+    },
   },
   preview: {
     host: '0.0.0.0',

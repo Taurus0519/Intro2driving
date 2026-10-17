@@ -33,7 +33,9 @@ export default function Layout() {
   const { profile, signOut } = useAuth();
   const items = NAV[profile.role] || [];
   const location = useLocation();
-  const pageTitle = items.find((item) => item.to === location.pathname)?.label || 'Dashboard';
+  const pageTitle = location.pathname.startsWith('/students/')
+    ? 'Student Details'
+    : items.find((item) => item.to === location.pathname)?.label || 'Dashboard';
   const roleLabel = profile.role === 'superadmin'
     ? 'Super Admin'
     : profile.role === 'admin' ? 'Admin' : 'Student';

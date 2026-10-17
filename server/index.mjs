@@ -1,5 +1,6 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
+import studentDetailsHandler from '../api/student-details.mjs';
 
 const app = express();
 app.disable('x-powered-by');
@@ -43,6 +44,7 @@ app.use((request, response, next) => {
   next();
 });
 app.use(express.json({ limit: '16kb' }));
+app.get('/api/student-details', studentDetailsHandler);
 
 app.get('/health', (_request, response) => {
   response.json({ ok: true, configured: Boolean(authClient && adminClient) });

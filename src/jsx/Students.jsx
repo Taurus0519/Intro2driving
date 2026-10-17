@@ -3,6 +3,8 @@ import { supabase } from './supabase_Client';
 import { createAccount } from './accounts';
 import { useAuth } from './useAunth.jsx';
 import { ACHIEVEMENTS } from '../js/achievementData.js';
+import { Link } from 'react-router-dom';
+import '../css/StudentDetails.css';
 
 function summarizeGameScores(scores) {
   if (!Array.isArray(scores) || !scores.length) return 'No scores yet';
@@ -206,7 +208,7 @@ export default function Students() {
               const status = s.status || 'Unknown';
               return (
               <tr key={s.id}>
-                <td>{s.name}</td>
+                <td><Link className="student-name-link" to={`/students/${s.id}`}>{s.name || 'Student'}</Link></td>
                 <td>{s.email}</td>
                 <td><span className={`status ${status.toLowerCase()}`}>{status}</span></td>
                 <td>

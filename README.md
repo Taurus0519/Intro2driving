@@ -28,6 +28,14 @@ Student deletion, achievement progress, and the admin student age distribution u
 
 ## Quiz results
 
+The dashboard includes separate game and quiz success-rate pie charts. Each rate is total earned points divided by total possible points across all valid recorded attempts, including repeat attempts. Students see their own results; admins and super admins see the school totals. Charts refresh every 30 seconds and when the window regains focus. Empty results display a placeholder rather than a misleading 0%.
+
+Student names in the Students list, dashboard progress table, and quiz results open an admin-only detail page with account/profile information, game scores, quiz history, achievements, and PDC progress. The `/api/student-details` endpoint validates the signed-in administrator before reading the selected student's records. It uses the same server-only Supabase configuration as the existing account APIs. Run `npm run dev` for the local API and client; Vite proxies this endpoint to port 3001.
+
+Every Wednesday is marked in the dashboard calendar for the onsite theoretical driving course. The calendar shows the next class and a same-day reminder on Wednesdays. Students can download a recurring weekly `.ics` event with a reminder the day before and import it into their personal calendar. The event is all day because a class time has not been specified; the website does not send email or push notifications.
+
+Run `npm test` to check score aggregation, pagination, weekly recurrence/calendar exports, and student-detail authorization.
+
 Before students can submit recorded quiz results, run [`supabase/quiz_attempts.sql`](./supabase/quiz_attempts.sql) in the Supabase SQL Editor. It creates the attempt table and the row-level security policies that allow students to record their own results and admins to view them. Admin and super admin dashboards show the total number of takes and the 20 most recent results.
 
 ## Chaptered quizzes

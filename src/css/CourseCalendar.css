@@ -1,0 +1,16 @@
+.calendar-grid button.course-day{position:relative;background:#fff3d8;color:#765317;border-radius:7px;font-weight:800}
+.calendar-grid button.course-day::after{content:'';position:absolute;width:4px;height:4px;border-radius:50%;background:#ac6a11;bottom:2px;left:calc(50% - 2px)}
+.calendar-grid button[aria-current="date"]{outline:1px solid #176ca6;outline-offset:1px}
+.calendar-grid button.course-day:hover,.calendar-grid button.course-day.selected{background:#176ca6;color:#fff}
+.calendar-grid button.course-day.selected::after,.calendar-grid button.course-day:hover::after{background:#fff}
+.calendar-grid button:focus-visible,.calendar-heading button:focus-visible{outline:2px solid #176ca6;outline-offset:2px}
+.calendar-course-legend{display:flex;align-items:center;gap:6px;color:#765317;font-size:11px;margin:12px 0 0}
+.calendar-course-legend>span{width:7px;height:7px;border-radius:50%;background:#ac6a11;flex-shrink:0}
+.course-reminder{padding:12px;margin-top:14px;border:1px solid #d5e7f3;border-radius:6px;background:#f0f8fd;font-size:12px}
+.course-reminder>strong{display:block;color:#075083}
+.course-reminder p{margin:7px 0;color:#395c73}
+.course-reminder .course-time-note{font-size:11px;color:#607d91}
+.course-reminder-today{background:#fff7e5;border-color:#efce88}
+.course-calendar-download{display:inline-block;margin-top:6px;color:#12659a;text-decoration:underline;text-underline-offset:3px;font-weight:700}
+.course-calendar-download:focus-visible{outline:2px solid #176ca6;outline-offset:3px}
+.course-reminder small{display:block;margin-top:6px;color:#607d91;font-size:10px}

@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./Loginpage'));
 const LandingPage = lazy(() => import('./LandingPage'));
 const ResetPassword = lazy(() => import('./ResetPassword'));
 const Students = lazy(() => import('./Students'));
+const StudentDetails = lazy(() => import('./StudentDetails'));
 const Admins = lazy(() => import('./admins'));
 const Lessons = lazy(() => import('./lessons'));
 const Assignments = lazy(() => import('./assignments'));
@@ -55,6 +56,7 @@ export default function App() {
       </Route>
       <Route element={<Role allow={['admin', 'superadmin']} />}>
         <Route path="students" element={<Students />} />
+        <Route path="students/:studentId" element={<StudentDetails />} />
       </Route>
       <Route element={<Role allow={['superadmin']} />}><Route path="admins" element={<Admins />} /></Route>
     </Route>
