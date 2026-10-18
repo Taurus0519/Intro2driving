@@ -24,7 +24,7 @@ function Protected() {
 
   useEffect(() => {
     if (loading || !user) return;
-    const timer = window.setTimeout(() => setWelcomeComplete(true), 6000);
+    const timer = window.setTimeout(() => setWelcomeComplete(true), 4000);
     return () => window.clearTimeout(timer);
   }, [loading, user?.id]);
 
