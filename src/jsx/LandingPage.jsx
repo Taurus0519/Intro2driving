@@ -126,10 +126,14 @@ export default function LandingPage() {
               <div className="landing-game-brand">
                 <img
                   src={`${import.meta.env.BASE_URL}intro2driving-logo.png`}
-                  alt="Intro2driving game logo with a red car"
-                  width="768"
-                  height="768"
+                  alt="Intro2driving game artwork"
+                  width="64"
+                  height="64"
                 />
+                <div>
+                  <p>Intro2driving</p>
+                  <span>BY RITEWAY DRIVING SCHOOL</span>
+                </div>
               </div>
               <h2 id="download-title">A new way to<br /><span>learn the road.</span></h2>
               <p className="landing-game-description">

@@ -264,13 +264,29 @@ body:has(.public-landing) {
 .landing-game-brand {
   display: flex;
   align-items: center;
+  gap: 12px;
   margin-bottom: 32px;
 }
 .landing-game-brand img {
   display: block;
-  width: min(100%, 252px);
-  height: auto;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.landing-game-brand p {
+  margin: 0;
+  color: var(--landing-brand-navy);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.landing-game-brand span {
+  color: #536b84;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 .landing-download-copy h2 {
   margin-bottom: 20px;

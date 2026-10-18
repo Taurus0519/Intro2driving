@@ -48,7 +48,7 @@ export default function Layout() {
         <details className="account-menu sidebar-account-menu">
           <summary className="user-chip">
             <span className="account-menu-labels">
-              <span className="account-menu-name">{profile.name}</span>
+              <span className="account-menu-name">{profile.username || 'Account'}</span>
               <span className="account-menu-role">{roleLabel}</span>
             </span>
             <span className="account-menu-chevron" aria-hidden="true">▾</span>

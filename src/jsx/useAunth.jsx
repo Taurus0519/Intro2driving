@@ -7,6 +7,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loginInProgress, setLoginInProgress] = useState(false);
+  const [welcomeUserId, setWelcomeUserId] = useState(null);
+  const showLoginWelcome = Boolean(user && welcomeUserId === user.id);
+
+  useEffect(() => {
+    if (!showLoginWelcome || loading || !profile) return;
+    const timer = window.setTimeout(() => setWelcomeUserId(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [showLoginWelcome, loading, profile?.id]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -19,7 +28,7 @@ export function AuthProvider({ children }) {
       (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) fetchProfile(session.user.id);
-        else { setProfile(null); setLoading(false); }
+        else { setWelcomeUserId(null); setProfile(null); setLoading(false); }
       }
     );
 
@@ -41,8 +50,16 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const signIn = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password });
+  async function signIn(email, password) {
+    setLoginInProgress(true);
+    try {
+      const result = await supabase.auth.signInWithPassword({ email, password });
+      if (!result.error && result.data?.user) setWelcomeUserId(result.data.user.id);
+      return result;
+    } finally {
+      setLoginInProgress(false);
+    }
+  }
 
   const resetPassword = (email) => {
     const configuredAppUrl = import.meta.env.DEV ? import.meta.env.VITE_APP_URL : '';
@@ -66,11 +83,11 @@ export function AuthProvider({ children }) {
   const isStudent = profile?.role === 'student';
 
   const contextValue = useMemo(() => ({
-    user, profile, loading,
+    user, profile, loading, loginInProgress, showLoginWelcome,
     signIn, resetPassword, updatePassword, signOut,
     refreshProfile: () => user && fetchProfile(user.id),
     isSuperAdmin, isAdmin, isStudent,
-  }), [user, profile, loading, isSuperAdmin, isAdmin, isStudent]);
+  }), [user, profile, loading, loginInProgress, showLoginWelcome, isSuperAdmin, isAdmin, isStudent]);
 
   return (
     <AuthContext.Provider value={contextValue}>

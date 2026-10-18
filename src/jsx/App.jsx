@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './useAunth';
 import Layout from './Layout';
@@ -19,18 +19,17 @@ const Achievements = lazy(() => import('./Achievements'));
 const PdcChecklist = lazy(() => import('./PdcChecklist'));
 
 function Protected() {
-  const { user, profile, loading } = useAuth();
-  const [welcomeComplete, setWelcomeComplete] = useState(false);
+  const { user, profile, loading, loginInProgress, showLoginWelcome, signOut } = useAuth();
 
-  useEffect(() => {
-    if (loading || !user) return;
-    const timer = window.setTimeout(() => setWelcomeComplete(true), 4000);
-    return () => window.clearTimeout(timer);
-  }, [loading, user?.id]);
-
-  if (loading) return <div className="loading-screen">Loading portal...</div>;
+  if (loading || loginInProgress) return <div className="loading-screen">Loading portal...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (!welcomeComplete || !profile) {
+  if (!profile) {
+    return <div className="loading-screen"><div>
+      <p>Your account profile could not be loaded. Please sign in again.</p>
+      <button type="button" className="button" onClick={signOut}>Sign out</button>
+    </div></div>;
+  }
+  if (showLoginWelcome) {
     const name = profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'there';
     return <div className="loading-screen">Login Successful, Welcome back {name}!</div>;
   }
