@@ -251,7 +251,7 @@ body:has(.public-landing) {
 }
 .landing-game-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: 1fr;
   overflow: hidden;
   border: 1px solid #d8e3f3;
   border-radius: 24px;
@@ -264,25 +264,13 @@ body:has(.public-landing) {
 .landing-game-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
   margin-bottom: 32px;
 }
 .landing-game-brand img {
+  display: block;
+  width: min(100%, 252px);
+  height: auto;
   flex-shrink: 0;
-  border-radius: 50%;
-}
-.landing-game-brand p {
-  margin: 0;
-  color: var(--landing-brand-navy);
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-}
-.landing-game-brand span {
-  color: #536b84;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
 }
 .landing-download-copy h2 {
   margin-bottom: 20px;
@@ -352,64 +340,6 @@ body:has(.public-landing) {
   color: #536b84;
   font-size: 12px;
   line-height: 1.7;
-}
-.landing-game-art {
-  position: relative;
-  display: flex;
-  min-height: 480px;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  padding: 32px;
-  color: #fff;
-  background: linear-gradient(145deg, #07358e, #0751bb);
-}
-.landing-game-art-heading {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-.landing-art-marker {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 0 4px #ffffff20;
-}
-.landing-practice-road {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.landing-game-art-caption {
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
-  margin-bottom: auto;
-}
-.landing-game-art-caption p {
-  margin: 8px 0 0;
-  font-size: clamp(20px, 2.5vw, 28px);
-  line-height: 1.2;
-  letter-spacing: -0.035em;
-}
-.landing-game-art-brand {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid #ffffff40;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
 }
 .landing-install-heading {
   display: flex;
@@ -592,13 +522,6 @@ body:has(.public-landing) {
   .landing-game-panel {
     grid-template-columns: 1fr;
   }
-  .landing-game-art {
-    min-height: 350px;
-  }
-  .landing-practice-road {
-    left: auto;
-    width: min(100%, 450px);
-  }
   .landing-download-steps {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -645,20 +568,6 @@ body:has(.public-landing) {
   }
   .landing-game-panel {
     border-radius: 18px;
-  }
-  .landing-game-brand {
-    gap: 10px;
-  }
-  .landing-game-brand img {
-    width: 44px;
-    height: 44px;
-  }
-  .landing-game-brand span {
-    font-size: 8px;
-  }
-  .landing-game-art {
-    min-height: 320px;
-    padding: 24px;
   }
   .landing-apk-button {
     width: 100%;

@@ -63,7 +63,6 @@ export default function LandingPage() {
               <span>Riteway<br />Driving School</span>
             </div>
             <nav aria-label="Main navigation">
-              <a href="#about">About</a>
               <a href="#faq">FAQ</a>
               <a href="#contact">Contact</a>
               <a className="landing-nav-download" href="#download">Download</a>
@@ -125,11 +124,12 @@ export default function LandingPage() {
           <div className="landing-game-panel">
             <div className="landing-download-copy">
               <div className="landing-game-brand">
-                <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" width="56" height="56" />
-                <div>
-                  <p>Intro2driving</p>
-                  <span>BY RITEWAY DRIVING SCHOOL</span>
-                </div>
+                <img
+                  src={`${import.meta.env.BASE_URL}intro2driving-logo.png`}
+                  alt="Intro2driving game logo with a red car"
+                  width="768"
+                  height="768"
+                />
               </div>
               <h2 id="download-title">A new way to<br /><span>learn the road.</span></h2>
               <p className="landing-game-description">
@@ -154,33 +154,6 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="landing-game-art" aria-hidden="true">
-              <div className="landing-game-art-heading"><span className="landing-art-marker" /> THE ROAD IS JUST THE BEGINNING</div>
-              <svg className="landing-practice-road" viewBox="0 0 420 430" fill="none">
-                <path d="M440 365H125C85 365 65 345 65 305V245C65 205 85 185 125 185H295C335 185 355 165 355 125V-20" stroke="#fff" strokeOpacity=".09" strokeWidth="72" />
-                <path d="M440 365H125C85 365 65 345 65 305V245C65 205 85 185 125 185H295C335 185 355 165 355 125V-20" stroke="#fff" strokeOpacity=".55" strokeWidth="2" strokeDasharray="10 12" />
-                <circle cx="65" cy="282" r="12" fill="#fff" />
-                <circle cx="65" cy="282" r="5" fill="#0561ef" />
-                <circle cx="355" cy="64" r="12" fill="#fff" />
-                <circle cx="355" cy="64" r="5" fill="#e51e2a" />
-                <g transform="translate(183 164)">
-                  <rect x="12" y="-4" width="16" height="7" rx="2" fill="#071c48" />
-                  <rect x="45" y="-4" width="16" height="7" rx="2" fill="#071c48" />
-                  <rect x="12" y="35" width="16" height="7" rx="2" fill="#071c48" />
-                  <rect x="45" y="35" width="16" height="7" rx="2" fill="#071c48" />
-                  <rect width="74" height="38" rx="12" fill="#e51e2a" />
-                  <path d="M24 5h21l9 5v18l-9 5H24l-5-7V12l5-7Z" fill="#f7fbff" />
-                  <path d="m45 6 9 5v16l-9 5V6Z" fill="#9cc9fa" />
-                  <path d="M25 8h16v22H25z" fill="#b91b2c" />
-                  <path d="M68 8v6m0 10v6" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
-                </g>
-                <path d="m140 185-6-5m6 5-6 5m6-5h-15M355 105l-5 6m5-6 5 6m-5-6v15" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="landing-game-art-caption">
-                <p>Small steps.<br /><strong>More confidence.</strong></p>
-              </div>
-              <span className="landing-game-art-brand">RITEWAY <span>→</span></span>
-            </div>
           </div>
 
           <div className="landing-install-heading">
