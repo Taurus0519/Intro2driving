@@ -42,7 +42,7 @@ export default function LoginPage() {
         <p className="muted">
           {forgotPassword
             ? 'Enter your email and we will send you a reset link.'
-            : 'Sign in with your assigned email and password. Super Admin uses this same sign-in form.'}
+            : 'Sign in with your assigned email and password.'}
         </p>
 
         <form onSubmit={submit}>
