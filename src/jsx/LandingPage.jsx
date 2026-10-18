@@ -120,60 +120,87 @@ export default function LandingPage() {
         <Link className="landing-faq-login" to="/login">Ready to get started? Log in</Link>
       </section>
 
-      <div className="landing-dark-sections">
+      <div className="landing-school-sections">
         <section className="landing-download" id="download" aria-labelledby="download-title">
-          <div className="landing-download-copy">
-            <p className="landing-eyebrow">LEARN. PLAY. DRIVE.</p>
-            <h2 id="download-title">Download our game</h2>
-            <p className="landing-section-description">
-              Take the next step with <strong>Intro2driving</strong>, our driving game for Android.
-              Install it directly from the APK file when it becomes available.
-            </p>
-            <p className="landing-steps-intro">Get started in three steps:</p>
-            <ol className="landing-download-steps">
-              <li>
-                <span className="landing-step-number" aria-hidden="true">1</span>
-                <p>Once available, tap <strong>Download APK</strong> on your Android phone.</p>
-              </li>
-              <li>
-                <span className="landing-step-number" aria-hidden="true">2</span>
-                <p>Open the downloaded file. If Android asks, allow installs from your browser.</p>
-              </li>
-              <li>
-                <span className="landing-step-number" aria-hidden="true">3</span>
-                <p>Open <strong>Intro2driving</strong> and start practicing.</p>
-              </li>
-            </ol>
-          </div>
-
-          <div className="landing-download-card">
-            <div className="landing-download-card-inner">
-              <p className="landing-game-name">Intro2driving</p>
-              <div className="landing-qr-placeholder">
-                <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-                  <rect x="19" y="5" width="26" height="54" rx="5" stroke="currentColor" strokeWidth="3" />
-                  <path d="M27 11h10M28 52h8M32 21v20m-8-8 8 8 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <strong>Ready for your next drive?</strong>
-                <span>QR code coming soon</span>
+          <div className="landing-game-panel">
+            <div className="landing-download-copy">
+              <div className="landing-game-brand">
+                <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" width="56" height="56" />
+                <div>
+                  <p>Intro2driving</p>
+                  <span>BY RITEWAY DRIVING SCHOOL</span>
+                </div>
               </div>
+              <h2 id="download-title">A new way to<br /><span>learn the road.</span></h2>
+              <p className="landing-game-description">
+                A little play. A little practice. Get ready for the road with Intro2driving,
+                the Android driving game from Riteway.
+              </p>
+              <div className="landing-game-platform"><span aria-hidden="true">↓</span> ANDROID GAME <span aria-hidden="true">/</span> APK DOWNLOAD</div>
               {gameApkAvailable
-                ? <a className="landing-apk-button" href={gameApkUrl} download="Intro2driving.apk">Download APK</a>
+                ? <a className="landing-apk-button" href={gameApkUrl} download="Intro2driving.apk"><span aria-hidden="true">↓</span> Download for Android</a>
                 : (
                   <button className="landing-apk-button" type="button" disabled aria-describedby="landing-apk-status">
-                    {gameApkAvailable === null ? 'Checking availability…' : 'Download APK · Coming soon'}
+                    <span aria-hidden="true">↓</span>
+                    {gameApkAvailable === null ? 'Checking availability…' : 'Coming soon for Android'}
                   </button>
                 )}
-              <p className="landing-android-note">Android phones only</p>
+              <p className="landing-apk-status" id="landing-apk-status" role="status">
+                {gameApkCheckError || (gameApkAvailable === null
+                  ? 'Checking the Intro2driving download…'
+                  : gameApkAvailable
+                    ? 'Your next drive is ready. Download the APK to get started.'
+                    : 'Our next stop: Android. The APK will be available here soon.')}
+              </p>
+            </div>
+
+            <div className="landing-game-art" aria-hidden="true">
+              <div className="landing-game-art-heading"><span className="landing-art-marker" /> THE ROAD IS JUST THE BEGINNING</div>
+              <svg className="landing-practice-road" viewBox="0 0 420 430" fill="none">
+                <path d="M440 365H125C85 365 65 345 65 305V245C65 205 85 185 125 185H295C335 185 355 165 355 125V-20" stroke="#fff" strokeOpacity=".09" strokeWidth="72" />
+                <path d="M440 365H125C85 365 65 345 65 305V245C65 205 85 185 125 185H295C335 185 355 165 355 125V-20" stroke="#fff" strokeOpacity=".55" strokeWidth="2" strokeDasharray="10 12" />
+                <circle cx="65" cy="282" r="12" fill="#fff" />
+                <circle cx="65" cy="282" r="5" fill="#0561ef" />
+                <circle cx="355" cy="64" r="12" fill="#fff" />
+                <circle cx="355" cy="64" r="5" fill="#e51e2a" />
+                <g transform="translate(183 164)">
+                  <rect x="12" y="-4" width="16" height="7" rx="2" fill="#071c48" />
+                  <rect x="45" y="-4" width="16" height="7" rx="2" fill="#071c48" />
+                  <rect x="12" y="35" width="16" height="7" rx="2" fill="#071c48" />
+                  <rect x="45" y="35" width="16" height="7" rx="2" fill="#071c48" />
+                  <rect width="74" height="38" rx="12" fill="#e51e2a" />
+                  <path d="M24 5h21l9 5v18l-9 5H24l-5-7V12l5-7Z" fill="#f7fbff" />
+                  <path d="m45 6 9 5v16l-9 5V6Z" fill="#9cc9fa" />
+                  <path d="M25 8h16v22H25z" fill="#b91b2c" />
+                  <path d="M68 8v6m0 10v6" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                </g>
+                <path d="m140 185-6-5m6 5-6 5m6-5h-15M355 105l-5 6m5-6 5 6m-5-6v15" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className="landing-game-art-caption">
+                <p>Small steps.<br /><strong>More confidence.</strong></p>
+              </div>
+              <span className="landing-game-art-brand">RITEWAY <span>→</span></span>
             </div>
           </div>
-          <p className="landing-apk-status" id="landing-apk-status" role="status">
-            {gameApkCheckError || (gameApkAvailable === null
-              ? 'Checking the Intro2driving download…'
-              : gameApkAvailable
-                ? 'Intro2driving is ready. Download the APK to get started.'
-                : 'Intro2driving is on the way. The APK download will be available here soon.')}
-          </p>
+
+          <div className="landing-install-heading">
+            <h3>From download to your first drive.</h3>
+            <p>Your quick start, once the game arrives.</p>
+          </div>
+          <ol className="landing-download-steps">
+            <li>
+              <span className="landing-step-number" aria-hidden="true">01</span>
+              <div><h4>Get the game</h4><p>Download the Intro2driving APK to your Android phone when it becomes available.</p></div>
+            </li>
+            <li>
+              <span className="landing-step-number" aria-hidden="true">02</span>
+              <div><h4>Make it yours</h4><p>Open the file to install. If prompted, allow your browser to install the game.</p></div>
+            </li>
+            <li>
+              <span className="landing-step-number" aria-hidden="true">03</span>
+              <div><h4>Take the wheel</h4><p>Launch Intro2driving and start your driving practice.</p></div>
+            </li>
+          </ol>
         </section>
 
         <section className="landing-contact" id="contact" aria-labelledby="contact-title">
