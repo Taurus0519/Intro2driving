@@ -27,10 +27,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function fetchProfile(id) {
-    const { data } = await supabase
-      .from('profiles').select('*').eq('id', id).single();
-    setProfile(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('profiles').select('*').eq('id', id).maybeSingle();
+
+      if (error) throw error;
+      setProfile(data ?? null);
+    } catch (error) {
+      console.warn('Profile lookup failed:', error);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const signIn = (email, password) =>

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './useAunth';
 import Layout from './Layout';
@@ -20,10 +20,18 @@ const PdcChecklist = lazy(() => import('./PdcChecklist'));
 
 function Protected() {
   const { user, profile, loading } = useAuth();
+  const [welcomeComplete, setWelcomeComplete] = useState(false);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    const timer = window.setTimeout(() => setWelcomeComplete(true), 10000);
+    return () => window.clearTimeout(timer);
+  }, [loading, user?.id]);
+
   if (loading) return <div className="loading-screen">Loading portal...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (!profile) {
-    const name = user.user_metadata?.name || user.email?.split('@')[0] || 'there';
+  if (!welcomeComplete || !profile) {
+    const name = profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'there';
     return <div className="loading-screen">Login Successful, Welcome back {name}!</div>;
   }
   return <Layout />;
