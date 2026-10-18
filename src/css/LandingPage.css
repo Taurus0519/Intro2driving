@@ -259,7 +259,12 @@ body:has(.public-landing) {
   box-shadow: 0 16px 50px #07358e08;
 }
 .landing-download-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
   padding: clamp(24px, 4vw, 48px);
+  text-align: center;
 }
 .landing-game-brand {
   display: flex;
@@ -308,6 +313,7 @@ body:has(.public-landing) {
 .landing-game-platform {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
   margin: 28px 0 12px;
