@@ -48,7 +48,8 @@ body:has(.public-landing) {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: clamp(0.75rem, 2vw, 1.875rem);
+  gap: clamp(0.75rem, 1.3vw, 1.25rem);
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 .landing-header nav a:hover,
@@ -59,6 +60,17 @@ body:has(.public-landing) {
   padding: 9px 17px;
   border: 1px solid rgba(23, 55, 80, 0.42);
   border-radius: 999px;
+}
+.landing-header .landing-nav-download {
+  padding: 10px 16px;
+  border-radius: 6px;
+  color: #10250b;
+  background: #65c34a;
+  transition: background-color 140ms ease;
+}
+.landing-header .landing-nav-download:hover {
+  background: #79d35f;
+  text-decoration: none;
 }
 .landing-intro {
   width: min(100%, 35rem);
@@ -205,12 +217,245 @@ body:has(.public-landing) {
   color: #17689f;
   font-weight: 800;
 }
+.public-landing section[id] {
+  scroll-margin-top: 24px;
+}
+.landing-dark-sections {
+  color: #f7f8fa;
+  background: #0d1012;
+}
+.landing-download,
+.landing-contact {
+  display: grid;
+  width: min(100%, 1080px);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+  gap: 24px 80px;
+  margin: 0 auto;
+  padding: 88px 28px;
+}
+.landing-download {
+  align-items: center;
+}
+.landing-dark-sections .landing-eyebrow {
+  color: #85d36b;
+}
+.landing-dark-sections h2 {
+  margin: 0 0 22px;
+  font-size: clamp(1.875rem, 3.6vw, 2.75rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+.landing-section-description {
+  margin: 0;
+  color: #b9c2ca;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.landing-section-description strong {
+  color: #f7f8fa;
+}
+.landing-steps-intro {
+  margin: 26px 0 12px;
+  color: #b9c2ca;
+  font-size: 13px;
+}
+.landing-download-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.landing-download-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #2c3237;
+}
+.landing-step-number {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: #10250b;
+  background: #65c34a;
+  font-weight: 800;
+}
+.landing-download-steps p {
+  margin: 3px 0 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.landing-download-card {
+  width: min(100%, 300px);
+  justify-self: center;
+  margin: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  color: #173750;
+  background: #fff;
+  box-shadow: 10px 12px 0 #65c34a;
+  transform: rotate(-2deg);
+}
+.landing-download-card-inner {
+  padding: 18px 16px 12px;
+  border: 2px dashed #6353dc;
+  text-align: center;
+}
+.landing-game-name {
+  margin: 0 0 14px;
+  color: #173750;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+.landing-qr-placeholder {
+  display: flex;
+  min-height: 222px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 18px 12px;
+  border: 1px solid #dbe5ec;
+  border-radius: 4px;
+  background: #f0f6fa;
+}
+.landing-qr-placeholder svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  color: #174f9d;
+}
+.landing-qr-placeholder strong {
+  font-size: 13px;
+}
+.landing-qr-placeholder > span {
+  color: #5f7383;
+  font-size: 12px;
+}
+.landing-apk-button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  background: #0d1012;
+  font-size: 13px;
+  font-weight: 800;
+}
+.landing-apk-button:hover {
+  background: #26323b;
+}
+.landing-apk-button:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  background: #30383e;
+}
+.landing-android-note {
+  margin: 12px 0 0;
+  color: #6353dc;
+  font-size: 13px;
+}
+.landing-apk-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b9c2ca;
+  font-size: 13px;
+}
+.landing-contact {
+  align-items: start;
+  border-top: 1px solid #2c3237;
+}
+.landing-contact-heading .landing-section-description {
+  max-width: 420px;
+}
+.landing-contact-heading a {
+  color: #f7f8fa;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.landing-contact-details {
+  margin: 0;
+}
+.landing-contact-details > div {
+  display: grid;
+  grid-template-columns: 65px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px 0;
+  border-top: 1px solid #2c3237;
+}
+.landing-contact-details dt {
+  color: #b9c2ca;
+}
+.landing-contact-details dd {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.8;
+}
+.landing-contact-details address {
+  font-style: normal;
+}
+.landing-contact-details a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.landing-map-link {
+  display: block;
+  margin-top: 12px;
+  color: #85d36b;
+  font-size: 13px;
+}
+.landing-site-footer {
+  border-top: 1px solid #2c3237;
+}
+.landing-site-footer > div {
+  display: flex;
+  width: min(100%, 1080px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto;
+  padding: 24px 28px;
+  color: #b9c2ca;
+  font-size: 12px;
+}
+.landing-site-footer p {
+  margin: 0;
+}
+.landing-site-footer a {
+  flex-shrink: 0;
+}
+.landing-site-footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.landing-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .public-landing a:focus-visible,
 .public-landing button:focus-visible,
 .public-landing summary:focus-visible {
   outline: 3px solid #064fb5;
   outline-offset: 4px;
   border-radius: 4px;
+}
+.landing-dark-sections a:focus-visible,
+.landing-dark-sections button:focus-visible {
+  outline-color: #65c34a;
 }
 @media (max-width: 52rem) {
   .landing-hero {
@@ -241,6 +486,24 @@ body:has(.public-landing) {
   .landing-faq-login {
     grid-column: 1;
   }
+  .landing-download,
+  .landing-contact {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 4rem clamp(1rem, 5vw, 3rem);
+  }
+  .landing-download-card {
+    margin: 12px 12px 16px;
+  }
+  .landing-apk-status {
+    text-align: center;
+  }
+  .landing-contact-heading .landing-section-description {
+    max-width: none;
+  }
+  .landing-site-footer > div {
+    padding: 24px clamp(1rem, 5vw, 3rem);
+  }
 }
 @media (max-width: 30rem) {
   .landing-copy {
@@ -248,10 +511,17 @@ body:has(.public-landing) {
   }
   .landing-header {
     align-items: flex-start;
+    flex-direction: column;
   }
   .landing-header nav {
-    gap: 12px;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
     font-size: 12px;
+  }
+  .landing-header .landing-nav-download,
+  .landing-header .landing-nav-login {
+    padding: 8px 10px;
   }
   .landing-brand {
     gap: 6px;
@@ -268,9 +538,17 @@ body:has(.public-landing) {
   .landing-button {
     width: 100%;
   }
+  .landing-download-card {
+    width: min(calc(100% - 24px), 300px);
+  }
+  .landing-site-footer > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-button {
+  .landing-button,
+  .landing-header .landing-nav-download {
     transition: none;
   }
 }
