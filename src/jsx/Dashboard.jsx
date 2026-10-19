@@ -9,6 +9,7 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklis
 import SuccessRateCharts from './SuccessRateCharts';
 import { fetchAllRows } from '../js/learningStats.mjs';
 import { getProfileDisplayName } from '../js/profileIdentity.mjs';
+import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import Pagination from './Pagination';
 import '../css/StudentDetails.css';
 
@@ -662,7 +663,7 @@ function AdminDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
-          <SuccessRateCharts />
+          <SuccessRateCharts students={studentProgress} />
           <section className="dash-card age-distribution">
             <div className="card-heading">
               <h3>Student Age Distribution</h3>
@@ -816,7 +817,6 @@ function AdminDashboard({ profile }) {
                     <tr>
                       <th>Student</th>
                       <th>Chapter</th>
-                      <th>Score</th>
                       <th>Result</th>
                       <th>Taken</th>
                     </tr>
@@ -826,8 +826,10 @@ function AdminDashboard({ profile }) {
                       <tr key={attempt.id}>
                         <td><Link className="student-name-link" to={`/students/${attempt.student_id}`}>{attempt.profiles?.name || 'Student'}</Link></td>
                         <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
-                        <td>{attempt.score}/{attempt.total_questions}</td>
-                        <td>{attempt.percentage}%</td>
+                        <td>{Number(attempt.total_questions) > 0
+                          && (Number(attempt.score) / Number(attempt.total_questions)) * 100 >= QUIZ_PASSING_PERCENT
+                          ? 'Pass'
+                          : 'Fail'}</td>
                         <td>{new Date(attempt.created_at).toLocaleString()}</td>
                       </tr>
                     ))}

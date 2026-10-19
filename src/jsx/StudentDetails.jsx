@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from './supabase_Client';
 import { ACHIEVEMENTS } from '../js/achievementData';
 import { PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_ITEM_COUNT } from '../js/pdcChecklistData';
+import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import { SuccessRateSummary } from './SuccessRateCharts';
 import '../css/StudentDetails.css';
 
@@ -95,10 +96,14 @@ export default function StudentDetails() {
             <h3>Quiz History</h3>
             <SectionError message={errors.quizAttempts} />
             {!errors.quizAttempts && (quizAttempts.length ? <div className="table-wrap student-detail-history"><table className="data-table">
-              <thead><tr><th>Chapter</th><th>Score</th><th>Result</th><th>Taken</th></tr></thead>
+              <thead><tr><th>Chapter</th><th>Pass / fail</th><th>Taken</th></tr></thead>
               <tbody>{quizAttempts.map((attempt) => <tr key={attempt.id}>
                 <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
-                <td>{attempt.score}/{attempt.total_questions}</td><td>{attempt.percentage}%</td><td>{displayDate(attempt.created_at, true)}</td>
+                <td>{Number(attempt.total_questions) > 0
+                  && (Number(attempt.score) / Number(attempt.total_questions)) * 100 >= QUIZ_PASSING_PERCENT
+                  ? 'Pass'
+                  : 'Fail'}</td>
+                <td>{displayDate(attempt.created_at, true)}</td>
               </tr>)}</tbody>
             </table></div> : <p className="empty">No quizzes recorded yet.</p>)}
           </section>

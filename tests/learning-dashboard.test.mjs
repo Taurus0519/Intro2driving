@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAllRows, summarizeSuccess } from '../src/js/learningStats.mjs';
 import { buildCourseCalendar, nextCourseDate } from '../src/js/courseReminder.mjs';
+import { summarizeQuizAttempts } from '../src/js/quizAttemptStats.mjs';
 
 test('success rates weight results by possible points, including repeat attempts', () => {
   const stats = summarizeSuccess([{ score: 1, total: 2 }, { score: 90, total: 100 }], 'total');
@@ -28,6 +29,34 @@ test('invalid scores do not corrupt success percentages', () => {
   ], 'max_score');
   assert.equal(stats.percentage, 50);
   assert.equal(stats.attempts, 1);
+});
+
+test('quiz rates classify 50 percent as pass and count attempts rather than answers', () => {
+  const summary = summarizeQuizAttempts([
+    { score: 5, total_questions: 10 },
+    { score: 4, total_questions: 10 },
+    { score: 10, total_questions: 10 },
+    { score: 0, total_questions: 0 },
+  ]);
+  assert.deepEqual(
+    { passed: summary.passed, failed: summary.failed, attempts: summary.attempts },
+    { passed: 2, failed: 1, attempts: 3 },
+  );
+  assert.equal(summary.percentage.toFixed(1), '66.7');
+});
+
+test('quiz attempt rate includes at most the latest five attempts per student', () => {
+  const rows = [
+    { student_id: 'one', score: 10, total_questions: 10 },
+    ...Array.from({ length: 5 }, () => ({ student_id: 'one', score: 0, total_questions: 10 })),
+    { student_id: 'two', score: 5, total_questions: 10 },
+  ];
+  const summary = summarizeQuizAttempts(rows);
+  assert.deepEqual(
+    { passed: summary.passed, failed: summary.failed, attempts: summary.attempts },
+    { passed: 1, failed: 5, attempts: 6 },
+  );
+  assert.equal(summary.percentage.toFixed(1), '16.7');
 });
 
 test('dashboard totals include results beyond the default 1000-row page', async () => {

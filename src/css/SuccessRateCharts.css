@@ -13,6 +13,8 @@
 .success-pie-legend strong{margin-left:auto}
 .success-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 .success-swatch.remaining{background:#e5edf3;border:1px solid #cbd7e0}
+.success-swatch.failed{background:#c94747}
+.quiz-success-student-picker{max-width:360px;margin:0 0 14px}
 .success-rate-caption{font-size:12px;color:#607d91;margin:12px 0 0}
 .success-rate-message{color:#607d91;font-size:13px;min-height:150px;display:grid;place-items:center}
 @media(max-width:1150px){.success-rate-content{flex-wrap:wrap;gap:12px}.success-rate-summary{text-align:center}}

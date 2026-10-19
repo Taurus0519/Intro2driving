@@ -44,7 +44,7 @@ Before students can submit recorded quiz results, run [`supabase/quiz_attempts.s
 
 ## Chaptered quizzes
 
-Before deploying chaptered quizzes, run [`supabase/quiz_chapters.sql`](./supabase/quiz_chapters.sql) in the Supabase SQL Editor after the quiz questions and attempts tables exist. Existing questions are assigned in creation order to chapters in groups of 10. The migration requires no more than 70 unassigned questions. Admins and super admins can manage up to 7 chapters with 10 questions each. Students complete chapters in order; each chapter's question order is shuffled when they start, and submitting it unlocks the next chapter regardless of score.
+Before deploying chaptered quizzes, run [`supabase/quiz_chapters.sql`](./supabase/quiz_chapters.sql) in the Supabase SQL Editor after the quiz questions and attempts tables exist. Existing questions are assigned in creation order to chapters in groups of 10. The migration requires no more than 70 unassigned questions. Admins and super admins can manage up to 7 chapters with 10 questions each. Students complete chapters in order; each chapter's question order is shuffled when they start, and submitting it unlocks the next chapter. A score of 50% or higher is a pass. Students can take up to 5 attempts across the entire course; run [`supabase/quiz_attempt_limit.sql`](./supabase/quiz_attempt_limit.sql) after the quiz attempt table exists to enforce the cap in the database as well as the quiz page.
 
 ## Quiz question images
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './useAunth';
 import { supabase } from './supabase_Client';
+import { MAX_QUIZ_ATTEMPTS, QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import '../css/Quiz.css';
 
 const ATTACHMENT_BUCKET = 'quiz-question-images';
@@ -47,6 +48,10 @@ export default function Lessons() {
   const [completedChapters, setCompletedChapters] = useState([]);
   const [loadingChapterProgress, setLoadingChapterProgress] = useState(true);
   const [chapterProgressError, setChapterProgressError] = useState('');
+  const [quizAttemptCount, setQuizAttemptCount] = useState(0);
+  const [loadingQuizAttemptCount, setLoadingQuizAttemptCount] = useState(true);
+  const [quizAttemptCountError, setQuizAttemptCountError] = useState('');
+  const [checkingQuizAttemptCount, setCheckingQuizAttemptCount] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState('');
@@ -135,6 +140,70 @@ export default function Lessons() {
       active = false;
     };
   }, [isStudent, profile?.id]);
+
+  useEffect(() => {
+    if (!isStudent || !profile?.id) {
+      setLoadingQuizAttemptCount(false);
+      return undefined;
+    }
+
+    let active = true;
+    async function loadAttemptCount() {
+      setLoadingQuizAttemptCount(true);
+      setQuizAttemptCountError('');
+      let count = null;
+      let error = null;
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+        const response = await fetch('/api/student-quiz-attempts', {
+          headers: { Authorization: ['Bearer', session.access_token].join(' ') },
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error || 'Quiz attempts could not be loaded.');
+        if (!Array.isArray(result?.attempts)) throw new Error('Quiz attempts returned invalid data.');
+        count = result.attempts.length;
+      } catch (loadError) {
+        error = loadError;
+      }
+
+      if (!active) return;
+      if (error) {
+        setQuizAttemptCountError(`Quiz attempt limit could not be checked: ${error.message || 'Please try again.'}`);
+      } else {
+        setQuizAttemptCount(count);
+        setQuizAttemptCountError('');
+      }
+      setLoadingQuizAttemptCount(false);
+    }
+
+    void loadAttemptCount();
+    return () => {
+      active = false;
+    };
+  }, [isStudent, profile?.id]);
+
+  async function refreshQuizAttemptCount() {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+      const response = await fetch('/api/student-quiz-attempts', {
+        headers: { Authorization: ['Bearer', session.access_token].join(' ') },
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || 'Quiz attempts could not be loaded.');
+      if (!Array.isArray(result?.attempts)) throw new Error('Quiz attempts returned invalid data.');
+      const count = result.attempts.length;
+      setQuizAttemptCount(count);
+      setQuizAttemptCountError('');
+      return count;
+    } catch (error) {
+      setQuizAttemptCountError(`Quiz attempt limit could not be checked: ${error.message || 'Please try again.'}`);
+      return null;
+    }
+  }
 
   function resetForm() {
     setForm(emptyForm);
@@ -282,6 +351,17 @@ export default function Lessons() {
       return;
     }
 
+    const currentAttemptCount = await refreshQuizAttemptCount();
+    if (currentAttemptCount === null) {
+      setSubmitError('Your quiz result could not be saved because the attempt limit could not be verified. Please try again.');
+      return;
+    }
+    if (currentAttemptCount >= MAX_QUIZ_ATTEMPTS) {
+      setQuizStarted(false);
+      setSubmitError(`You have used all ${MAX_QUIZ_ATTEMPTS} quiz attempts across the course.`);
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError('');
     let errorMessage = '';
@@ -316,6 +396,7 @@ export default function Lessons() {
     }
 
     setResult(attemptResult);
+    setQuizAttemptCount(currentAttemptCount + 1);
     setCompletedChapters((current) => (
       current.includes(selectedChapter) ? current : [...current, selectedChapter]
     ));
@@ -325,6 +406,7 @@ export default function Lessons() {
     questions.filter((question) => question.chapterNumber === index + 1).length
   ));
   const selectedChapterReady = chapterCounts[selectedChapter - 1] >= QUESTIONS_PER_QUIZ;
+  const attemptsRemaining = Math.max(0, MAX_QUIZ_ATTEMPTS - quizAttemptCount);
   const currentQuestion = activeQuestions[currentIndex];
   const selectedAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
   const nextActionLabel = submitting ? 'Saving…' : currentIndex === activeQuestions.length - 1 ? 'Submit' : 'Continue';
@@ -339,7 +421,15 @@ export default function Lessons() {
     setSubmitError('');
   }
 
-  function startChapterQuiz() {
+  async function startChapterQuiz() {
+    if (!selectedChapterReady || checkingQuizAttemptCount || loadingQuizAttemptCount) return;
+    setCheckingQuizAttemptCount(true);
+    setSubmitError('');
+    const currentAttemptCount = await refreshQuizAttemptCount();
+    setCheckingQuizAttemptCount(false);
+    if (currentAttemptCount === null) return;
+    if (currentAttemptCount >= MAX_QUIZ_ATTEMPTS) return;
+
     const chapterQuestions = questions.filter((question) => question.chapterNumber === selectedChapter);
     if (chapterQuestions.length < QUESTIONS_PER_QUIZ) return;
 
@@ -539,6 +629,7 @@ export default function Lessons() {
 
       {isStudent && !loadingQuestions && !loadingChapterProgress && !questionError && !chapterProgressError && (
         <>
+          {quizAttemptCountError && <p className="error" role="alert">{quizAttemptCountError}</p>}
           <section className="quiz-chapter-list" aria-label="Quiz chapters">
             {chapterCounts.map((count, index) => {
               const chapterNumber = index + 1;
@@ -564,6 +655,11 @@ export default function Lessons() {
           {!quizStarted && !result && (
             <section className="quiz-start-card panel">
               <h3>Chapter {selectedChapter}</h3>
+              {loadingQuizAttemptCount ? (
+                <p role="status">Checking quiz attempts...</p>
+              ) : (
+                <p>Course attempts remaining: {attemptsRemaining} of {MAX_QUIZ_ATTEMPTS}.</p>
+              )}
               <p>
                 {!selectedChapterReady
                   ? `This chapter needs ${QUESTIONS_PER_QUIZ - chapterCounts[selectedChapter - 1]} more ${QUESTIONS_PER_QUIZ - chapterCounts[selectedChapter - 1] === 1 ? 'question' : 'questions'} before it is available.`
@@ -571,9 +667,18 @@ export default function Lessons() {
                   ? 'You have completed this chapter. You can take it again.'
                   : `Complete all ${QUESTIONS_PER_QUIZ} questions to finish this chapter${selectedChapter < 7 ? ' and unlock the next' : ''}.`}
               </p>
-              <button type="button" className="button primary" onClick={startChapterQuiz} disabled={!selectedChapterReady}>
-                {completedChapters.includes(selectedChapter) ? 'Retake Chapter' : 'Start Chapter'}
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => void startChapterQuiz()}
+                disabled={!selectedChapterReady || loadingQuizAttemptCount || Boolean(quizAttemptCountError)
+                  || quizAttemptCount >= MAX_QUIZ_ATTEMPTS || checkingQuizAttemptCount}
+              >
+                {checkingQuizAttemptCount ? 'Checking attempts...' : completedChapters.includes(selectedChapter) ? 'Retake Chapter' : 'Start Chapter'}
               </button>
+              {quizAttemptCount >= MAX_QUIZ_ATTEMPTS && (
+                <p role="status">You have used all {MAX_QUIZ_ATTEMPTS} quiz attempts across the course.</p>
+              )}
             </section>
           )}
         </>
@@ -628,8 +733,10 @@ export default function Lessons() {
       {isStudent && result && (
         <div className="panel quiz-result-card">
           <h3>Chapter {selectedChapter} complete</h3>
-          <p style={{ fontSize: 20, margin: '0 0 8px' }}>Your score: <strong>{result.score}/{result.total}</strong></p>
-          <p style={{ fontSize: 18, margin: 0 }}>{result.percentage}% correct</p>
+          <p style={{ fontSize: 20, margin: '0 0 8px' }}>
+            Result: <strong>{result.percentage >= QUIZ_PASSING_PERCENT ? 'PASS' : 'FAIL'}</strong>
+          </p>
+          <p style={{ margin: '0 0 12px' }}>Passing score: {QUIZ_PASSING_PERCENT}%.</p>
           <button
             type="button"
             className="button primary"
