@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAllRows, summarizeSuccess } from '../src/js/learningStats.mjs';
 import { buildCourseCalendar, nextCourseDate } from '../src/js/courseReminder.mjs';
-import { summarizeQuizAttempts } from '../src/js/quizAttemptStats.mjs';
+import {
+  getGameLevelBreakdown,
+  getQuizChapterBreakdown,
+  summarizeQuizAttempts,
+} from '../src/js/quizAttemptStats.mjs';
 
 test('success rates weight results by possible points, including repeat attempts', () => {
   const stats = summarizeSuccess([{ score: 1, total: 2 }, { score: 90, total: 100 }], 'total');
@@ -57,6 +61,47 @@ test('quiz attempt rate includes at most the latest five attempts per student', 
     { passed: 1, failed: 5, attempts: 6 },
   );
   assert.equal(summary.percentage.toFixed(1), '16.7');
+});
+
+test('quiz chapter bars group passed and failed attempts after applying the course attempt limit', () => {
+  const rows = [
+    { student_id: 'one', chapter_number: 1, score: 10, total_questions: 10 },
+    { student_id: 'one', chapter_number: 1, score: 0, total_questions: 10 },
+    ...Array.from({ length: 4 }, () => ({
+      student_id: 'one', chapter_number: 2, score: 5, total_questions: 10,
+    })),
+    { student_id: 'two', chapter_number: 2, score: 0, total_questions: 10 },
+  ];
+  assert.deepEqual(getQuizChapterBreakdown(rows), [
+    { label: 'Chapter 1', passed: 0, failed: 1, attempts: 1 },
+    { label: 'Chapter 2', passed: 4, failed: 1, attempts: 5 },
+  ]);
+});
+
+test('quiz chapter bars count the latest attempts when results arrive newest first', () => {
+  const rows = Array.from({ length: 6 }, (_, index) => ({
+    id: String(index + 1),
+    student_id: 'one',
+    chapter_number: index === 0 ? 1 : 2,
+    score: index === 0 ? 10 : 0,
+    total_questions: 10,
+    created_at: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+  })).reverse();
+  assert.deepEqual(getQuizChapterBreakdown(rows), [
+    { label: 'Chapter 2', passed: 0, failed: 5, attempts: 5 },
+  ]);
+});
+
+test('game level bars show points earned, points missed, and valid attempt totals', () => {
+  assert.deepEqual(getGameLevelBreakdown([
+    { level: 2, score: 8, max_score: 10 },
+    { level: 1, score: 0, max_score: 5 },
+    { level: 2, score: 4, max_score: 10 },
+    { level: 1, score: 6, max_score: 5 },
+  ]), [
+    { label: 'Game 1', earned: 0, missed: 5, attempts: 1 },
+    { label: 'Game 2', earned: 12, missed: 8, attempts: 2 },
+  ]);
 });
 
 test('dashboard totals include results beyond the default 1000-row page', async () => {

@@ -7,8 +7,8 @@ const otherId = '22222222-2222-4222-8222-222222222222';
 
 function setup({ role = 'student', validToken = true } = {}) {
   const attempts = [
-    { student_id: studentId, score: 10, total_questions: 10 },
-    { student_id: otherId, score: 4, total_questions: 10 },
+    { student_id: studentId, score: 10, total_questions: 10, chapter_number: 1 },
+    { student_id: otherId, score: 4, total_questions: 10, chapter_number: 2 },
   ];
   const clientFactory = (_url, key) => {
     if (key === 'publishable') {
@@ -63,7 +63,7 @@ test('student quiz results return only the authenticated student’s attempts', 
   const { handler, request, response } = setup();
   await handler(request, response);
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(response.body.attempts, [{ score: 10, total_questions: 10 }]);
+  assert.deepEqual(response.body.attempts, [{ score: 10, total_questions: 10, chapter_number: 1 }]);
   assert.equal(response.headers['Cache-Control'], 'private, no-store');
   assert.equal(response.headers.Vary, 'Authorization');
 });

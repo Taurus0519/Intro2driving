@@ -40,7 +40,7 @@ export function createStudentQuizAttemptsHandler({
 
       const { data: attempts, error: attemptsError } = await fetchAllRows(() => adminClient
         .from('quiz_attempts')
-        .select('score, total_questions')
+        .select('score, total_questions, chapter_number')
         .eq('student_id', user.id)
         .order('created_at')
         .order('id'));
