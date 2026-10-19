@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '../css/LandingPage.css';
 
-const schoolMapUrl = 'https://www.bing.com/maps/default.aspx?v=2&where1=14.6597533%2C%20120.9797944&name=Unit%20D%20%2364%20JP%20Bautista%20Street%2C%20Barangay%2079%2C%20Caloocan%2C%20Philippines%2C%201400';
+const schoolMapCoordinates = '14.6597533,120.9797944';
+const schoolMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schoolMapCoordinates)}`;
+const schoolMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(schoolMapCoordinates)}&z=17&output=embed`;
 
 const faqs = [
   {
@@ -137,10 +139,6 @@ export default function LandingPage() {
       <section className="landing-hero" id="about" aria-labelledby="landing-title">
         <div className="landing-copy">
           <header className="landing-header">
-            <div className="landing-brand">
-              <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" />
-              <span>Riteway<br />Driving School</span>
-            </div>
             <button
               className="landing-menu-toggle"
               type="button"
@@ -154,6 +152,10 @@ export default function LandingPage() {
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
+            <div className="landing-brand">
+              <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" />
+              <span>Riteway<br />Driving School</span>
+            </div>
           </header>
 
           <div className="landing-intro">
@@ -285,12 +287,22 @@ export default function LandingPage() {
                 <address>
                   <a href={schoolMapUrl} target="_blank" rel="noopener noreferrer">
                     Unit D #64 JP Bautista Street, Barangay 79, Caloocan, Philippines, 1400
-                    <span className="landing-map-link">View on map<span className="landing-sr-only"> (opens in a new tab)</span></span>
+                    <span className="landing-map-link">Open in Google Maps<span className="landing-sr-only"> (opens in a new tab)</span></span>
                   </a>
                 </address>
               </dd>
             </div>
           </dl>
+          <iframe
+            className="landing-contact-map"
+            title="Riteway Driving School location in Caloocan, Metro Manila"
+            src={schoolMapEmbedUrl}
+            width="1064"
+            height="400"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
         </section>
 
         <footer className="landing-site-footer">

@@ -561,6 +561,15 @@ body:has(.public-landing) {
   color: var(--landing-brand-navy);
   font-size: 13px;
 }
+.landing-contact-map {
+  display: block;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: clamp(18rem, 38vw, 25rem);
+  border: 1px solid #d1dff2;
+  border-radius: 18px;
+  background: #edf4ff;
+}
 .landing-site-footer {
   color: #fff;
   background: var(--landing-brand-navy);
