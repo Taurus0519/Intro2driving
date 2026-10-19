@@ -68,6 +68,7 @@ function getAgeGroupGradient(ageGroups) {
 
 function StudentDashboard({ profile }) {
   const [progress, setProgress] = useState({ quizzes: 0 });
+  const [quizProgressError, setQuizProgressError] = useState('');
   const [gameProgress, setGameProgress] = useState(Number(profile?.progress) || 0);
   const [gameProgressError, setGameProgressError] = useState('');
   const [gameScores, setGameScores] = useState([]);
@@ -125,21 +126,36 @@ function StudentDashboard({ profile }) {
     let active = true;
 
     async function loadProgress() {
-      const { count } = await supabase
-        .from('quiz_attempts')
-        .select('id', { count: 'exact', head: true })
+      const { count, error } = await supabase
+        .from('quiz_chapter_progress')
+        .select('chapter_number', { count: 'exact', head: true })
         .eq('student_id', profile.id);
 
-      if (active) {
-        setProgress({
-          quizzes: count ?? 0,
-        });
+      if (!active) return;
+      if (error) {
+        setQuizProgressError(`Quiz completion could not be loaded: ${error.message}`);
+        return;
       }
+
+      setProgress({ quizzes: count ?? 0 });
+      setQuizProgressError('');
     }
 
     void loadProgress();
+    const refreshInterval = window.setInterval(() => void loadProgress(), 30000);
+    const channel = supabase
+      .channel(`student-quiz-progress-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'quiz_chapter_progress', filter: `student_id=eq.${profile.id}` },
+        () => void loadProgress(),
+      )
+      .subscribe();
+
     return () => {
       active = false;
+      window.clearInterval(refreshInterval);
+      void supabase.removeChannel(channel);
     };
   }, [profile.id]);
 
@@ -246,6 +262,7 @@ function StudentDashboard({ profile }) {
             <span>{gameProgressError ? 'Progress unavailable' : `${gameProgress}% complete`}</span>
           </div>
           {gameProgressError && <p role="alert" className="quiz-results-error">{gameProgressError}</p>}
+          {quizProgressError && <p role="alert" className="quiz-results-error">{quizProgressError}</p>}
 
           <div className="progress-cards">
             <ProgressCard
