@@ -9,6 +9,7 @@ const NAV = {
     { to: '/students', label: 'Students' },
     { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
+    { to: '/profile', label: 'Profile' },
     { to: '/achievements', label: 'Achievements' },
     { to: '/pdc-checklist', label: 'PDC Checklist' },
   ],
@@ -17,6 +18,7 @@ const NAV = {
     { to: '/students', label: 'Students' },
     { to: '/quiz', label: 'Quiz' },
     { to: '/messages', label: 'Messages' },
+    { to: '/profile', label: 'Profile' },
     { to: '/pdc-checklist', label: 'PDC Checklist' },
   ],
   student: [

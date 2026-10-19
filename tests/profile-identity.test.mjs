@@ -65,6 +65,16 @@ test('editing other profile details does not rewrite either identity field', asy
   assert.equal(requests.length, 0);
 });
 
+test('administrator identity edits target only their own account and preserve account roles', async () => {
+  for (const role of ['admin', 'superadmin']) {
+    const ownProfile = { ...profile, role };
+    const { save, requests } = setup({ storedProfile: ownProfile });
+    await save({ name: 'Updated Admin', role: 'student' }, { profile: ownProfile });
+    assert.deepEqual(requests[0].body, { name: 'Updated Admin' });
+    assert.equal(requests[0].url.searchParams.get('id'), `eq.${userId}`);
+  }
+});
+
 test('blank names and usernames are rejected before writing', async () => {
   const { save, requests } = setup();
   await assert.rejects(save({ name: '  ' }), /Full name is required/);

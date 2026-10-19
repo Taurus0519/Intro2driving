@@ -26,6 +26,10 @@ Run `npm install` and then `npm run dev` to start the local API and Vite client 
 
 Student deletion, achievement progress, the admin student age distribution, and student quiz results use authenticated Vercel serverless functions in `api/`. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project environment variables for the same Supabase project. The service-role key must remain server-side and must never use a `VITE_` prefix. The student quiz results endpoint only returns attempts belonging to the authenticated student. The Students page shows each student's completed achievements out of the six configured achievements.
 
+## Personal profiles
+
+Students, admins, and super admins can open Profile from the sidebar to edit their own name, username, nickname, gender, date of birth, address, About, and Goals. Email and account role are read-only. Admin and super admin personal details are saved in their own Supabase Auth `staff_profile` metadata; student details continue to use `student_profiles`. The age distribution includes only accounts whose `profiles.role` is `student`, so staff profiles and birthdays do not affect the chart. No new database migration is needed for staff profiles.
+
 ## Quiz results
 
 The dashboard includes separate game and quiz success-rate pie charts. Each rate is total earned points divided by total possible points across all valid recorded attempts, including repeat attempts. Students see their own results; admins and super admins see the school totals. Charts refresh every 30 seconds and when the window regains focus. Empty results display a placeholder rather than a misleading 0%.

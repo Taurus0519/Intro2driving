@@ -60,7 +60,7 @@ export default function App() {
       <Route element={<Role allow={['student', 'admin', 'superadmin']} />}>
         <Route path="pdc-checklist" element={<PdcChecklist />} />
       </Route>
-      <Route element={<Role allow={['student']} />}><Route path="profile" element={<Profile />} /></Route>
+      <Route element={<Role allow={['student', 'admin', 'superadmin']} />}><Route path="profile" element={<Profile />} /></Route>
       <Route element={<Role allow={['student', 'admin', 'superadmin']} />}>
         <Route path="quiz" element={<Lessons />} />
         <Route path="lessons" element={<Navigate to="/quiz" replace />} />

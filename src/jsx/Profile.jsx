@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
 import { updateProfileIdentity } from '../js/profileIdentity.mjs';
+import { getStaffProfileDetails, saveStaffProfileDetails } from '../js/staffProfile.mjs';
 import '../css/Profile.css';
 
 const fields = ['nickname', 'gender', 'date_of_birth', 'address'];
@@ -47,6 +48,9 @@ function getTodayDate() {
 
 export default function Profile() {
   const { user, profile, refreshProfile } = useAuth();
+  const isStaff = profile?.role === 'admin' || profile?.role === 'superadmin';
+  const roleLabel = profile?.role === 'superadmin' ? 'Super Admin' : isStaff ? 'Admin' : 'Student';
+  const staffDetails = user?.user_metadata?.staff_profile;
   const [details, setDetails] = useState(null);
   const [form, setForm] = useState({});
   const [originalIdentity, setOriginalIdentity] = useState(null);
@@ -59,6 +63,11 @@ export default function Profile() {
     let active = true;
 
     if (!user?.id) return;
+
+    if (isStaff) {
+      setDetails(getStaffProfileDetails(user));
+      return;
+    }
 
     supabase
       .from('student_profiles')
@@ -78,7 +87,7 @@ export default function Profile() {
       });
 
     return () => { active = false; };
-  }, [user?.id]);
+  }, [user?.id, isStaff, staffDetails]);
 
   function toggleEditing() {
     if (saving) return;
@@ -108,25 +117,30 @@ export default function Profile() {
       await updateProfileIdentity(supabase, { userId: user?.id, profile: originalIdentity, values: form });
       identitySaved = true;
 
-      const payload = {
-        student_id: user.id,
-        nickname: form.nickname || null,
-        age: getAge(form.date_of_birth),
-        gender: form.gender || null,
-        date_of_birth: form.date_of_birth || null,
-        address: form.address || null,
-        about: form.about || null,
-        goals: form.goals || null
-      };
+      if (isStaff) {
+        const data = await saveStaffProfileDetails(supabase, { userId: user.id, profile, values: form });
+        setDetails(data);
+      } else {
+        const payload = {
+          student_id: user.id,
+          nickname: form.nickname || null,
+          age: getAge(form.date_of_birth),
+          gender: form.gender || null,
+          date_of_birth: form.date_of_birth || null,
+          address: form.address || null,
+          about: form.about || null,
+          goals: form.goals || null
+        };
 
-      const { data, error } = await supabase
-        .from('student_profiles')
-        .upsert(payload, { onConflict: 'student_id' })
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from('student_profiles')
+          .upsert(payload, { onConflict: 'student_id' })
+          .select()
+          .single();
 
-      if (error) throw error;
-      setDetails(data);
+        if (error) throw error;
+        setDetails(data);
+      }
       setEditing(false);
       setMessage('Profile saved.');
     } catch (error) {
@@ -175,6 +189,7 @@ export default function Profile() {
                 <label key={key}>
                   {labels[key]}
                   <input
+                    name={key}
                     type={inputType}
                     disabled={saving}
                     max={key === 'date_of_birth' ? getTodayDate() : undefined}
@@ -191,6 +206,7 @@ export default function Profile() {
           <label>
             {tab}
             <textarea
+              name={tab.toLowerCase()}
               rows="6"
               disabled={saving}
               value={form[tab.toLowerCase()] || ''}
@@ -238,7 +254,7 @@ export default function Profile() {
         <div className="profile-avatar">{profile.name?.charAt(0)?.toUpperCase() || '?'}</div>
         <div>
           <h2>{profile.name}</h2>
-          <span className="profile-badge">Student</span>
+          <span className="profile-badge">{roleLabel}</span>
         </div>
         <button type="button" className="button profile-edit" onClick={toggleEditing} disabled={saving || !details}>
           {editing ? 'Cancel' : 'Edit'}
@@ -275,14 +291,16 @@ export default function Profile() {
         <aside className="account-card">
           <strong>Account</strong>
           <p>
-            Enrolled
+            {isStaff ? 'Joined' : 'Enrolled'}
             <br />
-            <small>{details?.created_at ? new Date(details.created_at).toLocaleDateString() : '—'}</small>
+            <small>{(isStaff ? user.created_at : details?.created_at)
+              ? new Date(isStaff ? user.created_at : details.created_at).toLocaleDateString()
+              : '—'}</small>
           </p>
           <p>
             Role
             <br />
-            <small>Student</small>
+            <small>{roleLabel}</small>
           </p>
         </aside>
       </div>
