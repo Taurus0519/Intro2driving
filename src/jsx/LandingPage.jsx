@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '../css/LandingPage.css';
 
@@ -28,6 +28,30 @@ export default function LandingPage() {
   const gameApkUrl = `${import.meta.env.BASE_URL}downloads/intro2driving.apk`;
   const [gameApkAvailable, setGameApkAvailable] = useState(null);
   const [gameApkCheckError, setGameApkCheckError] = useState('');
+  const menuRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const openMenu = () => {
+    menuRef.current.showModal();
+    setMenuOpen(true);
+  };
+
+  const closeMenu = () => menuRef.current.close();
+
+  const handleMenuBackdropClick = (event) => {
+    if (event.target !== event.currentTarget) return;
+    const { left, right, top, bottom } = event.currentTarget.getBoundingClientRect();
+    if (event.clientX < left || event.clientX > right || event.clientY < top || event.clientY > bottom) {
+      closeMenu();
+    }
+  };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [menuOpen]);
 
   useEffect(() => {
     const sectionId = location.hash.slice(1);
@@ -55,6 +79,61 @@ export default function LandingPage() {
 
   return (
     <main className="public-landing">
+      <dialog
+        ref={menuRef}
+        className="landing-menu"
+        id="landing-navigation"
+        aria-label="Main menu"
+        onClose={() => setMenuOpen(false)}
+        onClick={handleMenuBackdropClick}
+      >
+        <div className="landing-menu-header">
+          <div className="landing-brand">
+            <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" />
+            <span>Riteway<br />Driving School</span>
+          </div>
+          <button className="landing-menu-close" type="button" onClick={closeMenu} aria-label="Close menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 6 12 12M6 18 18 6" />
+            </svg>
+          </button>
+        </div>
+        <nav className="landing-menu-links" aria-label="Main navigation">
+          <a href="#faq" onClick={closeMenu}>
+            <span className="landing-menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01" />
+              </svg>
+            </span>
+            FAQ
+          </a>
+          <a href="#contact" onClick={closeMenu}>
+            <span className="landing-menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-1 1v-9.5a9 9 0 0 1 18 0ZM8 9h8m-8 5h5" />
+              </svg>
+            </span>
+            Contact
+          </a>
+          <a href="#download" onClick={closeMenu}>
+            <span className="landing-menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" />
+              </svg>
+            </span>
+            Download
+          </a>
+          <Link className="landing-menu-login" to="/login" onClick={closeMenu}>
+            <span className="landing-menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M14 3h6v18h-6M3 12h12m-4-4 4 4-4 4" />
+              </svg>
+            </span>
+            Log in
+          </Link>
+        </nav>
+      </dialog>
       <section className="landing-hero" id="about" aria-labelledby="landing-title">
         <div className="landing-copy">
           <header className="landing-header">
@@ -62,12 +141,19 @@ export default function LandingPage() {
               <img src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="" />
               <span>Riteway<br />Driving School</span>
             </div>
-            <nav aria-label="Main navigation">
-              <a href="#faq">FAQ</a>
-              <a href="#contact">Contact</a>
-              <a className="landing-nav-download" href="#download">Download</a>
-              <Link className="landing-nav-login" to="/login">Log in</Link>
-            </nav>
+            <button
+              className="landing-menu-toggle"
+              type="button"
+              aria-label="Open menu"
+              aria-controls="landing-navigation"
+              aria-expanded={menuOpen}
+              aria-haspopup="dialog"
+              onClick={openMenu}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </header>
 
           <div className="landing-intro">
@@ -200,7 +286,7 @@ export default function LandingPage() {
                 <address>
                   <a href={schoolMapUrl} target="_blank" rel="noopener noreferrer">
                     Unit D #64 JP Bautista Street, Barangay 79, Caloocan, Philippines, 1400
-                    <span className="landing-map-link">View on map <span aria-hidden="true">↗</span><span className="landing-sr-only"> (opens in a new tab)</span></span>
+                    <span className="landing-map-link">View on map<span className="landing-sr-only"> (opens in a new tab)</span></span>
                   </a>
                 </address>
               </dd>
