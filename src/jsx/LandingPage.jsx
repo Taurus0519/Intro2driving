@@ -172,7 +172,6 @@ export default function LandingPage() {
                 : 'Intro2driving for Android is coming soon.')}
             </p>
           </div>
-          <p className="landing-footer">Riteway Driving School <span>·</span> Drive the right way</p>
         </div>
 
         <div className="landing-art">
