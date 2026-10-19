@@ -224,14 +224,14 @@ function StudentDashboard({ profile }) {
     };
   }, [profile.id]);
 
-  const firstName = profile?.name?.split(' ')[0] || 'Student';
+  const welcomeName = profile?.username || profile?.name?.split(' ')[0] || 'Student';
 
   return (
     <div className="student-dashboard">
       <section className="student-welcome">
         <div>
           <span className="welcome-script">Drive the right way</span>
-          <h2>Welcome back, {firstName}!</h2>
+          <h2>Welcome back, {welcomeName}!</h2>
           <p>Keep learning and build the confidence to drive safely.</p>
         </div>
         <span className="welcome-stars" aria-hidden="true">★ ✦</span>

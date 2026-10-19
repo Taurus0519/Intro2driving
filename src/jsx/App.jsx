@@ -30,7 +30,7 @@ function Protected() {
     </div></div>;
   }
   if (showLoginWelcome) {
-    const name = profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'there';
+    const name = profile?.username || profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'there';
     return <div className="loading-screen">Login Successful, Welcome back {name}!</div>;
   }
   return <Layout />;
