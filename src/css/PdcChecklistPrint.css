@@ -4,6 +4,10 @@
 }
 
 @media print {
+  .pdc-checklist-page[data-print-allowed="false"] {
+    display: none !important;
+  }
+
   .pdc-checklist-page {
     width: 100%;
     font-size: 9px !important;

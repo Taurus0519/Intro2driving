@@ -38,7 +38,10 @@ export default function LandingPage() {
     setMenuOpen(true);
   };
 
-  const closeMenu = () => menuRef.current.close();
+  const closeMenu = () => {
+    menuRef.current.close();
+    setMenuOpen(false);
+  };
 
   const handleMenuBackdropClick = (event) => {
     if (event.target !== event.currentTarget) return;
@@ -58,10 +61,13 @@ export default function LandingPage() {
   useEffect(() => {
     const sectionId = location.hash.slice(1);
     if (['about', 'faq', 'download', 'contact'].includes(sectionId)) {
-      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
-      document.getElementById(sectionId)?.scrollIntoView({ behavior });
+      const frame = window.requestAnimationFrame(() => {
+        const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+        document.getElementById(sectionId)?.scrollIntoView({ behavior, block: 'start' });
+      });
+      return () => window.cancelAnimationFrame(frame);
     }
-  }, [location.hash]);
+  }, [location.hash, location.key]);
 
   useEffect(() => {
     let active = true;
@@ -101,7 +107,7 @@ export default function LandingPage() {
           </button>
         </div>
         <nav className="landing-menu-links" aria-label="Main navigation">
-          <a href="#faq" onClick={closeMenu}>
+          <Link to="#faq" onClick={closeMenu}>
             <span className="landing-menu-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="12" cy="12" r="9" />
@@ -109,23 +115,23 @@ export default function LandingPage() {
               </svg>
             </span>
             FAQ
-          </a>
-          <a href="#contact" onClick={closeMenu}>
+          </Link>
+          <Link to="#contact" onClick={closeMenu}>
             <span className="landing-menu-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-1 1v-9.5a9 9 0 0 1 18 0ZM8 9h8m-8 5h5" />
               </svg>
             </span>
             Contact
-          </a>
-          <a href="#download" onClick={closeMenu}>
+          </Link>
+          <Link to="#download" onClick={closeMenu}>
             <span className="landing-menu-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" />
               </svg>
             </span>
             Download
-          </a>
+          </Link>
           <Link className="landing-menu-login" to="/login" onClick={closeMenu}>
             <span className="landing-menu-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">

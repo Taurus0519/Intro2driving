@@ -18,10 +18,9 @@ body:has(.public-landing) {
   background: linear-gradient(120deg, #88c1e5, #d7eef9);
 }
 .landing-copy {
-  display: flex;
+  display: grid;
   min-width: 0;
-  flex-direction: column;
-  justify-content: space-between;
+  grid-template-rows: auto 1fr;
   padding: clamp(1.25rem, 2.5vw, 2rem) clamp(1.25rem, 5vw, 5.625rem) 1.5rem;
 }
 .landing-header {
@@ -180,6 +179,7 @@ body:has(.public-landing) {
   to { transform: translateX(0); }
 }
 .landing-intro {
+  align-self: center;
   width: min(100%, 35rem);
   margin: clamp(2.5rem, 8svh, 6rem) auto;
 }

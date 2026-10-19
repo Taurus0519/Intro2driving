@@ -56,7 +56,7 @@ Run [`supabase/player_achievements.sql`](./supabase/player_achievements.sql) in 
 
 ## PDC checklist
 
-Run [`supabase/pdc_checklist.sql`](./supabase/pdc_checklist.sql) in the Supabase SQL Editor to enable the per-student practical driving checklist. Admins and super admins can select a student, record a Yes/No result and optional remarks for each item, and print the checklist or save it as a PDF. Students can view and print their results. A checklist is counted as completed when all 20 items have a Yes/No result. Re-run the SQL after this update so a saved Yes or No can be cleared.
+Run [`supabase/pdc_checklist.sql`](./supabase/pdc_checklist.sql) in the Supabase SQL Editor to enable the per-student practical driving checklist. Admins and super admins can select a student, record a Yes/No result and optional remarks for each item, and print the checklist or save it as a PDF. Students can view their results; printing and PDF downloads are available only to admins and super admins. A checklist is counted as completed when all 20 items have a Yes/No result. Re-run the SQL after this update so a saved Yes or No can be cleared.
 
 ## Game score tracking
 

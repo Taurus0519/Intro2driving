@@ -119,6 +119,7 @@ export default function PdcChecklist() {
   }
 
   function printChecklist() {
+    if (!isStaff) return;
     if (Object.keys(draftResponses).length) {
       setError('Save your pending checklist changes before printing.');
       return;
@@ -127,7 +128,7 @@ export default function PdcChecklist() {
   }
 
   async function saveChecklistPdf() {
-    if (savingPdf || loading || !studentId) return;
+    if (!isStaff || savingPdf || loading || !studentId) return;
     if (Object.keys(draftResponses).length || savingItemsRef.current.size) {
       setError('Save your pending checklist changes before downloading a PDF.');
       return;
@@ -193,7 +194,7 @@ export default function PdcChecklist() {
   }
 
   return (
-    <div className="pdc-checklist-page">
+    <div className="pdc-checklist-page" data-print-allowed={isStaff}>
       <div className="pdc-toolbar">
         <div className="pdc-print-heading">
           <p className="pdc-school-name">RITEWAY DRIVING SCHOOL</p>
@@ -258,14 +259,16 @@ export default function PdcChecklist() {
         <div><span /><strong>STUDENT SIGNATURE OVER PRINTED NAME AND DATE</strong></div>
         <div><span /><strong>INSTRUCTOR SIGNATURE OVER PRINTED NAME AND DATE</strong></div>
       </div>
-      <div className="pdc-print-footer">
-        <button type="button" className="button" onClick={printChecklist} disabled={loading || !studentId || savingPdf}>
-          Print
-        </button>
-        <button type="button" className="button primary" onClick={saveChecklistPdf} disabled={loading || !studentId || savingPdf}>
-          {savingPdf ? 'Saving PDF...' : 'Save PDF'}
-        </button>
-      </div>
+      {isStaff && (
+        <div className="pdc-print-footer">
+          <button type="button" className="button" onClick={printChecklist} disabled={loading || !studentId || savingPdf}>
+            Print
+          </button>
+          <button type="button" className="button primary" onClick={saveChecklistPdf} disabled={loading || !studentId || savingPdf}>
+            {savingPdf ? 'Saving PDF...' : 'Save PDF'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
