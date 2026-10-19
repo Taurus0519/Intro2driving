@@ -3,9 +3,14 @@
 .calendar-grid button[aria-current="date"]{outline:1px solid #176ca6;outline-offset:1px}
 .calendar-grid button.course-day:hover,.calendar-grid button.course-day.selected{background:#176ca6;color:#fff}
 .calendar-grid button.course-day.selected::after,.calendar-grid button.course-day:hover::after{background:#fff}
+.calendar-grid button.extra-course-day{box-shadow:inset 0 0 0 1px #19725a}
+.calendar-grid button.extra-course-day::after{background:#19725a}
+.calendar-grid button.extra-course-day.selected::after,.calendar-grid button.extra-course-day:hover::after{background:#fff}
 .calendar-grid button:focus-visible,.calendar-heading button:focus-visible{outline:2px solid #176ca6;outline-offset:2px}
 .calendar-course-legend{display:flex;align-items:center;gap:6px;color:#765317;font-size:11px;margin:12px 0 0}
 .calendar-course-legend>span{width:7px;height:7px;border-radius:50%;background:#ac6a11;flex-shrink:0}
+.calendar-extra-legend{margin-top:5px;color:#19725a}
+.calendar-extra-legend>span{background:#19725a}
 .course-reminder{padding:12px;margin-top:14px;border:1px solid #d5e7f3;border-radius:6px;background:#f0f8fd;font-size:12px}
 .course-reminder>strong{display:block;color:#075083}
 .course-reminder p{margin:7px 0;color:#395c73}
@@ -14,3 +19,12 @@
 .course-calendar-download{display:inline-block;margin-top:6px;color:#12659a;text-decoration:underline;text-underline-offset:3px;font-weight:700}
 .course-calendar-download:focus-visible{outline:2px solid #176ca6;outline-offset:3px}
 .course-reminder small{display:block;margin-top:6px;color:#607d91;font-size:10px}
+.calendar-staff-controls{margin-top:14px;padding:12px;border:1px solid #dce8ed;border-radius:6px;background:#fbfdfe;font-size:12px}
+.calendar-staff-controls h4{margin:0 0 10px;color:#294b60;font-size:12px}
+.calendar-staff-controls form{display:grid;gap:7px}
+.calendar-staff-controls label{font-weight:700;color:#395c73}
+.calendar-staff-controls input{min-width:0;padding:7px;border:1px solid #cbd9e0;border-radius:4px;color:#294b60;font:inherit}
+.calendar-session-actions{display:flex;flex-wrap:wrap;gap:7px}
+.calendar-session-actions button{padding:6px 9px;border:1px solid #cbd9e0;border-radius:4px;background:#fff;color:#176ca6;font:inherit;font-weight:700;cursor:pointer}
+.calendar-session-actions button:disabled{opacity:.6;cursor:wait}
+.calendar-session-error{margin:8px 0 0;color:#a32f2f;font-size:11px}

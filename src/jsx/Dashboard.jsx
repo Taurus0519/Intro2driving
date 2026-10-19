@@ -822,7 +822,7 @@ function AdminDashboard({ profile }) {
         </div>
 
         <div className="dashboard-aside">
-          <Calendar />
+          <Calendar isStaff />
           <section className="dash-card aside-card">
             <h3>Announcement</h3>
             <p>Keep student accounts and quiz content up to date.</p>

@@ -72,5 +72,5 @@ test('recurring calendar export crosses year boundaries and includes a reminder'
   assert.ok(content.endsWith('END:VCALENDAR\r\n'));
   assert.ok(content.split('\r\n').every((line) => Buffer.byteLength(line) <= 75));
   const unfolded = content.replace(/\r\n /g, '');
-  assert.ok(unfolded.includes('Confirm the class time with the school.'));
+  assert.ok(unfolded.includes('Class time to be confirmed.'));
 });
