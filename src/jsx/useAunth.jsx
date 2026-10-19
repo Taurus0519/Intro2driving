@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!showLoginWelcome || loading || !profile) return;
-    const timer = window.setTimeout(() => setWelcomeUserId(null), 3000);
+    const timer = window.setTimeout(() => setWelcomeUserId(null), 2000);
     return () => window.clearTimeout(timer);
   }, [showLoginWelcome, loading, profile?.id]);
 
