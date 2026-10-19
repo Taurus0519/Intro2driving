@@ -192,7 +192,7 @@ export default function LandingPage() {
           <dl className="landing-contact-details">
             <div>
               <dt>School</dt>
-              <dd>Riteway Driving School - Caloocan</dd>
+              <dd>Riteway Driving School - Caloocan, Metro Manila</dd>
             </div>
             <div>
               <dt>Address</dt>
@@ -210,7 +210,7 @@ export default function LandingPage() {
 
         <footer className="landing-site-footer">
           <div>
-            <p>© {new Date().getFullYear()} Riteway Driving School - Caloocan.</p>
+            <p>© 2026 Intro2driving, made for Riteway Driving School - Caloocan, Metro Manila.</p>
             <a href="#about">Back to top <span aria-hidden="true">↑</span></a>
           </div>
         </footer>
