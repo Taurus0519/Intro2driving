@@ -15,7 +15,7 @@ body:has(.public-landing) {
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
-  background: #86c2f2;
+  background: linear-gradient(120deg, #88c1e5, #d7eef9);
 }
 .landing-copy {
   display: flex;
