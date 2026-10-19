@@ -28,7 +28,7 @@ Student deletion, achievement progress, the admin student age distribution, and 
 
 ## Personal profiles
 
-Students, admins, and super admins can open Profile from the sidebar to edit their own name, username, nickname, gender, date of birth, address, About, and Goals. Email and account role are read-only. Admin and super admin personal details are saved in their own Supabase Auth `staff_profile` metadata; student details continue to use `student_profiles`. The age distribution includes only accounts whose `profiles.role` is `student`, so staff profiles and birthdays do not affect the chart. No new database migration is needed for staff profiles.
+Students, admins, and super admins can open Profile from the sidebar to edit their own first name, last name, username, nickname, gender, date of birth, address, About, and Goals. First and last name boundaries are preserved in their own Auth `profile_name` metadata, while `profiles.name` keeps the combined name for reports and checklists. Dashboard greetings use the username for all three roles. Email and account role are read-only. Admin and super admin personal details are saved in their own Supabase Auth `staff_profile` metadata; student details continue to use `student_profiles`. The age distribution includes only accounts whose `profiles.role` is `student`, so staff profiles and birthdays do not affect the chart. No new database migration is needed for staff profiles.
 
 ## Quiz results
 

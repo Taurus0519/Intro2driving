@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
-import { updateProfileIdentity } from '../src/js/profileIdentity.mjs';
+import { getProfileDisplayName, saveProfileNameParts, splitProfileName, updateProfileIdentity } from '../src/js/profileIdentity.mjs';
 
 const userId = '11111111-1111-4111-8111-111111111111';
 const profile = { id: userId, name: 'Kenjih', username: 'Student', role: 'student' };
@@ -36,6 +36,55 @@ test('editing a full name does not send or overwrite the username', async () => 
   assert.equal(requests[0].url.pathname, '/rest/v1/profiles');
   assert.equal(requests[0].url.searchParams.get('id'), `eq.${userId}`);
   assert.deepEqual(requests[0].body, { name: 'Kenjih Reyes' });
+});
+
+test('first and last name edits update the combined name without rewriting the username', async () => {
+  const { save, requests } = setup();
+  await save({ firstName: '  Maria Isabel ', lastName: ' de la Cruz  ' });
+  assert.deepEqual(requests[0].body, { name: 'Maria Isabel de la Cruz' });
+  await assert.rejects(save({ firstName: '', lastName: 'Reyes' }), /First name is required/);
+  await assert.rejects(save({ firstName: 'Maria', lastName: ' ' }), /Last name is required/);
+  assert.equal(requests.length, 1);
+});
+
+test('existing names are prefilled without losing words and saved compound names retain their boundaries', () => {
+  assert.deepEqual(splitProfileName('  Juan Carlos Reyes  '), { firstName: 'Juan Carlos', lastName: 'Reyes' });
+  assert.deepEqual(splitProfileName('Kenjih'), { firstName: 'Kenjih', lastName: '' });
+  assert.deepEqual(splitProfileName(null), { firstName: '', lastName: '' });
+  const saved = { firstName: 'Maria Isabel', lastName: 'de la Cruz' };
+  assert.deepEqual(splitProfileName('Maria Isabel de la Cruz', saved), saved);
+  assert.deepEqual(splitProfileName('Alex Reyes', saved), { firstName: 'Alex', lastName: 'Reyes' });
+});
+
+test('name parts are saved only as personal metadata for the signed-in account', async () => {
+  const calls = [];
+  const user = { id: userId, user_metadata: {} };
+  const client = { auth: { async updateUser(payload) {
+    calls.push(payload);
+    return { data: { user: { ...user, user_metadata: payload.data } }, error: null };
+  } } };
+  const values = { firstName: ' Maria Isabel ', lastName: ' de la Cruz ', role: 'superadmin', student_id: 'other' };
+  await saveProfileNameParts(client, { user, profile, values });
+  assert.deepEqual(calls, [{ data: { profile_name: { firstName: 'Maria Isabel', lastName: 'de la Cruz' } } }]);
+  await assert.rejects(saveProfileNameParts(client, { user: { id: 'other' }, profile, values }), /Sign in again/);
+  assert.equal(calls.length, 1);
+  user.user_metadata = calls[0].data;
+  await saveProfileNameParts(client, { user, profile, values });
+  assert.equal(calls.length, 1, 'Unchanged name parts do not trigger another auth update');
+});
+
+test('failed name-part saves cannot be reported as successful', async () => {
+  const options = { user: { id: userId }, profile, values: { firstName: 'Maria', lastName: 'Reyes' } };
+  await assert.rejects(saveProfileNameParts({ auth: { updateUser: async () => ({ error: { message: 'Session expired' } }) } }, options), /Session expired/);
+  await assert.rejects(saveProfileNameParts({ auth: { updateUser: async () => ({ data: { user: { id: 'other' } } }) } }, options), /sign in again/);
+});
+
+test('student, admin, and super admin dashboard greetings prefer usernames over personal names', () => {
+  for (const role of ['student', 'admin', 'superadmin']) {
+    assert.equal(getProfileDisplayName({ role, name: 'Maria Reyes', username: 'maria_driver' }, 'Account'), 'maria_driver');
+  }
+  assert.equal(getProfileDisplayName({ name: 'Maria Reyes' }, 'Admin'), 'Maria');
+  assert.equal(getProfileDisplayName(null, 'Admin'), 'Admin');
 });
 
 test('editing a username does not send or overwrite the full name', async () => {

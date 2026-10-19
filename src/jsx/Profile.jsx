@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
-import { updateProfileIdentity } from '../js/profileIdentity.mjs';
+import { saveProfileNameParts, splitProfileName, updateProfileIdentity } from '../js/profileIdentity.mjs';
 import { getStaffProfileDetails, saveStaffProfileDetails } from '../js/staffProfile.mjs';
 import '../css/Profile.css';
 
@@ -51,6 +51,7 @@ export default function Profile() {
   const isStaff = profile?.role === 'admin' || profile?.role === 'superadmin';
   const roleLabel = profile?.role === 'superadmin' ? 'Super Admin' : isStaff ? 'Admin' : 'Student';
   const staffDetails = user?.user_metadata?.staff_profile;
+  const nameParts = splitProfileName(profile?.name, user?.user_metadata?.profile_name);
   const [details, setDetails] = useState(null);
   const [form, setForm] = useState({});
   const [originalIdentity, setOriginalIdentity] = useState(null);
@@ -93,7 +94,7 @@ export default function Profile() {
     if (saving) return;
     setOriginalIdentity({ id: profile.id, name: profile.name, username: profile.username });
     setForm({
-      name: profile.name || '',
+      ...nameParts,
       username: profile.username || '',
       nickname: details?.nickname || '',
       gender: details?.gender || '',
@@ -116,6 +117,7 @@ export default function Profile() {
     try {
       await updateProfileIdentity(supabase, { userId: user?.id, profile: originalIdentity, values: form });
       identitySaved = true;
+      await saveProfileNameParts(supabase, { user, profile: originalIdentity, values: form });
 
       if (isStaff) {
         const data = await saveStaffProfileDetails(supabase, { userId: user.id, profile, values: form });
@@ -162,8 +164,13 @@ export default function Profile() {
         {tab === 'Info' && (
           <>
             <label>
-              <span>Full name</span>
-              <input name="name" autoComplete="name" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} disabled={saving} required />
+              <span>First Name</span>
+              <input name="firstName" autoComplete="given-name" value={form.firstName || ''} onChange={e => setForm({ ...form, firstName: e.target.value })} disabled={saving} required />
+            </label>
+
+            <label>
+              <span>Last Name</span>
+              <input name="lastName" autoComplete="family-name" value={form.lastName || ''} onChange={e => setForm({ ...form, lastName: e.target.value })} disabled={saving} required />
             </label>
 
             <label>
@@ -224,7 +231,8 @@ export default function Profile() {
     content = (
       <dl className="profile-info">
         {[
-          ['Full name', profile.name],
+          ['First Name', nameParts.firstName],
+          ['Last Name', nameParts.lastName],
           ['Username', profile.username],
           ['Nickname', details?.nickname],
           ['Email', user.email],

@@ -53,6 +53,23 @@ function getAgeGroup(age) {
   return null;
 }
 
+export function getStudentAgeGroups(accounts, personalProfiles) {
+  const studentIds = new Set(accounts.filter((account) => account.role === 'student').map((account) => account.id));
+  const ageGroups = Object.fromEntries(AGE_GROUPS.map((group) => [group, 0]));
+
+  for (const personalProfile of personalProfiles) {
+    if (!studentIds.has(personalProfile.student_id)) continue;
+    const ageFromDateOfBirth = getAgeFromDateOfBirth(personalProfile.date_of_birth);
+    const age = ageFromDateOfBirth ?? (
+      personalProfile.age == null ? null : Number(personalProfile.age)
+    );
+    const group = getAgeGroup(age);
+    if (group) ageGroups[group] += 1;
+  }
+
+  return ageGroups;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -102,7 +119,7 @@ export default async function handler(req, res) {
     }
 
     const [studentsResult, studentProfilesResult] = await Promise.all([
-      fetchAllRows(() => adminClient.from('profiles').select('id').eq('role', 'student')),
+      fetchAllRows(() => adminClient.from('profiles').select('id, role').eq('role', 'student')),
       fetchAllRows(() => adminClient.from('student_profiles').select('student_id, age, date_of_birth')),
     ]);
 
@@ -112,18 +129,7 @@ export default async function handler(req, res) {
       return respond(res, 500, { error: `Student age distribution could not be loaded: ${error.message}` });
     }
 
-    const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
-    const ageGroups = Object.fromEntries(AGE_GROUPS.map((group) => [group, 0]));
-
-    for (const studentProfile of studentProfilesResult.data || []) {
-      if (!studentIds.has(studentProfile.student_id)) continue;
-      const ageFromDateOfBirth = getAgeFromDateOfBirth(studentProfile.date_of_birth);
-      const age = ageFromDateOfBirth ?? (
-        studentProfile.age == null ? null : Number(studentProfile.age)
-      );
-      const group = getAgeGroup(age);
-      if (group) ageGroups[group] += 1;
-    }
+    const ageGroups = getStudentAgeGroups(studentsResult.data || [], studentProfilesResult.data || []);
 
     return respond(res, 200, { ageGroups });
   } catch (error) {

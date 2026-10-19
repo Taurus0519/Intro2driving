@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklistData';
 import SuccessRateCharts from './SuccessRateCharts';
 import { fetchAllRows } from '../js/learningStats.mjs';
+import { getProfileDisplayName } from '../js/profileIdentity.mjs';
 import '../css/StudentDetails.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
@@ -224,7 +225,7 @@ function StudentDashboard({ profile }) {
     };
   }, [profile.id]);
 
-  const welcomeName = profile?.username || profile?.name?.split(' ')[0] || 'Student';
+  const welcomeName = getProfileDisplayName(profile, 'Student');
 
   return (
     <div className="student-dashboard">
@@ -624,7 +625,7 @@ function AdminDashboard({ profile }) {
       <section className="role-welcome">
         <div>
           <span className="welcome-script">School overview</span>
-          <h2>Welcome back, {profile?.name?.split(' ')[0] || 'Admin'}!</h2>
+          <h2>Welcome back, {getProfileDisplayName(profile, 'Admin')}!</h2>
           <p>Manage your driving school from one place.</p>
         </div>
         <span className="welcome-stars" aria-hidden="true">★ ✦</span>
