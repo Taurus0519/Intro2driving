@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './useAunth.jsx';
 import { supabase } from './supabase_Client';
+import StudentPicker from './StudentPicker';
 import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_SECTIONS } from '../js/pdcChecklistData';
 import '../css/PdcChecklist.css';
 import '../css/PdcChecklistPrint.css';
@@ -212,15 +213,14 @@ export default function PdcChecklist() {
       </div>
 
       {isStaff && (
-        <label className="pdc-student-select">
-          Select student
-          <select value={studentId} onChange={(event) => setStudentId(event.target.value)}>
-            <option value="">Select a student</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>{student.name}</option>
-            ))}
-          </select>
-        </label>
+        <StudentPicker
+          id="pdc-student-select"
+          className="pdc-student-select"
+          label="Select student"
+          students={students}
+          value={studentId}
+          onChange={setStudentId}
+        />
       )}
 
       <div className="pdc-progress" aria-live="polite">

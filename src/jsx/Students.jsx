@@ -3,7 +3,10 @@ import { supabase } from './supabase_Client';
 import { createAccount } from './accounts';
 import { useAuth } from './useAunth.jsx';
 import { Link } from 'react-router-dom';
+import Pagination from './Pagination';
 import '../css/StudentDetails.css';
+
+const STUDENTS_PAGE_SIZE = 10;
 
 export default function Students() {
   const { isAdmin } = useAuth();
@@ -13,6 +16,7 @@ export default function Students() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [studentsLoading, setStudentsLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => { void load(); }, []);
 
@@ -24,12 +28,20 @@ export default function Students() {
         .from('profiles').select('id, name, status').eq('role', 'student').order('name');
       if (loadError) throw loadError;
       setStudents(data || []);
+      setPage(1);
     } catch (loadError) {
       setError(`Students could not be loaded: ${loadError.message || 'Please try again.'}`);
     } finally {
       setStudentsLoading(false);
     }
   }
+
+  const pageCount = Math.max(1, Math.ceil(students.length / STUDENTS_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleStudents = students.slice(
+    (currentPage - 1) * STUDENTS_PAGE_SIZE,
+    currentPage * STUDENTS_PAGE_SIZE,
+  );
 
   async function submit(e) {
     e.preventDefault();
@@ -119,7 +131,7 @@ export default function Students() {
           <tbody>
             {studentsLoading ? (
               <tr><td colSpan="3">Loading students...</td></tr>
-            ) : students.map((s) => {
+            ) : visibleStudents.map((s) => {
               const status = s.status || 'Unknown';
               return (
               <tr key={s.id}>
@@ -136,6 +148,14 @@ export default function Students() {
             })}
           </tbody>
         </table>
+        {!studentsLoading && (
+          <Pagination
+            page={currentPage}
+            pageSize={STUDENTS_PAGE_SIZE}
+            totalItems={students.length}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </>
   );

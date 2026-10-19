@@ -1,0 +1,6 @@
+.pagination-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px 2px;color:#607d91;font-size:12px}
+.pagination-controls>div{display:flex;align-items:center;gap:10px}
+.pagination-controls button{padding:6px 10px;border:1px solid #cbd9e0;border-radius:4px;background:#fff;color:#176ca6;font:inherit;font-weight:700;cursor:pointer}
+.pagination-controls button:disabled{opacity:.5;cursor:not-allowed}
+.pagination-controls button:focus-visible{outline:2px solid #176ca6;outline-offset:2px}
+@media(max-width:500px){.pagination-controls{align-items:flex-start;flex-direction:column}.pagination-controls>div{width:100%;justify-content:space-between}}

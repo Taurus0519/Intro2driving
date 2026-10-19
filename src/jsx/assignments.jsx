@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
+import StudentPicker from './StudentPicker';
 
 export default function Assignments() {
   const { user, profile } = useAuth();
@@ -46,12 +47,14 @@ export default function Assignments() {
 
       {showForm && (
         <form className="panel" onSubmit={create} style={{ marginBottom: 20 }}>
-          <label>Student
-            <select value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })} required>
-              <option value="">Select student</option>
-              {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </label>
+          <StudentPicker
+            id="assignment-student-select"
+            label="Student"
+            students={students}
+            value={form.student_id}
+            onChange={(studentId) => setForm({ ...form, student_id: studentId })}
+            placeholder="Select student"
+          />
           <label>Title<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></label>
           <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
           <label>Due date<input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></label>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
+import StudentPicker from './StudentPicker';
 import '../css/Messages.css';
 
 const ATTACHMENT_BUCKET = 'message-attachments';
@@ -384,17 +385,16 @@ export default function Messages() {
             sending={sending}
             submitLabel="Send message"
             recipientSelect={(
-              <label>
-                Recipient
-                <select value={recipientId} onChange={(event) => setRecipientId(event.target.value)} required disabled={recipientsLoading}>
-                  <option value="">
-                    {recipientsLoading ? 'Loading recipients...' : recipients.length ? 'Select recipient' : 'No recipients available'}
-                  </option>
-                  {recipients.map((recipient) => (
-                    <option key={recipient.id} value={recipient.id}>{recipient.name}</option>
-                  ))}
-                </select>
-              </label>
+              <StudentPicker
+                id="message-recipient-select"
+                label="Recipient"
+                students={recipients}
+                value={recipientId}
+                onChange={setRecipientId}
+                itemLabel="recipient"
+                placeholder={recipientsLoading ? 'Loading recipients...' : recipients.length ? 'Select recipient' : 'No recipients available'}
+                disabled={recipientsLoading || recipients.length === 0}
+              />
             )}
           />
         </div>

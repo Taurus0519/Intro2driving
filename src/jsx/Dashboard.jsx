@@ -9,11 +9,13 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklis
 import SuccessRateCharts from './SuccessRateCharts';
 import { fetchAllRows } from '../js/learningStats.mjs';
 import { getProfileDisplayName } from '../js/profileIdentity.mjs';
+import Pagination from './Pagination';
 import '../css/StudentDetails.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
+const STUDENT_PROGRESS_PAGE_SIZE = 10;
 const AGE_GROUP_COLORS = {
   '16-17': '#3b82f6',
   '18-24': '#14b8a6',
@@ -391,6 +393,7 @@ function AdminDashboard({ profile }) {
   const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
   const [studentAchievementsError, setStudentAchievementsError] = useState('');
   const [studentProgressLive, setStudentProgressLive] = useState(false);
+  const [studentProgressPage, setStudentProgressPage] = useState(1);
 
   function handleAgePieMouseMove(event) {
     const chart = event.currentTarget;
@@ -524,6 +527,15 @@ function AdminDashboard({ profile }) {
       void supabase.removeChannel(channel);
     };
   }, [profile?.id]);
+
+  const studentProgressPageCount = Math.max(
+    1,
+    Math.ceil(studentProgress.length / STUDENT_PROGRESS_PAGE_SIZE),
+  );
+  const visibleStudentProgress = studentProgress.slice(
+    (Math.min(studentProgressPage, studentProgressPageCount) - 1) * STUDENT_PROGRESS_PAGE_SIZE,
+    Math.min(studentProgressPage, studentProgressPageCount) * STUDENT_PROGRESS_PAGE_SIZE,
+  );
 
   useEffect(() => {
     let active = true;
@@ -706,56 +718,64 @@ function AdminDashboard({ profile }) {
             ) : studentProgressLoading ? (
               <p className="quiz-results-empty">Loading student progress...</p>
             ) : studentProgress.length ? (
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Game Scores</th>
-                      <th>Earned Achievements</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentProgress.map((student) => (
-                      <tr key={student.id}>
-                        <td><Link className="student-name-link" to={`/students/${student.id}`}>{student.name || 'Student'}</Link></td>
-                        <td>
-                          {studentGameScoresError
-                            ? 'Unavailable'
-                            : studentGameScores[student.id]?.length
-                              ? studentGameScores[student.id]
-                                .map((score) => `Level ${score.level}: ${score.score}/${score.maxScore}`)
-                                .join(', ')
-                              : 'No scores yet'}
-                        </td>
-                        <td>
-                          {studentAchievementsLoading
-                            ? 'Loading...'
-                            : studentAchievementsError
-                              ? 'Unavailable'
-                              : studentAchievements[student.id]?.length
-                                ? (
-                                  <ul className="student-earned-achievements">
-                                    {studentAchievements[student.id].map((award) => {
-                                      const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
-                                      return (
-                                        <li key={award.achievement_id}>
-                                          <span>
-                                            <strong>{achievement.title}</strong>
-                                            <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
-                                          </span>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                )
-                                : 'No achievements completed yet'}
-                        </td>
+              <>
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Game Scores</th>
+                        <th>Earned Achievements</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {visibleStudentProgress.map((student) => (
+                        <tr key={student.id}>
+                          <td><Link className="student-name-link" to={`/students/${student.id}`}>{student.name || 'Student'}</Link></td>
+                          <td>
+                            {studentGameScoresError
+                              ? 'Unavailable'
+                              : studentGameScores[student.id]?.length
+                                ? studentGameScores[student.id]
+                                  .map((score) => `Level ${score.level}: ${score.score}/${score.maxScore}`)
+                                  .join(', ')
+                                : 'No scores yet'}
+                          </td>
+                          <td>
+                            {studentAchievementsLoading
+                              ? 'Loading...'
+                              : studentAchievementsError
+                                ? 'Unavailable'
+                                : studentAchievements[student.id]?.length
+                                  ? (
+                                    <ul className="student-earned-achievements">
+                                      {studentAchievements[student.id].map((award) => {
+                                        const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
+                                        return (
+                                          <li key={award.achievement_id}>
+                                            <span>
+                                              <strong>{achievement.title}</strong>
+                                              <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                                            </span>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )
+                                  : 'No achievements completed yet'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  page={Math.min(studentProgressPage, studentProgressPageCount)}
+                  pageSize={STUDENT_PROGRESS_PAGE_SIZE}
+                  totalItems={studentProgress.length}
+                  onPageChange={setStudentProgressPage}
+                />
+              </>
             ) : (
               <p className="quiz-results-empty">No students are registered yet.</p>
             )}

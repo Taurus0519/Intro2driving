@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase_Client';
 import { useAuth } from './useAunth';
 import { ACHIEVEMENTS } from '../js/achievementData';
+import StudentPicker from './StudentPicker';
 import '../css/Achievements.css';
 
 export default function Achievements() {
@@ -109,15 +110,14 @@ export default function Achievements() {
       </section>
 
       {isSuperAdmin && (
-        <label className="award-select">
-          View achievements for student
-          <select value={studentId} onChange={(event) => setStudentId(event.target.value)}>
-            <option value="">Select a student</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>{student.name}</option>
-            ))}
-          </select>
-        </label>
+        <StudentPicker
+          id="achievement-student-select"
+          className="award-select"
+          label="View achievements for student"
+          students={students}
+          value={studentId}
+          onChange={setStudentId}
+        />
       )}
 
       <h3>{isSuperAdmin ? 'Student Achievements' : 'Your Achievements'}</h3>
