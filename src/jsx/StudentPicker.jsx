@@ -58,7 +58,7 @@ export default function StudentPicker({
           {students.map((student) => (
             <option key={student.id} value={student.id}>{student.name || `Unknown ${itemLabel}`}</option>
           ))}
-          <option value={BROWSE_STUDENTS}>Select all {itemLabel}s…</option>
+          <option value={BROWSE_STUDENTS}>Select a {itemLabel}</option>
         </select>
       </label>
       {isOpen && (
