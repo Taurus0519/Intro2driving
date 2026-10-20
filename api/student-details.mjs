@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchAllRows } from '../src/js/learningStats.mjs';
+import { splitProfileName } from '../src/js/profileIdentity.mjs';
 
 export function createStudentDetailsHandler({
   url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
@@ -44,7 +45,8 @@ export function createStudentDetailsHandler({
       if (studentError) return res.status(500).json({ error: 'Student information could not be loaded.' });
       if (!student) return res.status(404).json({ error: 'This student could not be found.' });
 
-      const sections = await Promise.allSettled([
+      const [identity, ...sections] = await Promise.allSettled([
+        adminClient.auth.admin.getUserById(studentId),
         adminClient.from('student_profiles').select('nickname, age, gender, date_of_birth, address, about, goals')
           .eq('student_id', studentId).maybeSingle(),
         fetchAllRows(() => adminClient.from('game_scores')
@@ -59,7 +61,10 @@ export function createStudentDetailsHandler({
           .select('item_id, result, remarks').eq('student_id', studentId).order('item_id')),
       ]);
       const names = ['details', 'gameScores', 'quizAttempts', 'achievements', 'pdcResponses'];
-      const result = { student, errors: {} };
+      const savedUser = identity.status === 'fulfilled' && !identity.value.error ? identity.value.data?.user : null;
+      const nameParts = splitProfileName(student.name,
+        savedUser?.id === studentId ? savedUser.user_metadata?.profile_name : null);
+      const result = { student: { ...student, ...nameParts }, errors: {} };
       sections.forEach((section, index) => {
         const name = names[index];
         const value = section.status === 'fulfilled' ? section.value : { error: section.reason };

@@ -69,7 +69,8 @@ export default function StudentDetails() {
             <span className={`status ${student.status === 'Active' ? 'active' : 'inactive'}`}>{student.status || 'Unknown'}</span></div>
           <dl className="student-details-grid">
             {[
-              ['Full name', student.name], ['Email', student.email], ['Username', student.username],
+              ['First Name', student.firstName || null], ['Last Name', student.lastName || null],
+              ['Email', student.email], ['Username', student.username],
               ['Nickname', details.nickname], ['Age', details.age], ['Gender', details.gender],
               ['Date of birth', displayDate(details.date_of_birth)], ['Address', details.address],
               ['Game progress', student.progress != null && Number.isFinite(Number(student.progress)) ? `${student.progress}%` : null],

@@ -5,10 +5,11 @@ import { createStudentDetailsHandler } from '../api/student-details.mjs';
 const studentId = '11111111-1111-4111-8111-111111111111';
 const otherId = '22222222-2222-4222-8222-222222222222';
 
-function setup({ role = 'admin', validToken = true, missingStudent = false, failedSection } = {}) {
+function setup({ role = 'admin', validToken = true, missingStudent = false, failedSection,
+  name = 'Test Student', profileName, identityFailure, identityId = studentId } = {}) {
   const calls = [];
   const rows = {
-    profiles: missingStudent ? [] : [{ id: studentId, role: 'student', name: 'Test Student' }],
+    profiles: missingStudent ? [] : [{ id: studentId, role: 'student', name }],
     student_profiles: [{ student_id: studentId, age: 20 }],
     game_scores: [{ player_id: studentId, level: 1, score: 8, max_score: 10 }, { player_id: otherId, score: 10, max_score: 10 }],
     quiz_attempts: [{ student_id: studentId, id: 'attempt', score: 7, total_questions: 10 }, { student_id: otherId, id: 'other' }],
@@ -18,7 +19,17 @@ function setup({ role = 'admin', validToken = true, missingStudent = false, fail
   const clientFactory = (_url, key, options) => {
     calls.push({ key });
     return {
-      auth: { getUser: async () => ({ data: { user: validToken ? { id: 'caller', user_metadata: { role: 'superadmin' } } : null }, error: null }) },
+      auth: {
+        getUser: async () => ({ data: { user: validToken ? { id: 'caller', user_metadata: { role: 'superadmin' } } : null }, error: null }),
+        admin: { async getUserById(userId) {
+          calls.push({ key, userId });
+          if (identityFailure === 'throw') throw new Error('Unavailable');
+          if (identityFailure) return { data: { user: null }, error: { message: 'Unavailable' } };
+          return { data: { user: { id: identityId,
+            user_metadata: { profile_name: profileName, unrelated: 'Private metadata' },
+          } }, error: null };
+        } },
+      },
       from(table) {
         const filters = [];
         const getResult = (single = false, from = 0, to = Infinity) => {
@@ -67,10 +78,58 @@ test('both school administrator roles can load only the selected student records
     await handler(request, response);
     assert.equal(response.statusCode, 200);
     assert.equal(response.body.student.id, studentId);
+    assert.equal(response.body.student.firstName, 'Test');
+    assert.equal(response.body.student.lastName, 'Student');
     for (const name of ['gameScores', 'quizAttempts', 'achievements', 'pdcResponses']) assert.equal(response.body[name].length, 1);
     assert.equal(response.body.details.age, 20);
     assert.deepEqual(response.body.errors, {});
     assert.equal(response.headers['Cache-Control'], 'private, no-store');
+  }
+});
+
+test('student information preserves saved first and compound last names without exposing auth metadata', async () => {
+  const name = 'Maria Isabel de la Cruz';
+  const { handler, request, response, calls } = setup({
+    name, profileName: { firstName: 'Maria Isabel', lastName: 'de la Cruz' },
+  });
+  await handler(request, response);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.body.student, {
+    id: studentId, role: 'student', name, firstName: 'Maria Isabel', lastName: 'de la Cruz',
+  });
+  assert.deepEqual(calls.filter((call) => call.userId), [{ key: 'server', userId: studentId }]);
+});
+
+test('legacy single names leave the last name empty rather than inventing one', async () => {
+  const { handler, request, response } = setup({ name: 'Sean' });
+  await handler(request, response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.student.firstName, 'Sean');
+  assert.equal(response.body.student.lastName, '');
+});
+
+test('stale saved names and metadata from another account cannot replace the current profile name', async () => {
+  for (const options of [
+    { profileName: { firstName: 'Old', lastName: 'Name' } },
+    { identityId: otherId, name: 'Maria Isabel de la Cruz', profileName: { firstName: 'Maria Isabel', lastName: 'de la Cruz' } },
+  ]) {
+    const { handler, request, response } = setup(options);
+    await handler(request, response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.student.firstName, options.name ? 'Maria Isabel de la' : 'Test');
+    assert.equal(response.body.student.lastName, options.name ? 'Cruz' : 'Student');
+  }
+});
+
+test('an unavailable name metadata lookup still returns student information and results', async () => {
+  for (const identityFailure of ['error', 'throw']) {
+    const { handler, request, response } = setup({ identityFailure });
+    await handler(request, response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.student.firstName, 'Test');
+    assert.equal(response.body.student.lastName, 'Student');
+    assert.equal(response.body.quizAttempts.length, 1);
+    assert.deepEqual(response.body.errors, {});
   }
 });
 
