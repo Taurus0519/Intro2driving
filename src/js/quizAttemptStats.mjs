@@ -63,7 +63,12 @@ export function getQuizChapterBreakdown(rows, options = {}) {
 }
 
 export function getGameLevelBreakdown(rows, maximumField = 'max_score') {
-  const levels = new Map();
+  const levels = new Map(Array.from({ length: 7 }, (_, index) => [index + 1, {
+    label: `Level ${index + 1}`,
+    earned: 0,
+    missed: 0,
+    attempts: 0,
+  }]));
   for (const row of rows || []) {
     const score = Number(row.score);
     const maximum = Number(row[maximumField]);
@@ -72,7 +77,7 @@ export function getGameLevelBreakdown(rows, maximumField = 'max_score') {
     const level = Number(row.level);
     const levelKey = Number.isInteger(level) && level > 0 ? level : 'other';
     const values = levels.get(levelKey) || {
-      label: levelKey === 'other' ? 'Other' : `Game ${levelKey}`,
+      label: levelKey === 'other' ? 'Other' : `Level ${levelKey}`,
       earned: 0,
       missed: 0,
       attempts: 0,

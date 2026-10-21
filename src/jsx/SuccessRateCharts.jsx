@@ -70,7 +70,7 @@ export function SuccessRateCard({
                             {item.attempts} {item.attempts === 1 ? 'attempt' : 'attempts'}
                           </span>
                           <div className="success-chart-plot">
-                            <div className="success-chart-bar" title={`${item.label}: ${item.attempts} attempts`}
+                            {total > 0 && <div className="success-chart-bar" title={`${item.label}: ${item.attempts} attempts`}
                               style={{ height: `${(total / maximumBarValue) * 100}%` }}>
                             <span className="success-chart-segment missed"
                               style={{ height: `${total ? (remaining / total) * 100 : 0}%` }}
@@ -78,7 +78,7 @@ export function SuccessRateCard({
                             <span className="success-chart-segment earned"
                               style={{ height: `${total ? (earned / total) * 100 : 0}%`, backgroundColor: color }}
                               title={`${earned} ${earnedLabel.toLowerCase()}`} />
-                            </div>
+                            </div>}
                           </div>
                           <span className="success-chart-label">{item.label}</span>
                         </div>

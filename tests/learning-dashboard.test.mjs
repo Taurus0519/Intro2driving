@@ -98,9 +98,15 @@ test('game level bars show points earned, points missed, and valid attempt total
     { level: 1, score: 0, max_score: 5 },
     { level: 2, score: 4, max_score: 10 },
     { level: 1, score: 6, max_score: 5 },
+    { level: 7, score: 3, max_score: 5 },
   ]), [
-    { label: 'Game 1', earned: 0, missed: 5, attempts: 1 },
-    { label: 'Game 2', earned: 12, missed: 8, attempts: 2 },
+    { label: 'Level 1', earned: 0, missed: 5, attempts: 1 },
+    { label: 'Level 2', earned: 12, missed: 8, attempts: 2 },
+    { label: 'Level 3', earned: 0, missed: 0, attempts: 0 },
+    { label: 'Level 4', earned: 0, missed: 0, attempts: 0 },
+    { label: 'Level 5', earned: 0, missed: 0, attempts: 0 },
+    { label: 'Level 6', earned: 0, missed: 0, attempts: 0 },
+    { label: 'Level 7', earned: 3, missed: 2, attempts: 1 },
   ]);
 });
 
