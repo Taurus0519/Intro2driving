@@ -107,6 +107,15 @@ export default function LandingPage() {
           </button>
         </div>
         <nav className="landing-menu-links" aria-label="Main navigation">
+          <Link to="#about" onClick={closeMenu}>
+            <span className="landing-menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 11v5m0-8h.01" />
+              </svg>
+            </span>
+            About
+          </Link>
           <Link to="#faq" onClick={closeMenu}>
             <span className="landing-menu-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
@@ -142,7 +151,7 @@ export default function LandingPage() {
           </Link>
         </nav>
       </dialog>
-      <section className="landing-hero" id="about" aria-labelledby="landing-title">
+      <section className="landing-hero" id="landing-top" aria-labelledby="landing-title">
         <div className="landing-copy">
           <header className="landing-header">
             <button
@@ -192,6 +201,41 @@ export default function LandingPage() {
             fetchPriority="high"
             decoding="async"
           />
+        </div>
+      </section>
+
+      <section className="landing-about" id="about" aria-labelledby="about-title">
+        <div className="landing-about-heading">
+          <p className="landing-eyebrow">ABOUT THE GAME</p>
+          <h2 id="about-title">Intro2driving</h2>
+          <p>
+            Intro2driving is a fully immersive 3D simulation built entirely using the Unity Engine.
+            The game is designed to help players experience realistic road conditions while strictly
+            adhering to official Land Transportation Office (LTO) laws, rules, and regulations.
+          </p>
+        </div>
+        <div className="landing-about-details">
+          <article>
+            <h3>LTO &amp; Manual Integration</h3>
+            <p>
+              Every scenario in the game serves as an interactive reference to Philippine traffic
+              laws, right-of-way rules, and road safety standards. To provide an authentic testing
+              experience, players must navigate these LTO regulations using manual driving mechanics,
+              requiring proper clutch control and gear management to successfully pass road assessments.
+            </p>
+          </article>
+          <article className="landing-about-disclaimer">
+            <h3>Legal Disclaimer</h3>
+            <p>
+              This game serves as an educational supplement. While it accurately references LTO
+              guidelines and manual vehicle operations, it does not replace official LTO theoretical
+              courses or practical examinations.
+            </p>
+            <p className="landing-about-copyright">
+              © 2026. Powered by Unity. All official LTO regulations, traffic symbols, and statutory
+              codes remain the property of their respective government bodies.
+            </p>
+          </article>
         </div>
       </section>
 
@@ -314,7 +358,7 @@ export default function LandingPage() {
         <footer className="landing-site-footer">
           <div>
             <p>© 2026 Intro2driving, made for Riteway Driving School - Caloocan, Metro Manila.</p>
-            <a href="#about">Back to top <span aria-hidden="true">↑</span></a>
+            <a href="#landing-top">Back to top <span aria-hidden="true">↑</span></a>
           </div>
         </footer>
       </div>
