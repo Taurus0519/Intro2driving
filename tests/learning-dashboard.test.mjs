@@ -106,7 +106,6 @@ test('game level bars show points earned, points missed, and valid attempt total
     { label: 'Level 4', earned: 0, missed: 0, attempts: 0 },
     { label: 'Level 5', earned: 0, missed: 0, attempts: 0 },
     { label: 'Level 6', earned: 0, missed: 0, attempts: 0 },
-    { label: 'Level 7', earned: 3, missed: 2, attempts: 1 },
   ]);
 });
 

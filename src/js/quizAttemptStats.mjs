@@ -63,7 +63,7 @@ export function getQuizChapterBreakdown(rows, options = {}) {
 }
 
 export function getGameLevelBreakdown(rows, maximumField = 'max_score') {
-  const levels = new Map(Array.from({ length: 7 }, (_, index) => [index + 1, {
+  const levels = new Map(Array.from({ length: 6 }, (_, index) => [index + 1, {
     label: `Level ${index + 1}`,
     earned: 0,
     missed: 0,
@@ -75,6 +75,7 @@ export function getGameLevelBreakdown(rows, maximumField = 'max_score') {
     if (!Number.isFinite(score) || !Number.isFinite(maximum)
       || maximum <= 0 || score < 0 || score > maximum) continue;
     const level = Number(row.level);
+    if (level === 7) continue;
     const levelKey = Number.isInteger(level) && level > 0 ? level : 'other';
     const values = levels.get(levelKey) || {
       label: levelKey === 'other' ? 'Other' : `Level ${levelKey}`,
