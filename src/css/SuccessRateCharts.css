@@ -30,3 +30,4 @@
 .success-rate-message{color:#607d91;font-size:13px;min-height:150px;display:grid;place-items:center}
 @media(max-width:1150px){.success-chart-legend{grid-template-columns:1fr}.success-rate-card-heading{align-items:flex-start}}
 @media(max-width:550px){.success-rate-grid{grid-template-columns:1fr}.success-chart-columns{min-height:200px}.success-chart-plot{height:140px}}
+.success-chart-label strong{font-weight:800}
