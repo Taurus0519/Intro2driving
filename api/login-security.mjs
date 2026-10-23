@@ -42,13 +42,6 @@ export function createLoginSecurityHandler({
         const { data, error } = await auth.auth.signInWithPassword({ email, password: body.password });
         if (error || !data?.session) return failAttempt(attempt, 'Incorrect email or password.');
         await clearAttempts(admin, attempt.key);
-        const { data: loginProfile, error: loginProfileError } = await admin.from('profiles').select('role, status').eq('id', data.user.id).maybeSingle();
-        if (loginProfileError) throw new Error('Your account could not be verified.');
-        if (['admin', 'superadmin'].includes(loginProfile?.role) && loginProfile.status !== 'Inactive') {
-          const { error } = await admin.from('portal_verified_sessions').upsert({ user_id: data.user.id,
-            session_id: tokenSessionId(data.session.access_token), last_activity_at: new Date().toISOString() }, { onConflict: 'session_id' });
-          if (error) throw new Error('Your administrator session could not be opened.');
-        }
         // The session cannot read portal data until its PIN has been verified.
         return res.status(200).json({ session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } });
       }
@@ -68,31 +61,17 @@ export function createLoginSecurityHandler({
       if (securityError) throw new Error('Security controls are unavailable. Ask the school administrator to complete the security database setup.');
       const pinState = { pinRequired: true, needsSetup: !security, questionId: security?.question_id || null };
       const staff = profile.role !== 'student';
-      if (staff) { pinState.passwordRequired = true; pinState.needsSetup = false; }
-      let acceptedPinHash = security?.pin_hash;
 
-      if (staff && body.action === 'verify-password') {
-        if (typeof body.password !== 'string' || !body.password || body.password.length > 1024) return res.status(400).json({ error: 'Enter your administrator password.' });
-        const attempt = await reserve('password', user.email.toLowerCase());
-        if (!attempt) return;
-        const result = await auth.auth.signInWithPassword({ email: user.email, password: body.password });
-        if (result.error || result.data?.user?.id !== user.id) return failAttempt(attempt, 'Incorrect password.');
-        await auth.auth.signOut({ scope: 'local' });
-        await clearAttempts(admin, attempt.key);
-        const { error } = await admin.from('portal_verified_sessions').upsert({ user_id: user.id, session_id: sessionId,
-          last_activity_at: new Date().toISOString() }, { onConflict: 'session_id' });
-        if (error) throw new Error('Your portal could not be unlocked.');
-        return res.status(200).json({ pinRequired: false, profile });
-      }
-      if (staff && ['setup-pin', 'verify-pin', 'reset-pin'].includes(body.action)) return res.status(400).json({ error: 'Security PINs are for student accounts. Use your administrator password.' });
+      let acceptedPinHash = security?.pin_hash;
 
       if (body.action === 'lock') {
         const { error } = await admin.from('portal_verified_sessions').delete().eq('user_id', user.id).eq('session_id', sessionId);
         if (error) throw new Error('The portal could not be locked. Please sign out.');
         return res.status(200).json(pinState);
       }
-      if (body.action === 'status' || body.action === 'touch') {
-        if ((!staff && !security) || !await verifiedPortalSession(admin, user.id, token)) return res.status(200).json(pinState);
+      if (body.action === 'status') return res.status(200).json({ pinRequired: false, profile });
+      if (body.action === 'module-status' || body.action === 'touch') {
+        if (!security || !await verifiedPortalSession(admin, user.id, token)) return res.status(200).json(pinState);
         if (body.action === 'touch') {
           const { data, error } = await admin.from('portal_verified_sessions').update({ last_activity_at: new Date().toISOString() })
             .eq('user_id', user.id).eq('session_id', sessionId).select('session_id').maybeSingle();

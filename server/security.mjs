@@ -47,7 +47,8 @@ export async function verifiedPortalSession(client, userId, token, now = Date.no
 }
 
 export async function requirePortalSession(client, userId, token, res) {
-  if (await verifiedPortalSession(client, userId, token)) return true;
+  const { data: profile, error } = await client.from('profiles').select('role, status').eq('id', userId).maybeSingle();
+  if (!error && profile && profile.status !== 'Inactive' && ['student','admin','superadmin'].includes(profile.role)) return true;
   res.status(423).json({ error: 'Your portal is locked. Unlock it to continue.', pinRequired: true });
   return false;
 }

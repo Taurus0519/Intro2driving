@@ -2,30 +2,7 @@ import { useState } from 'react';
 import { useAuth } from './useAunth';
 import { SECURITY_QUESTIONS, normalizeAnswer, validPin } from '../js/securityConfig.mjs';
 
-export default function SecurityPinForm() {
-  const { pinStatus } = useAuth();
-  return pinStatus?.passwordRequired ? <StaffUnlock /> : <StudentPinForm />;
-}
-
-function StaffUnlock() {
-  const { completePin, signOut } = useAuth();
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  async function submit(event) {
-    event.preventDefault(); setBusy(true); setError('');
-    try { await completePin('verify-password', { password }); }
-    catch (error) { setError(error.message); }
-    finally { setBusy(false); setPassword(''); }
-  }
-  return <div className="login-view"><div className="login-card">
-    <h1>Portal locked</h1><p className="muted">Enter your administrator password to continue after 5 minutes of inactivity.</p>
-    <form onSubmit={submit}><label>Password<input type="password" autoComplete="current-password" required disabled={busy} value={password} onChange={(event) => setPassword(event.target.value)} /></label>
-      {error && <p className="error" role="alert">{error}</p>}
-      <button className="button primary full" disabled={busy}>{busy ? 'Verifying…' : 'Unlock portal'}</button>
-    </form><button type="button" className="text-button" onClick={() => void signOut()}>Sign out</button>
-  </div></div>;
-}
+export default function SecurityPinForm() { return <StudentPinForm />; }
 
 function StudentPinForm() {
   const { user, pinStatus, completePin, signOut } = useAuth();
@@ -60,11 +37,11 @@ function StudentPinForm() {
   return <div className="login-view"><div className="login-card security-pin-card">
     <img className="brand-mark-image" src={`${import.meta.env.BASE_URL}riteway-logo.png`} alt="Riteway Driving School" />
     <p className="eyebrow">RITEWAY DRIVING SCHOOL</p>
-    <h1>{setup ? 'Create your security PIN' : recovering ? 'Reset your PIN' : 'Portal locked'}</h1>
+    <h1>{setup ? 'Create your security PIN' : recovering ? 'Reset your PIN' : 'Students module locked'}</h1>
     <p className="muted">{setup
       ? 'Choose a private 6-digit PIN and a security question to protect your account.'
       : recovering ? 'Verify your password and security answer to create a new PIN.'
-        : 'Enter your 6-digit security PIN to continue. The portal locks after 5 minutes of inactivity.'}</p>
+        : 'Enter your 6-digit administrator PIN to view student information. This module locks after 5 minutes of inactivity.'}</p>
     <p className="security-account">{user?.email}</p>
     <form onSubmit={submit}>
       {setup && <label>Security question<select value={questionId} disabled={loading} onChange={(event) => setQuestionId(event.target.value)}>

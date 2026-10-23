@@ -92,9 +92,8 @@ test('student quiz results reject writes', async () => {
   assert.equal(response.headers.Allow, 'GET');
 });
 
-test('locked student sessions cannot read quiz results', async () => {
+test('quiz results outside the Students module do not require a module PIN', async () => {
   const { handler, request, response } = setup({ unlocked: false });
   await handler(request, response);
-  assert.equal(response.statusCode, 423);
-  assert.equal(response.body.pinRequired, true);
+  assert.equal(response.statusCode, 200);
 });

@@ -115,15 +115,15 @@ test('a correct password clears the attempt count but does not unlock portal dat
   assert.equal(login.statusCode, 200);
   assert.ok(login.body.session);
   assert.equal(app.unlocks, 0);
-  const status = await app.request({ action: 'status' });
+  const status = await app.request({ action: 'module-status' });
   assert.equal(status.body.pinRequired, true);
   assert.equal(status.body.profile, undefined);
 });
 
 test('student PINs are required and verified on the server', async () => {
-  for (const role of ['student']) {
+  for (const role of ['student','admin','superadmin']) {
     const app = setup({ role });
-    assert.equal((await app.request({ action: 'status' })).body.pinRequired, true);
+    assert.equal((await app.request({ action: 'module-status' })).body.pinRequired, true);
     const wrong = await app.request({ action: 'verify-pin', pin: '000000' });
     assert.equal(wrong.body.attemptsRemaining, 2);
     assert.equal(app.unlocks, 0);
@@ -135,24 +135,18 @@ test('student PINs are required and verified on the server', async () => {
   }
 });
 
-test('staff sign in and unlock with passwords rather than student PINs', async () => {
-  for (const role of ['admin','superadmin']) {
-    const app=setup({role,configured:false});
-    const login=await app.request({action:'sign-in',email:'test@example.com',password:'correct-password'});
-    assert.equal(login.statusCode,200);
-    assert.equal((await app.request({action:'status'})).body.pinRequired,false);
-    const lock=await app.request({action:'lock'});
-    assert.equal(lock.body.passwordRequired,true);
-    assert.equal((await app.request({action:'verify-pin',pin:'123456'})).statusCode,400);
-    const result=await app.request({action:'verify-password',password:'correct-password'});
-    assert.equal(result.statusCode,200);
-    assert.equal(result.body.pinRequired,false);
-  }
+test('ordinary portal status does not require a PIN for any role', async () => {
+ for (const role of ['student','admin','superadmin']) {
+ const app=setup({role,configured:false});
+ const result=await app.request({action:'status'});
+ assert.equal(result.body.pinRequired,false);
+ assert.equal((await app.request({action:'module-status'})).body.needsSetup,true);
+ }
 });
 
 test('PIN enrollment hashes secrets, validates question and cannot overwrite an existing PIN', async () => {
   const app = setup({ configured: false });
-  assert.equal((await app.request({ action: 'status' })).body.needsSetup, true);
+  assert.equal((await app.request({ action: 'module-status' })).body.needsSetup, true);
   const setupResult = await app.request({ action: 'setup-pin', pin: '654321', questionId: 'first-school', answer: ' Green Valley ' });
   assert.equal(setupResult.statusCode, 200);
   assert.equal(app.rows.portal_pin_credentials.length, 1);
@@ -193,7 +187,7 @@ test('admin-assisted reset verifies both admin password and student answer', asy
 
 test('locking deletes verification and status never exposes security hashes', async () => {
   const app = setup({ unlocked: true });
-  const unlocked = await app.request({ action: 'status' });
+  const unlocked = await app.request({ action: 'module-status' });
   assert.equal(unlocked.body.pinRequired, false);
   const locked = await app.request({ action: 'lock' });
   assert.equal(locked.body.pinRequired, true);
@@ -202,8 +196,8 @@ test('locking deletes verification and status never exposes security hashes', as
 });
 
 test('missing authentication, expired sessions and unavailable controls fail closed', async () => {
-  assert.equal((await setup().request({ action: 'status' }, { authenticated: false })).statusCode, 401);
-  assert.equal((await setup({ validToken: false }).request({ action: 'status' })).statusCode, 401);
+  assert.equal((await setup().request({ action: 'module-status' }, { authenticated: false })).statusCode, 401);
+  assert.equal((await setup({ validToken: false }).request({ action: 'module-status' })).statusCode, 401);
   const app = setup({ databaseDown: true });
   assert.equal((await app.request({ action: 'sign-in', email: 'test@example.com', password: 'correct-password' })).statusCode, 503);
   assert.equal(app.passwordCalls, 0);

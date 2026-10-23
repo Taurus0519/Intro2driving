@@ -39,7 +39,6 @@ export function createStudentQuizAttemptsHandler({
       if (profile?.role !== 'student') {
         return res.status(403).json({ error: 'Only students can use this endpoint to view quiz results.' });
       }
-      if (!await sessionVerifier(adminClient, user.id, token)) return res.status(423).json({ error: 'Unlock your portal with your security PIN.', pinRequired: true });
 
       const { data: attempts, error: attemptsError } = await fetchAllRows(() => adminClient
         .from('quiz_attempts')

@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
   const [welcomeUserId, setWelcomeUserId] = useState(null);
   const [pinStatus, setPinStatus] = useState(null);
   const [authError, setAuthError] = useState('');
+  const [moduleActive, setModuleActive] = useState(false);
   const authVersion = useRef(0);
   const activityTime = useRef(Date.now());
   const tokenRef = useRef(null);
@@ -59,7 +60,6 @@ export function AuthProvider({ children }) {
       const result = await securityRequest('status', {}, token);
       if (version !== authVersion.current) return;
       setAuthError('');
-      setPinStatus(result.pinRequired ? result : null);
       setProfile(result.pinRequired ? null : result.profile);
     } catch (error) {
       if (version !== authVersion.current) return;
@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
     const result = await securityRequest(action, values);
     ++authVersion.current;
     if (result.pinRequired) {
-      setPinStatus(result); setProfile(null);
+      setPinStatus(result);
     } else {
       activityTime.current = Date.now();
       storeEvent('riteway-portal-activity', activityTime.current);
@@ -99,9 +99,9 @@ export function AuthProvider({ children }) {
 
   async function lockPortal(broadcast = true) {
     const version = ++authVersion.current;
-    const lockState = { pinRequired: true, needsSetup: false, passwordRequired: profile?.role !== 'student' };
+    const lockState = { pinRequired: true, needsSetup: false, passwordRequired: false };
     setPinStatus({ ...lockState, locking: true });
-    setProfile(null); setWelcomeUserId(null);
+    setWelcomeUserId(null);
     if (broadcast) storeEvent('riteway-portal-lock', Date.now());
     try {
       const result = await securityRequest('lock', {}, tokenRef.current);
@@ -113,7 +113,7 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    if (!user || !profile || pinStatus) return;
+    if (!user || !profile || pinStatus || !moduleActive) return;
     const stored = readActivity();
     activityTime.current = stored || Date.now();
     let busy = false;
@@ -140,7 +140,7 @@ export function AuthProvider({ children }) {
       const version = authVersion.current;
       try {
         const result = await securityRequest('touch', {}, tokenRef.current);
-        if (version === authVersion.current && result.pinRequired) { setProfile(null); setPinStatus(result); }
+        if (version === authVersion.current && result.pinRequired) { setPinStatus(result); }
         lastTouch = Date.now();
         lastActivitySent = activityTime.current;
       } catch { if (version === authVersion.current) void lockPortal(); }
@@ -158,7 +158,7 @@ export function AuthProvider({ children }) {
       window.removeEventListener('storage', onStorage); window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', check); window.clearInterval(interval);
     };
-  }, [user?.id, profile?.id, Boolean(pinStatus)]);
+  }, [user?.id, profile?.id, Boolean(pinStatus), moduleActive]);
 
   const resetPassword = (email) => {
     const configuredAppUrl = import.meta.env.DEV ? import.meta.env.VITE_APP_URL : '';
@@ -186,7 +186,8 @@ export function AuthProvider({ children }) {
 
   const contextValue = {
     user, profile, loading, loginInProgress, showLoginWelcome, pinStatus, authError,
-    signIn, resetPassword, updatePassword, signOut, completePin, lockPortal,
+    signIn, resetPassword, updatePassword, signOut, completePin, lockPortal, setModuleActive,
+    checkModule: async () => { const result = await securityRequest('module-status'); setPinStatus(result.pinRequired ? result : null); return result; },
     refreshProfile: () => user && fetchProfile(tokenRef.current),
     isSuperAdmin, isAdmin, isStudent,
   };

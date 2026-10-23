@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import SecurityPinForm from './SecurityPinForm';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './useAunth';
 import Layout from './Layout';
@@ -23,7 +24,6 @@ function Protected() {
 
   if (loading || loginInProgress) return <div className="loading-screen">Loading portal...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (pinStatus?.pinRequired) return <LoginPage />;
   if (!profile) {
     return <div className="loading-screen"><div>
       <p>{authError || 'Your account profile could not be loaded. Please sign in again.'}</p>
@@ -39,6 +39,20 @@ function Protected() {
 function Role({ allow }) {
   const { profile } = useAuth();
   return allow.includes(profile?.role) ? <Outlet /> : <Navigate to="/dashboard" replace />;
+}
+function StudentModule() {
+  const { pinStatus, checkModule, setModuleActive } = useAuth();
+  const [checking, setChecking] = useState(true);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    checkModule().then(() => { if (active) { setModuleActive(true); setChecking(false); } })
+      .catch((error) => { if (active) { setError(error.message); setChecking(false); } });
+    return () => { active = false; setModuleActive(false); };
+  }, []);
+  if (checking) return <p role="status">Checking student module security…</p>;
+  if (error) return <p role="alert" className="error">{error}</p>;
+  return pinStatus?.pinRequired ? <SecurityPinForm /> : <Outlet />;
 }
 function Guest({ children }) {
   const { user, profile, loading } = useAuth();
@@ -67,8 +81,10 @@ export default function App() {
         <Route path="lessons" element={<Navigate to="/quiz" replace />} />
       </Route>
       <Route element={<Role allow={['admin', 'superadmin']} />}>
+        <Route element={<StudentModule />}>
         <Route path="students" element={<Students />} />
         <Route path="students/:studentId" element={<StudentDetails />} />
+        </Route>
       </Route>
       <Route element={<Role allow={['superadmin']} />}><Route path="admins" element={<Admins />} /></Route>
     </Route>
