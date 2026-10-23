@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import Pagination from './Pagination';
 import '../css/StudentDetails.css';
 
-const STUDENTS_PAGE_SIZE = 10;
+const STUDENTS_PAGE_SIZE = 3;
 
 export default function Students() {
   const { isAdmin } = useAuth();

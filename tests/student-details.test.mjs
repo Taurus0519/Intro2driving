@@ -6,7 +6,7 @@ const studentId = '11111111-1111-4111-8111-111111111111';
 const otherId = '22222222-2222-4222-8222-222222222222';
 
 function setup({ role = 'admin', validToken = true, missingStudent = false, failedSection,
-  name = 'Test Student', profileName, identityFailure, identityId = studentId } = {}) {
+  name = 'Test Student', profileName, identityFailure, identityId = studentId, unlocked = true } = {}) {
   const calls = [];
   const rows = {
     profiles: missingStudent ? [] : [{ id: studentId, role: 'student', name }],
@@ -47,7 +47,7 @@ function setup({ role = 'admin', validToken = true, missingStudent = false, fail
       },
     };
   };
-  const handler = createStudentDetailsHandler({ url: 'https://example.supabase.co', publishableKey: 'public', serviceRoleKey: 'server', clientFactory });
+  const handler = createStudentDetailsHandler({ url: 'https://example.supabase.co', publishableKey: 'public', serviceRoleKey: 'server', clientFactory, sessionVerifier: async () => unlocked });
   const response = { headers: {}, setHeader(name, value) { this.headers[name] = value; }, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   const request = { method: 'GET', headers: { authorization: 'Bearer test-token' }, query: { studentId } };
   return { handler, request, response, calls };
@@ -63,6 +63,13 @@ test('student details reject missing or expired sessions', async () => {
   await expired.handler(expired.request, expired.response);
   assert.equal(expired.response.statusCode, 401);
   assert.ok(expired.calls.every((call) => call.key !== 'server'));
+});
+
+test('locked administrators cannot load student details', async () => {
+  const { handler, request, response } = setup({ unlocked: false });
+  await handler(request, response);
+  assert.equal(response.statusCode, 423);
+  assert.equal(response.body.pinRequired, true);
 });
 
 test('students cannot access another student by URL or user-editable role metadata', async () => {

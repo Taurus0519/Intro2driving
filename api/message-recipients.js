@@ -31,10 +31,12 @@ module.exports = async function handler(req, res) {
   });
 
   try {
+    const { requirePortalSession } = await import('../server/security.mjs');
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) {
       return respond(res, 401, { error: 'Your session is invalid or expired. Sign in again.' });
     }
+    if (!await requirePortalSession(adminClient, user.id, token, res)) return;
 
     const { data: callerProfile, error: callerProfileError } = await adminClient
       .from('profiles')

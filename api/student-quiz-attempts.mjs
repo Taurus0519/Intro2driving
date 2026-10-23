@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchAllRows } from '../src/js/learningStats.mjs';
+import { verifiedPortalSession } from '../server/security.mjs';
 
 export function createStudentQuizAttemptsHandler({
   url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
   publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY,
   serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY,
   clientFactory = createClient,
+  sessionVerifier = verifiedPortalSession,
 } = {}) {
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'private, no-store');
@@ -37,6 +39,7 @@ export function createStudentQuizAttemptsHandler({
       if (profile?.role !== 'student') {
         return res.status(403).json({ error: 'Only students can use this endpoint to view quiz results.' });
       }
+      if (!await sessionVerifier(adminClient, user.id, token)) return res.status(423).json({ error: 'Unlock your portal with your security PIN.', pinRequired: true });
 
       const { data: attempts, error: attemptsError } = await fetchAllRows(() => adminClient
         .from('quiz_attempts')

@@ -1,4 +1,7 @@
 import Calendar from './Calendar';
+import EnrolmentChart from './EnrolmentChart';
+import GameScoreList from './GameScoreList';
+import Pagination from './Pagination';
 import { useEffect, useState } from 'react';
 import '../css/Dashboard.css';
 import { supabase } from './supabase_Client';
@@ -10,13 +13,11 @@ import SuccessRateCharts from './SuccessRateCharts';
 import { fetchAllRows } from '../js/learningStats.mjs';
 import { getProfileDisplayName } from '../js/profileIdentity.mjs';
 import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
-import Pagination from './Pagination';
 import '../css/StudentDetails.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
-const STUDENT_PROGRESS_PAGE_SIZE = 10;
 const AGE_GROUP_COLORS = {
   '16-17': '#3b82f6',
   '18-24': '#14b8a6',
@@ -294,19 +295,8 @@ function StudentDashboard({ profile }) {
             </div>
             {gameScoresError ? (
               <p role="alert" className="quiz-results-error">{gameScoresError}</p>
-            ) : gameScores.length ? (
-              <ul className="completed-achievements-list">
-                {gameScores.map((item) => (
-                  <li key={`level-${item.level}`} className="completed-achievement-item">
-                    <div>
-                      <strong>Level {item.level}</strong>
-                      <small>{item.score}/{item.maxScore}</small>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             ) : (
-              <p className="quiz-results-empty">No game scores recorded yet.</p>
+              <GameScoreList scores={gameScores} />
             )}
           </section>
 
@@ -385,16 +375,10 @@ function AdminDashboard({ profile }) {
   const [pdcStudentCount, setPdcStudentCount] = useState(0);
   const [pdcCompletedCount, setPdcCompletedCount] = useState(0);
   const [pdcStatsError, setPdcStatsError] = useState('');
-  const [studentProgress, setStudentProgress] = useState([]);
-  const [studentProgressLoading, setStudentProgressLoading] = useState(true);
-  const [studentProgressError, setStudentProgressError] = useState('');
-  const [studentGameScores, setStudentGameScores] = useState({});
-  const [studentGameScoresError, setStudentGameScoresError] = useState('');
-  const [studentAchievements, setStudentAchievements] = useState({});
-  const [studentAchievementsLoading, setStudentAchievementsLoading] = useState(true);
-  const [studentAchievementsError, setStudentAchievementsError] = useState('');
-  const [studentProgressLive, setStudentProgressLive] = useState(false);
-  const [studentProgressPage, setStudentProgressPage] = useState(1);
+  const [students, setStudents] = useState([]);
+  const [studentsError, setStudentsError] = useState('');
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [quizPage, setQuizPage] = useState(1);
 
   function handleAgePieMouseMove(event) {
     const chart = event.currentTarget;
@@ -425,118 +409,16 @@ function AdminDashboard({ profile }) {
 
   useEffect(() => {
     let active = true;
-
-    async function loadStudentProgress() {
-      const [studentsResult, scoresResult, sessionResult] = await Promise.all([
-        supabase.from('profiles').select('id, name, progress').eq('role', 'student').order('name'),
-        fetchAllRows(() =>
-          supabase
-            .from('game_scores')
-            .select('player_id, level, score, max_score, recorded_at')
-            .order('recorded_at', { ascending: false })
-        ),
-        supabase.auth.getSession(),
-      ]);
+    async function loadStudents() {
+      const { data, error } = await fetchAllRows(() => supabase.from('profiles').select('id, name, created_at').eq('role', 'student').order('name').order('id'));
       if (!active) return;
-
-      if (studentsResult.error) {
-        setStudentProgressError(`Student progress could not be loaded: ${studentsResult.error.message}`);
-      } else {
-        setStudentProgress(studentsResult.data || []);
-        setStudentProgressError('');
-      }
-      setStudentProgressLoading(false);
-
-      if (scoresResult.error) {
-        setStudentGameScoresError(
-          scoresResult.error.code === '42P01'
-            ? 'Game scores have not been configured in Supabase yet.'
-            : `Game scores could not be loaded: ${scoresResult.error.message}`,
-        );
-      } else {
-        const scoresByStudent = new Map();
-        for (const row of scoresResult.data || []) {
-          if (!row?.player_id) continue;
-          const rows = scoresByStudent.get(row.player_id) || [];
-          rows.push(row);
-          scoresByStudent.set(row.player_id, rows);
-        }
-        setStudentGameScores(
-          Object.fromEntries(
-            [...scoresByStudent].map(([studentId, rows]) => [studentId, summarizeGameScores(rows)]),
-          ),
-        );
-        setStudentGameScoresError('');
-      }
-
-      if (sessionResult.error || !sessionResult.data?.session?.access_token) {
-        setStudentAchievementsError(
-          sessionResult.error?.message || 'Your session has expired. Sign in again to view achievements.',
-        );
-        setStudentAchievementsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/achievement-progress', {
-          headers: { Authorization: ['Bearer', sessionResult.data.session.access_token].join(' ') },
-        });
-        const result = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(result?.error || 'Achievement progress could not be loaded.');
-
-        const knownAchievementIds = new Set(ACHIEVEMENTS.map((achievement) => achievement.id));
-        const completedByStudent = new Map();
-        for (const award of result?.awards || []) {
-          if (!knownAchievementIds.has(award.achievement_id)) continue;
-          const completed = completedByStudent.get(award.user_id) || [];
-          completed.push(award);
-          completedByStudent.set(award.user_id, completed);
-        }
-        if (active) {
-          setStudentAchievements(
-            Object.fromEntries([...completedByStudent]),
-          );
-          setStudentAchievementsError('');
-        }
-      } catch (error) {
-        if (active) setStudentAchievementsError(error.message || 'Achievement progress could not be loaded.');
-      } finally {
-        if (active) setStudentAchievementsLoading(false);
-      }
+      setStudentsLoading(false);
+      if (error) setStudentsError('Monthly enrolments could not be loaded.');
+      else { setStudents(data || []); setStudentsError(''); }
     }
-
-    void loadStudentProgress();
-    const refreshInterval = window.setInterval(() => void loadStudentProgress(), 30000);
-    const channel = supabase
-      .channel(`dashboard-student-progress-${profile?.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        void loadStudentProgress();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_achievements' }, () => {
-        void loadStudentProgress();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_scores' }, () => {
-        void loadStudentProgress();
-      })
-      .subscribe((status) => {
-        if (active) setStudentProgressLive(status === 'SUBSCRIBED');
-      });
-
-    return () => {
-      active = false;
-      window.clearInterval(refreshInterval);
-      void supabase.removeChannel(channel);
-    };
-  }, [profile?.id]);
-
-  const studentProgressPageCount = Math.max(
-    1,
-    Math.ceil(studentProgress.length / STUDENT_PROGRESS_PAGE_SIZE),
-  );
-  const visibleStudentProgress = studentProgress.slice(
-    (Math.min(studentProgressPage, studentProgressPageCount) - 1) * STUDENT_PROGRESS_PAGE_SIZE,
-    Math.min(studentProgressPage, studentProgressPageCount) * STUDENT_PROGRESS_PAGE_SIZE,
-  );
+    void loadStudents();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -663,7 +545,8 @@ function AdminDashboard({ profile }) {
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
-          <SuccessRateCharts students={studentProgress} />
+          <SuccessRateCharts students={students} />
+          <div className="admin-overview-row">
           <section className="dash-card age-distribution">
             <div className="card-heading">
               <h3>Student Age Distribution</h3>
@@ -709,89 +592,7 @@ function AdminDashboard({ profile }) {
               </div>
             )}
           </section>
-          <section className="dash-card student-progress-panel">
-            <div className="card-heading">
-              <h3>Student Progress &amp; Earned Achievements</h3>
-              <span>{studentProgressLive ? 'Live updates on' : 'Refreshes every 30 seconds'}</span>
-            </div>
-            {studentProgressError ? (
-              <p role="alert" className="quiz-results-error">{studentProgressError}</p>
-            ) : studentProgressLoading ? (
-              <p className="quiz-results-empty">Loading student progress...</p>
-            ) : studentProgress.length ? (
-              <>
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Student</th>
-                        <th>Game Scores</th>
-                        <th>Earned Achievements</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleStudentProgress.map((student) => (
-                        <tr key={student.id}>
-                          <td><Link className="student-name-link" to={`/students/${student.id}`}>{student.name || 'Student'}</Link></td>
-                          <td>
-                            {studentGameScoresError
-                              ? 'Unavailable'
-                              : studentGameScores[student.id]?.length
-                                ? studentGameScores[student.id]
-                                  .map((score) => `Level ${score.level}: ${score.score}/${score.maxScore}`)
-                                  .join(', ')
-                                : 'No scores yet'}
-                          </td>
-                          <td>
-                            {studentAchievementsLoading
-                              ? 'Loading...'
-                              : studentAchievementsError
-                                ? 'Unavailable'
-                                : studentAchievements[student.id]?.length
-                                  ? (
-                                    <ul className="student-earned-achievements">
-                                      {studentAchievements[student.id].map((award) => {
-                                        const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
-                                        return (
-                                          <li key={award.achievement_id}>
-                                            <span>
-                                              <strong>{achievement.title}</strong>
-                                              <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
-                                            </span>
-                                          </li>
-                                        );
-                                      })}
-                                    </ul>
-                                  )
-                                  : 'No achievements completed yet'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Pagination
-                  page={Math.min(studentProgressPage, studentProgressPageCount)}
-                  pageSize={STUDENT_PROGRESS_PAGE_SIZE}
-                  totalItems={studentProgress.length}
-                  onPageChange={setStudentProgressPage}
-                />
-              </>
-            ) : (
-              <p className="quiz-results-empty">No students are registered yet.</p>
-            )}
-            {studentAchievementsError && (
-              <p role="alert" className="quiz-results-error">
-                Student achievements could not be loaded: {studentAchievementsError}
-              </p>
-            )}
-            {studentGameScoresError && (
-              <p role="alert" className="quiz-results-error">
-                {studentGameScoresError}
-              </p>
-            )}
-          </section>
-
+          <EnrolmentChart students={students} error={studentsError} loading={studentsLoading} />
           <div className="progress-cards admin-progress-cards">
             <ProgressCard
               icon="✓"
@@ -801,6 +602,7 @@ function AdminDashboard({ profile }) {
             />
           </div>
 
+          </div>
           {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
 
           <section className="dash-card quiz-results-panel">
@@ -822,7 +624,7 @@ function AdminDashboard({ profile }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {quizAttempts.map((attempt) => (
+                    {quizAttempts.slice((quizPage-1)*3, quizPage*3).map((attempt) => (
                       <tr key={attempt.id}>
                         <td><Link className="student-name-link" to={`/students/${attempt.student_id}`}>{attempt.profiles?.name || 'Student'}</Link></td>
                         <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
@@ -839,6 +641,7 @@ function AdminDashboard({ profile }) {
             ) : (
               <p className="quiz-results-empty">No quiz attempts have been recorded yet.</p>
             )}
+            {!quizAttemptsError && quizAttempts.length > 0 && <Pagination page={quizPage} pageSize={3} totalItems={quizAttempts.length} onPageChange={setQuizPage} />}
           </section>
 
         </div>

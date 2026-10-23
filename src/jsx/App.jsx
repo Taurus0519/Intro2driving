@@ -19,13 +19,14 @@ const Achievements = lazy(() => import('./Achievements'));
 const PdcChecklist = lazy(() => import('./PdcChecklist'));
 
 function Protected() {
-  const { user, profile, loading, loginInProgress, showLoginWelcome, signOut } = useAuth();
+  const { user, profile, loading, loginInProgress, showLoginWelcome, signOut, pinStatus, authError } = useAuth();
 
   if (loading || loginInProgress) return <div className="loading-screen">Loading portal...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (pinStatus?.pinRequired) return <LoginPage />;
   if (!profile) {
     return <div className="loading-screen"><div>
-      <p>Your account profile could not be loaded. Please sign in again.</p>
+      <p>{authError || 'Your account profile could not be loaded. Please sign in again.'}</p>
       <button type="button" className="button" onClick={signOut}>Sign out</button>
     </div></div>;
   }
@@ -40,9 +41,9 @@ function Role({ allow }) {
   return allow.includes(profile?.role) ? <Outlet /> : <Navigate to="/dashboard" replace />;
 }
 function Guest({ children }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) return <div className="loading-screen">Loading portal...</div>;
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  return user && profile ? <Navigate to="/dashboard" replace /> : children;
 }
 export default function App() {
   const basename = import.meta.env.BASE_URL === '/' ? '/' : import.meta.env.BASE_URL.replace(/\/$/, '');

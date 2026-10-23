@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAllRows, summarizeSuccess } from '../src/js/learningStats.mjs';
-import { buildCourseCalendar, nextCourseDate } from '../src/js/courseReminder.mjs';
+import { buildCourseCalendar, upcomingCourseSessions } from '../src/js/courseReminder.mjs';
 import {
   getGameLevelBreakdown,
   getQuizChapterBreakdown,
@@ -128,25 +128,18 @@ test('a failed page never returns an incomplete total as a successful result', a
   assert.equal(result.error, error);
 });
 
-test('course reminder always finds this or the next Wednesday throughout a year', () => {
+test('course reminder leaves unscheduled dates empty throughout a year', () => {
   for (let day = 1; day <= 366; day += 1) {
     const from = new Date(2028, 0, day, 23, 59);
-    const next = nextCourseDate(from);
-    assert.equal(next.getDay(), 3);
-    const midnight = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-    assert.ok(next >= midnight);
-    const followingWeek = new Date(midnight);
-    followingWeek.setDate(followingWeek.getDate() + 7);
-    assert.ok(next < followingWeek);
-    if (from.getDay() === 3) assert.equal(next.toDateString(), from.toDateString());
+    assert.deepEqual(upcomingCourseSessions([], from), []);
   }
 });
 
-test('recurring calendar export crosses year boundaries and includes a reminder', () => {
-  const content = buildCourseCalendar(new Date(2026, 11, 31, 13));
-  assert.ok(content.includes('DTSTART;VALUE=DATE:20270106\r\n'));
-  assert.ok(content.includes('DTEND;VALUE=DATE:20270107\r\n'));
-  assert.ok(content.includes('RRULE:FREQ=WEEKLY;BYDAY=WE\r\n'));
+test('saved calendar export crosses year boundaries and includes a reminder', () => {
+  const content = buildCourseCalendar(new Date(2026, 11, 31, 13), [{ course_date: '2026-12-31', course_type: 'online' }]);
+  assert.ok(content.includes('DTSTART;VALUE=DATE:20261231\r\n'));
+  assert.ok(content.includes('DTEND;VALUE=DATE:20270101\r\n'));
+  assert.ok(!content.includes('RRULE'));
   assert.ok(content.includes('TRIGGER:-P1D\r\n'));
   assert.ok(content.endsWith('END:VCALENDAR\r\n'));
   assert.ok(content.split('\r\n').every((line) => Buffer.byteLength(line) <= 75));

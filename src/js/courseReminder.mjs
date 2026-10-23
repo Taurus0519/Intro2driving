@@ -1,13 +1,11 @@
-export const COURSE_TITLE = 'Onsite theoretical driving course';
+export const COURSE_TYPES = [
+  { value: 'onsite', label: 'Onsite theoretical driving course' },
+  { value: 'online', label: 'Online theoretical driving course' },
+  { value: 'additional', label: 'Additional schedule course date' },
+];
 
-export function nextCourseDate(from = new Date()) {
-  const date = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  date.setDate(date.getDate() + (3 - date.getDay() + 7) % 7);
-  return date;
-}
-
-function calendarDate(date) {
-  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+export function courseTitle(type) {
+  return COURSE_TYPES.find((item) => item.value === type)?.label || COURSE_TYPES[2].label;
 }
 
 export function courseDateKey(date) {
@@ -20,39 +18,33 @@ export function isValidCourseDate(date) {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
 
-export function buildCourseCalendar(from = new Date(), extraDates = []) {
-  const start = nextCourseDate(from);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+export function upcomingCourseSessions(sessions, from = new Date()) {
+  return sessions.filter((session) => isValidCourseDate(session.course_date) && session.course_date >= courseDateKey(from))
+    .sort((a, b) => a.course_date.localeCompare(b.course_date) || String(a.course_type).localeCompare(String(b.course_type)));
+}
+
+export function buildCourseCalendar(from = new Date(), sessions = []) {
   const timestamp = from.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-  const extraEvents = [...new Set(extraDates)]
-    .filter((date) => isValidCourseDate(date) && new Date(`${date}T00:00:00.000Z`).getUTCDay() !== 3)
-    .map((date) => {
-      const dateValue = date.replace(/-/g, '');
-      const nextDay = new Date(`${date}T00:00:00.000Z`);
-      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-      return [
-        'BEGIN:VEVENT', `UID:extra-theory-course-${dateValue}@riteway`, `DTSTAMP:${timestamp}`,
-        `DTSTART;VALUE=DATE:${dateValue}`, `DTEND;VALUE=DATE:${nextDay.toISOString().slice(0, 10).replace(/-/g, '')}`,
-        `SUMMARY:${COURSE_TITLE} (additional date)`,
-        'LOCATION:Riteway Driving School',
-        'DESCRIPTION:Attend your theoretical driving course onsite. Class time to be confirmed.',
-        'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY',
-        'DESCRIPTION:Your onsite theoretical driving course is tomorrow.',
-        'END:VALARM', 'END:VEVENT',
-      ];
-    });
-  // An all-day event avoids inventing a course time or a timezone.
-  return [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Riteway//Student course reminders//EN',
-    'CALSCALE:GREGORIAN', 'BEGIN:VEVENT', 'UID:weekly-theory-course@riteway',
-    `DTSTAMP:${timestamp}`,
-    `DTSTART;VALUE=DATE:${calendarDate(start)}`, `DTEND;VALUE=DATE:${calendarDate(end)}`,
-    'RRULE:FREQ=WEEKLY;BYDAY=WE', `SUMMARY:${COURSE_TITLE}`,
-    'LOCATION:Riteway Driving School',
-    'DESCRIPTION:Attend your theoretical driving course onsite every Wednesday. Class time to be confirmed.',
-    'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY',
-    'DESCRIPTION:Your onsite theoretical driving course is tomorrow.',
-    'END:VALARM', 'END:VEVENT', ...extraEvents.flat(), 'END:VCALENDAR', '',
+  const seen = new Set();
+  const events = upcomingCourseSessions(sessions, from).flatMap((session) => {
+    const type = COURSE_TYPES.some((item) => item.value === session.course_type) ? session.course_type : 'additional';
+    const key = `${session.course_date}-${type}`;
+    if (seen.has(key)) return [];
+    seen.add(key);
+    const end = new Date(`${session.course_date}T00:00:00Z`);
+    end.setUTCDate(end.getUTCDate() + 1);
+    return [
+      'BEGIN:VEVENT', `UID:course-${key}@riteway`, `DTSTAMP:${timestamp}`,
+      `DTSTART;VALUE=DATE:${session.course_date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${end.toISOString().slice(0, 10).replace(/-/g, '')}`,
+      `SUMMARY:${courseTitle(type)}`,
+      ...(type === 'onsite' ? ['LOCATION:Riteway Driving School'] : []),
+      'DESCRIPTION:Class time to be confirmed.',
+      'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY',
+      `DESCRIPTION:Your ${courseTitle(type).toLowerCase()} is tomorrow.`,
+      'END:VALARM', 'END:VEVENT',
+    ];
+  });
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Riteway//Course schedules//EN',
+    'CALSCALE:GREGORIAN', ...events, 'END:VCALENDAR', '',
   ].map((line) => (line.match(/.{1,75}/g) || ['']).join('\r\n ')).join('\r\n');
 }

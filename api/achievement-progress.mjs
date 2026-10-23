@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { requirePortalSession } from '../server/security.mjs';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!await requirePortalSession(adminClient, caller.id, token, res)) return;
     const { data: callerProfile, error: callerProfileError } = await userClient
       .from('profiles')
       .select('role')

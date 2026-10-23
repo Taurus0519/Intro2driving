@@ -18,7 +18,7 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     proxy: {
-      '/api/student-details': 'http://127.0.0.1:3001',
+      '/api': 'http://127.0.0.1:3001',
     },
   },
   preview: {

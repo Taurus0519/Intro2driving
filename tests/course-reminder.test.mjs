@@ -1,37 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  buildCourseCalendar,
-  courseDateKey,
-  isValidCourseDate,
-  nextCourseDate,
-} from '../src/js/courseReminder.mjs';
-
-test('nextCourseDate returns today when called on Wednesday and otherwise the next Wednesday', () => {
-  assert.equal(courseDateKey(nextCourseDate(new Date(2026, 9, 14))), '2026-10-14');
-  assert.equal(courseDateKey(nextCourseDate(new Date(2026, 9, 15))), '2026-10-21');
-});
+import { buildCourseCalendar, courseDateKey, isValidCourseDate, upcomingCourseSessions } from '../src/js/courseReminder.mjs';
 
 test('courseDateKey uses local calendar date components', () => {
   assert.equal(courseDateKey(new Date(2026, 0, 4)), '2026-01-04');
 });
-
-test('isValidCourseDate rejects malformed and impossible dates', () => {
+test('course dates reject malformed and impossible dates', () => {
   assert.equal(isValidCourseDate('2026-10-16'), true);
   assert.equal(isValidCourseDate('2026-02-30'), false);
   assert.equal(isValidCourseDate('16-10-2026'), false);
 });
-
-test('calendar export includes extra all-day dates once and skips weekly Wednesdays', () => {
-  const calendar = buildCourseCalendar(
-    new Date('2026-10-15T10:00:00.000Z'),
-    ['2026-10-17', '2026-10-17', '2026-10-21', 'not-a-date'],
-  );
-  const unfoldedCalendar = calendar.replace(/\r\n /g, '');
-
-  assert.match(calendar, /RRULE:FREQ=WEEKLY;BYDAY=WE/);
-  assert.equal((unfoldedCalendar.match(/UID:extra-theory-course-20261017@riteway/g) || []).length, 1);
-  assert.doesNotMatch(unfoldedCalendar, /UID:extra-theory-course-20261021@riteway/);
-  assert.match(unfoldedCalendar, /DTEND;VALUE=DATE:20261018/);
-  assert.match(unfoldedCalendar, /Class time to be confirmed/);
+test('upcoming schedules include only saved dates and never invent a Wednesday', () => {
+  const sessions = [
+    { course_date: '2026-10-30', course_type: 'onsite' },
+    { course_date: '2026-10-15', course_type: 'online' },
+    { course_date: '2026-10-16', course_type: 'additional' },
+    { course_date: 'invalid', course_type: 'onsite' },
+  ];
+  assert.deepEqual(upcomingCourseSessions(sessions, new Date(2026, 9, 16)), [sessions[2], sessions[0]]);
+  assert.deepEqual(upcomingCourseSessions([], new Date(2026, 9, 21)), []);
+});
+test('calendar exports all three editable course types with no weekly recurrence', () => {
+  const calendar = buildCourseCalendar(new Date(2026, 9, 15), [
+    { course_date: '2026-10-17', course_type: 'onsite' },
+    { course_date: '2026-10-17', course_type: 'online' },
+    { course_date: '2026-10-21', course_type: 'additional' },
+    { course_date: '2026-10-17', course_type: 'onsite' },
+    { course_date: '2026-10-01', course_type: 'online' },
+  ]).replace(/\r\n /g, '');
+  assert.doesNotMatch(calendar, /RRULE|weekly|Wednesday/);
+  assert.equal((calendar.match(/BEGIN:VEVENT/g) || []).length, 3);
+  assert.match(calendar, /SUMMARY:Onsite theoretical driving course/);
+  assert.match(calendar, /SUMMARY:Online theoretical driving course/);
+  assert.match(calendar, /SUMMARY:Additional schedule course date/);
+  assert.match(calendar, /DTEND;VALUE=DATE:20261018/);
+  assert.equal((calendar.match(/LOCATION:Riteway Driving School/g) || []).length, 1);
+  assert.equal((calendar.match(/TRIGGER:-P1D/g) || []).length, 3);
+});
+test('removing the last schedule produces no exported events', () => {
+  assert.doesNotMatch(buildCourseCalendar(new Date(), []), /BEGIN:VEVENT|RRULE/);
 });

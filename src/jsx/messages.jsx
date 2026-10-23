@@ -8,6 +8,13 @@ const ATTACHMENT_BUCKET = 'message-attachments';
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
+function MessagePrivacyNotice() {
+  return <div className="message-privacy-notice" role="note">
+    <span aria-hidden="true">⚠</span>
+    <p><strong>Do not send sensitive information.</strong> Never share passwords, security PINs, security answers, bank details, or personal identification documents in messages or attachments.</p>
+  </div>;
+}
+
 function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
   const [body, setBody] = useState('');
   const [files, setFiles] = useState([]);
@@ -42,6 +49,7 @@ function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
 
   return (
     <form className="message-composer" onSubmit={submit}>
+      <MessagePrivacyNotice />
       {recipientSelect}
       <label>
         Message
@@ -365,6 +373,7 @@ export default function Messages() {
 
   return (
     <section className="messages-page">
+      <MessagePrivacyNotice />
       <div className="toolbar">
         <div><h3>Messages</h3><p>Your conversations.</p></div>
         <button

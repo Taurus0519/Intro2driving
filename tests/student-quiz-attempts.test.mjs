@@ -5,7 +5,7 @@ import { createStudentQuizAttemptsHandler } from '../api/student-quiz-attempts.m
 const studentId = '11111111-1111-4111-8111-111111111111';
 const otherId = '22222222-2222-4222-8222-222222222222';
 
-function setup({ role = 'student', validToken = true } = {}) {
+function setup({ role = 'student', validToken = true, unlocked = true } = {}) {
   const attempts = [
     { student_id: studentId, score: 10, total_questions: 10, chapter_number: 1 },
     { student_id: otherId, score: 4, total_questions: 10, chapter_number: 2 },
@@ -48,6 +48,7 @@ function setup({ role = 'student', validToken = true } = {}) {
     publishableKey: 'publishable',
     serviceRoleKey: 'server-only',
     clientFactory,
+    sessionVerifier: async () => unlocked,
   });
   const response = {
     headers: {},
@@ -89,4 +90,11 @@ test('student quiz results reject writes', async () => {
   await handler(request, response);
   assert.equal(response.statusCode, 405);
   assert.equal(response.headers.Allow, 'GET');
+});
+
+test('locked student sessions cannot read quiz results', async () => {
+  const { handler, request, response } = setup({ unlocked: false });
+  await handler(request, response);
+  assert.equal(response.statusCode, 423);
+  assert.equal(response.body.pinRequired, true);
 });

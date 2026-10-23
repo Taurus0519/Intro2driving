@@ -28,3 +28,11 @@
 .calendar-session-actions button{padding:6px 9px;border:1px solid #cbd9e0;border-radius:4px;background:#fff;color:#176ca6;font:inherit;font-weight:700;cursor:pointer}
 .calendar-session-actions button:disabled{opacity:.6;cursor:wait}
 .calendar-session-error{margin:8px 0 0;color:#a32f2f;font-size:11px}
+.calendar-online-legend{color:#6251a6;margin-top:5px}.calendar-online-legend>span{background:#7561bb}
+.calendar-additional-legend{color:#19725a;margin-top:5px}.calendar-additional-legend>span{background:#19725a}
+.calendar-grid button.online-course-day{background:#f0eafb;color:#6251a6}.calendar-grid button.online-course-day::after{background:#7561bb}
+.calendar-grid button.additional-course-day{background:#e6f5ee;color:#19725a}.calendar-grid button.additional-course-day::after{background:#19725a}
+.calendar-grid button.course-day.selected{background:#176ca6;color:#fff}.calendar-grid button.course-day.selected::after{background:#fff}
+.calendar-staff-controls select{min-width:0;width:100%;padding:7px;border:1px solid #cbd9e0;border-radius:4px;color:#294b60;background:#fff;font:inherit}
+.calendar-scheduled-course{padding:8px 0;border-bottom:1px solid #e8eef1}.calendar-scheduled-course:last-child{border-bottom:0}.calendar-scheduled-course .calendar-session-actions{margin-top:7px}
+.calendar-session-notice{color:#19725a;font-size:12px}

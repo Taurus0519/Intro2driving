@@ -1,12 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchAllRows } from '../src/js/learningStats.mjs';
 import { splitProfileName } from '../src/js/profileIdentity.mjs';
+import { verifiedPortalSession } from '../server/security.mjs';
 
 export function createStudentDetailsHandler({
   url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
   publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY,
   serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY,
   clientFactory = createClient,
+  sessionVerifier = verifiedPortalSession,
 } = {}) {
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'private, no-store');
@@ -40,6 +42,7 @@ export function createStudentDetailsHandler({
       }
 
       const adminClient = clientFactory(url, serviceRoleKey, options);
+      if (!await sessionVerifier(adminClient, user.id, token)) return res.status(423).json({ error: 'Unlock your administrator portal to continue.', pinRequired: true });
       const { data: student, error: studentError } = await adminClient.from('profiles')
         .select('id, name, email, username, status, progress').eq('id', studentId).eq('role', 'student').maybeSingle();
       if (studentError) return res.status(500).json({ error: 'Student information could not be loaded.' });

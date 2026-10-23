@@ -24,3 +24,5 @@
 .student-pdc-details summary:focus-visible{outline:2px solid #176ca6;outline-offset:3px}
 @media(max-width:800px){.student-details-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-details-columns{grid-template-columns:1fr}}
 @media(max-width:450px){.student-details-grid{grid-template-columns:1fr}}
+.student-pin-reset{margin:18px 0}.student-pin-reset>p{color:var(--muted)}.student-pin-reset form{margin-top:18px;max-width:500px}
+.stacked-game-scores{list-style:none;display:grid;gap:8px;margin:14px 0;padding:0}.stacked-game-scores li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:5px;background:#f2f8fb}.stacked-game-scores strong{font-weight:800}.stacked-game-scores span{font-size:13px}

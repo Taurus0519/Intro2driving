@@ -5,6 +5,9 @@ import { ACHIEVEMENTS } from '../js/achievementData';
 import { PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_ITEM_COUNT } from '../js/pdcChecklistData';
 import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import { SuccessRateSummary } from './SuccessRateCharts';
+import StudentPinReset from './StudentPinReset';
+import GameScoreList from './GameScoreList';
+import Pagination from './Pagination';
 import '../css/StudentDetails.css';
 
 function displayDate(value, includeTime = false) {
@@ -24,6 +27,8 @@ export default function StudentDetails() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [scorePage, setScorePage] = useState(1);
+  const [quizPage, setQuizPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -80,25 +85,27 @@ export default function StudentDetails() {
           {details.goals && <div className="student-details-text"><h4>Goals</h4><p>{details.goals}</p></div>}
           <SectionError message={errors.details} />
         </section>
+        <StudentPinReset key={studentId} studentId={studentId} />
         <SuccessRateSummary gameRows={gameScores} quizRows={quizAttempts} gameError={errors.gameScores} quizError={errors.quizAttempts} />
         <p className="success-rate-caption">Success rate = total points earned ÷ total possible points across this student's recorded attempts.</p>
         <div className="student-details-columns">
           <section className="panel">
             <h3>Game Scores</h3>
+            <GameScoreList scores={gameScores} />
             <SectionError message={errors.gameScores} />
             {!errors.gameScores && (gameScores.length ? <div className="table-wrap student-detail-history"><table className="data-table">
               <thead><tr><th>Level</th><th>Score</th><th>Recorded</th></tr></thead>
-              <tbody>{gameScores.map((score, index) => <tr key={`${score.level}-${score.recorded_at}-${index}`}>
-                <td>Level {score.level}</td><td>{score.score}/{score.max_score}</td><td>{displayDate(score.recorded_at, true)}</td>
+              <tbody>{gameScores.slice((scorePage-1)*3,scorePage*3).map((score, index) => <tr key={`${score.level}-${score.recorded_at}-${index}`}>
+                <td><strong>Level {score.level}</strong></td><td>{score.score}/{score.max_score}</td><td>{displayDate(score.recorded_at, true)}</td>
               </tr>)}</tbody>
-            </table></div> : <p className="empty">No game scores recorded yet.</p>)}
+            </table><Pagination page={scorePage} pageSize={3} totalItems={gameScores.length} onPageChange={setScorePage} /></div> : <p className="empty">No game scores recorded yet.</p>)}
           </section>
           <section className="panel">
             <h3>Quiz History</h3>
             <SectionError message={errors.quizAttempts} />
             {!errors.quizAttempts && (quizAttempts.length ? <div className="table-wrap student-detail-history"><table className="data-table">
               <thead><tr><th>Chapter</th><th>Pass / fail</th><th>Taken</th></tr></thead>
-              <tbody>{quizAttempts.map((attempt) => <tr key={attempt.id}>
+              <tbody>{quizAttempts.slice((quizPage-1)*3,quizPage*3).map((attempt) => <tr key={attempt.id}>
                 <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
                 <td>{Number(attempt.total_questions) > 0
                   && (Number(attempt.score) / Number(attempt.total_questions)) * 100 >= QUIZ_PASSING_PERCENT
@@ -106,7 +113,7 @@ export default function StudentDetails() {
                   : 'Fail'}</td>
                 <td>{displayDate(attempt.created_at, true)}</td>
               </tr>)}</tbody>
-            </table></div> : <p className="empty">No quizzes recorded yet.</p>)}
+            </table><Pagination page={quizPage} pageSize={3} totalItems={quizAttempts.length} onPageChange={setQuizPage} /></div> : <p className="empty">No quizzes recorded yet.</p>)}
           </section>
           <section className="panel">
             <h3>Achievements {!errors.achievements && `(${earned.length}/${ACHIEVEMENTS.length})`}</h3>
