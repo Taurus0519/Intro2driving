@@ -18,4 +18,3 @@
 @media(max-width:700px){.admin-overview-row{grid-template-columns:1fr}}
 .admin-overview-row{align-items:start}.admin-overview-row .age-distribution{align-self:start;height:auto;min-height:0}.enrolment-chart svg{height:auto;max-height:220px;aspect-ratio:2/1}.admin-overview-row .admin-progress-cards{align-self:start}
 .student-progress-scores{list-style:none;padding:0;margin:0;display:grid;gap:5px;white-space:nowrap}.student-progress-scores strong{font-weight:800}.student-progress-panel{margin-top:18px}
-.enrolment-example-toggle{display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer}.enrolment-example-toggle input{width:auto;margin:0;accent-color:#176ca6}.enrolment-example-notice{font-size:12px;padding:9px 11px;border:1px solid #e9c874;border-radius:5px;background:#fff8e6;color:#745217}
