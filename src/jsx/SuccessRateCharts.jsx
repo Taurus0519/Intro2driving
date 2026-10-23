@@ -49,7 +49,7 @@ export function SuccessRateCard({
               <div className="success-rate-content">
                 <div className="success-rate-summary">
                   <strong>{available ? `${percentage}%` : '—'}</strong>
-                  <span>{available ? attemptsLabel : 'No results yet'}</span>
+                  <span>{available || quiz ? attemptsLabel : 'No results yet'}</span>
                 </div>
               </div>
               {available && breakdown.length > 0 && maximumBarValue > 0 ? (

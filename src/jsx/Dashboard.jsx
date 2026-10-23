@@ -1,7 +1,6 @@
 import Calendar from './Calendar';
 import EnrolmentChart from './EnrolmentChart';
 import GameScoreList from './GameScoreList';
-import Pagination from './Pagination';
 import { useEffect, useState } from 'react';
 import '../css/Dashboard.css';
 import { supabase } from './supabase_Client';
@@ -12,7 +11,6 @@ import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklis
 import SuccessRateCharts from './SuccessRateCharts';
 import { fetchAllRows } from '../js/learningStats.mjs';
 import { getProfileDisplayName } from '../js/profileIdentity.mjs';
-import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import '../css/StudentDetails.css';
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
@@ -369,16 +367,12 @@ function AdminDashboard({ profile }) {
   });
   const [ageGroupsError, setAgeGroupsError] = useState('');
   const [agePieHover, setAgePieHover] = useState(null);
-  const [quizTakeCount, setQuizTakeCount] = useState(0);
-  const [quizAttempts, setQuizAttempts] = useState([]);
-  const [quizAttemptsError, setQuizAttemptsError] = useState('');
   const [pdcStudentCount, setPdcStudentCount] = useState(0);
   const [pdcCompletedCount, setPdcCompletedCount] = useState(0);
   const [pdcStatsError, setPdcStatsError] = useState('');
   const [students, setStudents] = useState([]);
   const [studentsError, setStudentsError] = useState('');
   const [studentsLoading, setStudentsLoading] = useState(true);
-  const [quizPage, setQuizPage] = useState(1);
 
   function handleAgePieMouseMove(event) {
     const chart = event.currentTarget;
@@ -454,38 +448,6 @@ function AdminDashboard({ profile }) {
     }
 
     void loadAgeGroups();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadQuizAttempts() {
-      const [countResult, attemptsResult] = await Promise.all([
-        supabase.from('quiz_attempts').select('id', { count: 'exact', head: true }),
-        supabase
-          .from('quiz_attempts')
-          .select('id, student_id, score, total_questions, percentage, chapter_number, created_at, profiles!quiz_attempts_student_id_fkey(name)')
-          .order('created_at', { ascending: false })
-          .limit(20),
-      ]);
-
-      if (!active) return;
-
-      if (countResult.error || attemptsResult.error) {
-        setQuizAttemptsError(
-          `Quiz results could not be loaded: ${countResult.error?.message || attemptsResult.error?.message}`,
-        );
-        return;
-      }
-
-      setQuizTakeCount(countResult.count ?? 0);
-      setQuizAttempts(attemptsResult.data || []);
-    }
-
-    void loadQuizAttempts();
     return () => {
       active = false;
     };
@@ -605,44 +567,7 @@ function AdminDashboard({ profile }) {
           </div>
           {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
 
-          <section className="dash-card quiz-results-panel">
-            <div className="card-heading">
-              <h3>Quiz Results</h3>
-              <span>{quizTakeCount} total takes</span>
-            </div>
-            {quizAttemptsError ? (
-              <p role="alert" className="quiz-results-error">{quizAttemptsError}</p>
-            ) : quizAttempts.length ? (
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Chapter</th>
-                      <th>Result</th>
-                      <th>Taken</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {quizAttempts.slice((quizPage-1)*3, quizPage*3).map((attempt) => (
-                      <tr key={attempt.id}>
-                        <td><Link className="student-name-link" to={`/students/${attempt.student_id}`}>{attempt.profiles?.name || 'Student'}</Link></td>
-                        <td>{attempt.chapter_number ? `Chapter ${attempt.chapter_number}` : '—'}</td>
-                        <td>{Number(attempt.total_questions) > 0
-                          && (Number(attempt.score) / Number(attempt.total_questions)) * 100 >= QUIZ_PASSING_PERCENT
-                          ? 'Pass'
-                          : 'Fail'}</td>
-                        <td>{new Date(attempt.created_at).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="quiz-results-empty">No quiz attempts have been recorded yet.</p>
-            )}
-            {!quizAttemptsError && quizAttempts.length > 0 && <Pagination page={quizPage} pageSize={3} totalItems={quizAttempts.length} onPageChange={setQuizPage} />}
-          </section>
+
 
         </div>
 
