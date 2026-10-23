@@ -5,7 +5,6 @@ import { ACHIEVEMENTS } from '../js/achievementData';
 import { PDC_CHECKLIST_ITEMS, PDC_CHECKLIST_ITEM_COUNT } from '../js/pdcChecklistData';
 import { QUIZ_PASSING_PERCENT } from '../js/quizAttemptStats.mjs';
 import { SuccessRateSummary } from './SuccessRateCharts';
-import StudentPinReset from './StudentPinReset';
 import GameScoreList from './GameScoreList';
 import Pagination from './Pagination';
 import '../css/StudentDetails.css';
@@ -85,7 +84,6 @@ export default function StudentDetails() {
           {details.goals && <div className="student-details-text"><h4>Goals</h4><p>{details.goals}</p></div>}
           <SectionError message={errors.details} />
         </section>
-        <StudentPinReset key={studentId} studentId={studentId} />
         <SuccessRateSummary gameRows={gameScores} quizRows={quizAttempts} gameError={errors.gameScores} quizError={errors.quizAttempts} />
         <p className="success-rate-caption">Success rate = total points earned ÷ total possible points across this student's recorded attempts.</p>
         <div className="student-details-columns">
