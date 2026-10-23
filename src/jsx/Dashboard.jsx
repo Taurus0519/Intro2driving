@@ -1,4 +1,5 @@
 import Calendar from './Calendar';
+import StudentProgressPanel from './StudentProgressPanel';
 import EnrolmentChart from './EnrolmentChart';
 import GameScoreList from './GameScoreList';
 import { useEffect, useState } from 'react';
@@ -566,6 +567,7 @@ function AdminDashboard({ profile }) {
 
           </div>
           {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
+          <StudentProgressPanel students={students} studentsLoading={studentsLoading} studentsError={studentsError} />
 
 
 

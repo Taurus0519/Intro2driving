@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       tokenRef.current = session?.access_token;
-      if (session?.user) fetchProfile(session.access_token);
+      if (session?.user) void fetchProfile();
       else setLoading(false);
     });
 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
       (_event, session) => {
         setUser(session?.user ?? null);
         tokenRef.current = session?.access_token;
-        if (session?.user) void fetchProfile(session.access_token);
+        if (session?.user) window.setTimeout(() => void fetchProfile(), 0);
         else { authVersion.current++; setWelcomeUserId(null); setProfile(null); setPinStatus(null); setAuthError(''); setLoading(false); }
       }
     );
@@ -57,14 +57,16 @@ export function AuthProvider({ children }) {
   async function fetchProfile(token) {
     const version = ++authVersion.current;
     try {
-      const result = await securityRequest('status', {}, token);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.user) throw new Error('Please sign in to load your profile.');
+      const { data: accountProfile, error: profileError } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      if (profileError) throw profileError;
       if (version !== authVersion.current) return;
       setAuthError('');
-      setProfile(result.pinRequired ? null : result.profile);
+      setProfile(accountProfile);
     } catch (error) {
       if (version !== authVersion.current) return;
       setAuthError(error.message);
-      setProfile(null);
     } finally {
       if (version === authVersion.current) setLoading(false);
     }

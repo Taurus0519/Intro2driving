@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './useAunth.jsx';
-import SecurityPinForm from './SecurityPinForm';
 
 export default function LoginPage() {
   const { signIn, resetPassword, pinStatus, user, authError, signOut } = useAuth();
@@ -10,20 +9,21 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordWarning, setPasswordWarning] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setPasswordWarning(false);
     try {
       const { error } = forgotPassword ? await resetPassword(form.email) : await signIn(form.email, form.password);
-      if (error) setError(error.message);
+      if (error) { setError(error.message); setPasswordWarning(error.attemptsRemaining !== undefined); }
       else if (forgotPassword) setError('Password reset email sent. Check your inbox.');
     } catch (error) { setError(error.message || 'Sign in failed. Please try again.'); }
     finally { setForm((current) => ({ ...current, password: '' })); setLoading(false); }
   }
 
-  if (pinStatus?.pinRequired) return <SecurityPinForm />;
   if (user && authError) return <div className="login-view"><div className="login-card">
     <h1>Portal unavailable</h1><p className="error" role="alert">{authError}</p>
     <button type="button" className="button" onClick={() => void signOut()}>Sign out</button>
@@ -51,7 +51,7 @@ export default function LoginPage() {
             ? 'Enter your email and we will send you a reset link.'
             : 'Sign in with your assigned email and password.'}
         </p>
-        {!forgotPassword && <p className="login-security-hint">3 password attempts. After 3 unsuccessful attempts, sign in is locked for 15 minutes.</p>}
+        {!forgotPassword && passwordWarning && <p className="login-security-hint" role="alert">{error} After 3 unsuccessful password attempts, sign in is locked for 15 minutes.</p>}
 
         <form onSubmit={submit}>
           <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Enter email" required /></label>
@@ -74,7 +74,7 @@ export default function LoginPage() {
             </button>
           </label>}
 
-          {error && <p className="error">{error}</p>}
+          {error && !passwordWarning && <p className="error" role="alert">{error}</p>}
 
           <button type="submit" className="button primary full" disabled={loading}>
             {submitButtonLabel}

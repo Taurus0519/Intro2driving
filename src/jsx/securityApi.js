@@ -12,6 +12,11 @@ export async function securityRequest(action, values = {}, accessToken) {
     body: JSON.stringify({ ...values, action }),
   });
   const result = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(result?.error || 'Security verification could not be completed. Please try again.');
+  if (!response.ok) {
+    const error = new Error(result?.error || 'Security verification could not be completed. Please try again.');
+    error.attemptsRemaining = result?.attemptsRemaining;
+    error.status = response.status;
+    throw error;
+  }
   return result;
 }
