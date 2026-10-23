@@ -1,3 +1,5 @@
+-- Safe to rerun in the SQL Editor; policy replacement is atomic.
+begin;
 create or replace function portal_private.student_module_unlocked()
 returns boolean language sql stable security definer set search_path = '' as $$
  select (select auth.uid()) is not null and exists (
@@ -15,8 +17,10 @@ returns boolean language sql stable security definer set search_path = '' as $$
  where s.user_id=(select auth.uid()) and s.id::text=(select auth.jwt()->>'session_id')
  and p.role in ('student','admin','superadmin') and p.status is distinct from 'Inactive');
 $$;
+drop policy if exists student_module_pin_required on public.student_profiles;
 create policy student_module_pin_required on public.student_profiles as restrictive for all to authenticated
  using ((select portal_private.account_role())='student' or (select portal_private.student_module_unlocked()))
  with check ((select portal_private.account_role())='student' or (select portal_private.student_module_unlocked()));
-delete from public.portal_verified_sessions;
+-- Preserve verified sessions on reruns; idle sessions expire after five minutes.
 notify pgrst, 'reload schema';
+commit;
