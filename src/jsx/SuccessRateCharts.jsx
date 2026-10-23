@@ -80,7 +80,9 @@ export function SuccessRateCard({
                               title={`${earned} ${earnedLabel.toLowerCase()}`} />
                             </div>}
                           </div>
-                          <span className="success-chart-label">{quiz ? item.label : <strong>{item.label}</strong>}</span>
+                          {quiz
+                            ? <span className="success-chart-label">{item.label}</span>
+                            : <strong className="success-chart-label game-level-label" style={{ fontWeight: 900 }}>{item.label}</strong>}
                         </div>
                       );
                     })}
