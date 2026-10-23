@@ -10,13 +10,13 @@ export default function EnrolmentChart({ students, error, loading }) {
   const x = (month) => 40 + month * 28;
   const y = (count) => 150 - count / maximum * 115;
   return <section className="dash-card enrolment-chart">
-    <div className="card-heading"><h3>Monthly Enrollees</h3><label>Year <select aria-label="Enrolment year" value={year} onChange={(event) => setYear(Number(event.target.value))}>{years.map((value) => <option key={value}>{value}</option>)}</select></label></div>
-    {loading ? <p role="status">Loading enrolments…</p> : error ? <p className="error" role="alert">{error}</p> : <>
-      <p className="enrolment-total">{months.reduce((sum,item) => sum+item.count,0)} enrollees in {year}</p>
-      <svg viewBox="0 0 380 190" role="img" aria-label={`Monthly enrollees in ${year}: ${months.map((item) => `${new Date(year,item.month,1).toLocaleString('en',{month:'short'})}: ${item.count}`).join(', ')}`}>
+    <div className="card-heading"><h3>Monthly Enrollments</h3><label>Year <select aria-label="Enrolment year" value={year} onChange={(event) => setYear(Number(event.target.value))}>{years.map((value) => <option key={value}>{value}</option>)}</select></label></div>
+    {loading ? <p role="status">Loading enrollments…</p> : error ? <p className="error" role="alert">{error}</p> : <>
+      <p className="enrolment-total">{months.reduce((sum,item) => sum+item.count,0)} enrollments in {year}</p>
+      <svg viewBox="0 0 380 190" role="img" aria-label={`Monthly enrollments in ${year}: ${months.map((item) => `${new Date(year,item.month,1).toLocaleString('en',{month:'short'})}: ${item.count}`).join(', ')}`}>
         {[0,maximum].map((count) => <g key={count}><line x1="40" x2="350" y1={y(count)} y2={y(count)} stroke="#dce7ed"/><text x="32" y={y(count)+4} textAnchor="end" fontSize="11">{count}</text></g>)}
         <polyline points={months.map((item) => `${x(item.month)},${y(item.count)}`).join(' ')} fill="none" stroke="#176ca6" strokeWidth="2.5"/>
-        {months.map((item) => <g key={item.month}><circle cx={x(item.month)} cy={y(item.count)} r="4" fill="#176ca6"><title>{new Date(year,item.month,1).toLocaleString('en',{month:'long'})}: {item.count} enrollees</title></circle><text x={x(item.month)} y="176" textAnchor="middle" fontSize="9">{new Date(year,item.month,1).toLocaleString('en',{month:'short'})}</text></g>)}
+        {months.map((item) => <g key={item.month}><circle cx={x(item.month)} cy={y(item.count)} r="4" fill="#176ca6"><title>{new Date(year,item.month,1).toLocaleString('en',{month:'long'})}: {item.count} enrollments</title></circle><text x={x(item.month)} y="176" textAnchor="middle" fontSize="9">{new Date(year,item.month,1).toLocaleString('en',{month:'short'})}</text></g>)}
       </svg><small>Based on student account creation dates.</small>
     </>}
   </section>;
