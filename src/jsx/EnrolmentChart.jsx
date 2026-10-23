@@ -8,7 +8,7 @@ export default function EnrolmentChart({ students, error, loading }) {
   const [hoveredMonth, setHoveredMonth] = useState(null);
   const gradientId = useId();
   const years = [...new Set([currentYear, year, ...students.map((student) => new Date(student.created_at).getFullYear()).filter(Number.isFinite)])].sort((a,b) => b-a);
-  const months = example ? Array.from({ length: 12 }, (_, month) => ({ month, count: 10 })) : monthlyEnrolments(students, year);
+  const months = example ? [2, 4, 3, 6, 5, 8, 4, 7, 10, 6, 3, 5].map((count, month) => ({ month, count })) : monthlyEnrolments(students, year);
   const maximum = Math.max(1, Math.ceil(Math.max(...months.map((item) => item.count)) * 1.2));
   const x = (month) => 40 + month * 28;
   const y = (count) => 150 - count / maximum * 115;
@@ -25,8 +25,8 @@ export default function EnrolmentChart({ students, error, loading }) {
   }).join(' ');
   return <section className="dash-card enrolment-chart">
     <div className="card-heading"><h3>Monthly Enrollments</h3><label>Year <select aria-label="Enrolment year" value={year} onChange={(event) => { setYear(Number(event.target.value)); setHoveredMonth(null); }}>{years.map((value) => <option key={value}>{value}</option>)}</select></label></div>
-    <label className="enrollment-preview-toggle"><input type="checkbox" checked={example} onChange={(event) => { setExample(event.target.checked); setHoveredMonth(null); }} /> Preview example: 10 students per month</label>
-    {example && <p className="enrollment-preview-note" role="status">Example only: 120 students across 12 months. Actual student records are unchanged.</p>}
+    <label className="enrollment-preview-toggle"><input type="checkbox" checked={example} onChange={(event) => { setExample(event.target.checked); setHoveredMonth(null); }} /> Preview example: up to 10 students per month</label>
+    {example && <p className="enrollment-preview-note" role="status">Example only: varied monthly counts, with a maximum of 10 students in September. Actual student records are unchanged.</p>}
     {loading && !example ? <p role="status">Loading enrollments…</p> : error && !example ? <p className="error" role="alert">{error}</p> : <>
       <p className="enrolment-total">{months.reduce((sum,item) => sum+item.count,0)} enrollments in {year}</p>
       <svg viewBox="0 0 380 190" role="group" onMouseLeave={() => setHoveredMonth(null)} aria-label={`${example ? 'Example data. ' : ''}Monthly enrollments in ${year}: ${months.map((item) => `${new Date(year,item.month,1).toLocaleString('en',{month:'short'})}: ${item.count}`).join(', ')}`}>
@@ -50,7 +50,7 @@ export default function EnrolmentChart({ students, error, loading }) {
           <text x={tooltipX+10} y={tooltipY+15} fontSize="10" fill="#fff">{new Date(year,activeMonth.month,1).toLocaleString('en',{month:'long'})} {year}</text>
           <text x={tooltipX+10} y={tooltipY+29} fontSize="11" fontWeight="700" fill="#83e0d0">{activeMonth.count} {activeMonth.count === 1 ? 'student' : 'students'}{example ? ' (example)' : ''}</text>
         </g>}
-      </svg><small>{example ? 'Illustrative data only. Equal monthly counts produce a flat line.' : 'Based on student account creation dates.'} Hover, tap, or focus a month to see its student count.</small>
+      </svg><small>{example ? 'Illustrative data only, with monthly counts ranging from 2 to 10 students.' : 'Based on student account creation dates.'} Hover, tap, or focus a month to see its student count.</small>
     </>}
   </section>;
 }
