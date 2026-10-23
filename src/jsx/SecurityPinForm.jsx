@@ -5,7 +5,7 @@ import { SECURITY_QUESTIONS, normalizeAnswer, validPin } from '../js/securityCon
 export default function SecurityPinForm() { return <StudentPinForm />; }
 
 function StudentPinForm() {
-  const { user, pinStatus, completePin, signOut } = useAuth();
+  const { user, pinStatus, completePin } = useAuth();
   const [pin, setPin] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [questionId, setQuestionId] = useState(SECURITY_QUESTIONS[0].id);
@@ -65,7 +65,6 @@ function StudentPinForm() {
       {!setup && <button type="button" className="text-button" disabled={busy} onClick={() => {
         setRecovering((value) => !value); setPin(''); setConfirmation(''); setAnswer(''); setPassword(''); setError(''); setNotice('');
       }}>{recovering ? 'Back to unlock' : 'Forgot PIN?'}</button>}
-      <button type="button" className="text-button" disabled={loading} onClick={() => void signOut()}>Sign out</button>
     </div>
   </div></div>;
 }
