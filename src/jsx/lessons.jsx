@@ -51,6 +51,20 @@ function countChapterAttempts(attempts, chapterNumber) {
   ).length;
 }
 
+function getSubmissionErrorMessage(error) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const details = [
+      error.message,
+      error.details,
+      error.hint,
+      error.code,
+    ].filter((value) => typeof value === "string" && value.trim());
+    if (details.length) return details.join(" — ");
+  }
+  return typeof error === "string" ? error : "Unknown error";
+}
+
 export default function Lessons() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
@@ -487,8 +501,9 @@ export default function Lessons() {
       );
       submitted = true;
     } catch (error) {
+      console.error("Quiz chapter submission failed:", error);
       setSubmitError(
-        `Your quiz result could not be saved: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Your quiz result could not be saved: ${getSubmissionErrorMessage(error)}`,
       );
     } finally {
       setSubmitting(false);

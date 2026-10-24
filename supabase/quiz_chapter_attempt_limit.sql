@@ -220,3 +220,5 @@
     FROM PUBLIC;
   GRANT EXECUTE ON FUNCTION public.complete_quiz_chapter(integer, jsonb, uuid)
     TO authenticated;
+
+  NOTIFY pgrst, 'reload schema';
