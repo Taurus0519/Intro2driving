@@ -27,7 +27,7 @@ const faqs = [
 
 export default function LandingPage() {
   const location = useLocation();
-  const gameApkUrl = 'https://media.githubusercontent.com/media/Taurus0519/intro2driving-system/main/public/downloads/Intro2driving.apk';
+  const gameApkUrl = 'https://media.githubusercontent.com/media/Taurus0519/Intro2driving/main/public/downloads/Intro2driving.apk';
   const [gameApkAvailable, setGameApkAvailable] = useState(null);
   const [gameApkCheckError, setGameApkCheckError] = useState('');
   const menuRef = useRef(null);
