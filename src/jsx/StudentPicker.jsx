@@ -3,7 +3,6 @@ import Pagination from './Pagination';
 import '../css/StudentPicker.css';
 
 const PAGE_SIZE = 10;
-const DROPDOWN_STUDENT_LIMIT = 3;
 const BROWSE_STUDENTS = '__browse_all_students__';
 
 export default function StudentPicker({
@@ -25,11 +24,6 @@ export default function StudentPicker({
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
-  const dropdownStudents = students.slice(0, DROPDOWN_STUDENT_LIMIT);
-  const selectedStudent = students.find((student) => student.id === value);
-  if (selectedStudent && !dropdownStudents.some((student) => student.id === value)) {
-    dropdownStudents.splice(DROPDOWN_STUDENT_LIMIT - 1, 1, selectedStudent);
-  }
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -61,12 +55,10 @@ export default function StudentPicker({
         {label}
         <select id={id} value={value} onChange={handleSelectChange} disabled={disabled}>
           <option value="">{placeholder}</option>
-          {dropdownStudents.map((student) => (
+          {students.map((student) => (
             <option key={student.id} value={student.id}>{student.name || `Unknown ${itemLabel}`}</option>
           ))}
-          {students.length > DROPDOWN_STUDENT_LIMIT && (
-            <option value={BROWSE_STUDENTS}>Show more students</option>
-          )}
+          <option value={BROWSE_STUDENTS}>Show more students</option>
         </select>
       </label>
       {isOpen && (
