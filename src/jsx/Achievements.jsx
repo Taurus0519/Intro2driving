@@ -1,28 +1,28 @@
-import { useEffect, useState } from 'react';
-import { supabase } from './supabase_Client';
-import { useAuth } from './useAunth';
-import { ACHIEVEMENTS } from '../js/achievementData';
-import StudentPicker from './StudentPicker';
-import '../css/Achievements.css';
+import { useEffect, useState } from "react";
+import { supabase } from "./supabase_Client";
+import { useAuth } from "./useAunth";
+import { ACHIEVEMENTS } from "../js/achievementData";
+import StudentPicker from "./StudentPicker";
+import "../css/Achievements.css";
 
 export default function Achievements() {
   const { profile, user } = useAuth();
-  const isSuperAdmin = profile?.role === 'superadmin';
+  const isSuperAdmin = profile?.role === "superadmin";
   const [students, setStudents] = useState([]);
   const [awards, setAwards] = useState([]);
-  const [studentId, setStudentId] = useState('');
-  const [error, setError] = useState('');
+  const [studentId, setStudentId] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [busyAchievementId, setBusyAchievementId] = useState('');
+  const [busyAchievementId, setBusyAchievementId] = useState("");
 
   async function loadAwards() {
     let query = supabase
-      .from('player_achievements')
-      .select('user_id, achievement_id, unlocked_at')
-      .order('unlocked_at', { ascending: false });
+      .from("player_achievements")
+      .select("user_id, achievement_id, unlocked_at")
+      .order("unlocked_at", { ascending: false });
 
-    if (!isSuperAdmin) query = query.eq('user_id', user.id);
+    if (!isSuperAdmin) query = query.eq("user_id", user.id);
 
     const { data, error: awardsError } = await query;
     if (awardsError) {
@@ -39,16 +39,20 @@ export default function Achievements() {
 
     async function loadPage() {
       setLoading(true);
-      setError('');
+      setError("");
       setLoadFailed(false);
       const awardsQuery = supabase
-        .from('player_achievements')
-        .select('user_id, achievement_id, unlocked_at')
-        .order('unlocked_at', { ascending: false });
+        .from("player_achievements")
+        .select("user_id, achievement_id, unlocked_at")
+        .order("unlocked_at", { ascending: false });
       const results = await Promise.all([
-        isSuperAdmin ? awardsQuery : awardsQuery.eq('user_id', user.id),
+        isSuperAdmin ? awardsQuery : awardsQuery.eq("user_id", user.id),
         isSuperAdmin
-          ? supabase.from('profiles').select('id, name').eq('role', 'student').order('name')
+          ? supabase
+              .from("profiles")
+              .select("id, name")
+              .eq("role", "student")
+              .order("name")
           : Promise.resolve({ data: [], error: null }),
       ]);
       const [awardsResult, studentsResult] = results;
@@ -74,38 +78,48 @@ export default function Achievements() {
     if (!studentId) return;
 
     setBusyAchievementId(achievementId);
-    setError('');
+    setError("");
     const result = isUnlocked
       ? await supabase
-        .from('player_achievements')
-        .delete()
-        .eq('user_id', studentId)
-        .eq('achievement_id', achievementId)
+          .from("player_achievements")
+          .delete()
+          .eq("user_id", studentId)
+          .eq("achievement_id", achievementId)
       : await supabase
-        .from('player_achievements')
-        .insert({ user_id: studentId, achievement_id: achievementId });
+          .from("player_achievements")
+          .insert({ user_id: studentId, achievement_id: achievementId });
 
     if (result.error) {
       setError(result.error.message);
     } else {
       await loadAwards();
     }
-    setBusyAchievementId('');
+    setBusyAchievementId("");
   }
 
   const visibleAwards = isSuperAdmin
     ? awards.filter((award) => award.user_id === studentId)
     : awards;
   const latestAward = visibleAwards[0];
-  const latestAchievement = ACHIEVEMENTS.find((item) => item.id === latestAward?.achievement_id);
-  const studentName = students.find((student) => student.id === studentId)?.name;
+  const latestAchievement = ACHIEVEMENTS.find(
+    (item) => item.id === latestAward?.achievement_id,
+  );
+  const studentName = students.find(
+    (student) => student.id === studentId,
+  )?.name;
 
   return (
     <div className="achievements-page">
       <section className="achievement-latest">
-        <h3>{isSuperAdmin && studentName ? `Latest for ${studentName}` : 'Latest Achievement'}</h3>
+        <h3>
+          {isSuperAdmin && studentName
+            ? `Latest for ${studentName}`
+            : "Latest Achievement"}
+        </h3>
         <div>
-          {latestAchievement ? latestAchievement.title : 'No achievement unlocked yet'}
+          {latestAchievement
+            ? latestAchievement.title
+            : "No achievement unlocked yet"}
         </div>
       </section>
 
@@ -120,38 +134,58 @@ export default function Achievements() {
         />
       )}
 
-      <h3>{isSuperAdmin ? 'Student Achievements' : 'Your Achievements'}</h3>
-      {error && <p className="error" role="alert">{error}</p>}
+      <h3>{isSuperAdmin ? "Student Achievements" : "Your Achievements"}</h3>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       {loading ? (
         <p>Loading achievements...</p>
       ) : loadFailed ? null : (
         <div className="achievement-list">
           {ACHIEVEMENTS.map((achievement) => {
-            const award = visibleAwards.find((item) => item.achievement_id === achievement.id);
+            const award = visibleAwards.find(
+              (item) => item.achievement_id === achievement.id,
+            );
             const isUnlocked = Boolean(award);
 
             return (
-              <article key={achievement.id} className={`achievement-row${isUnlocked ? ' is-unlocked' : ''}`}>
+              <article
+                key={achievement.id}
+                className={`achievement-row${isUnlocked ? " is-unlocked" : ""}`}
+              >
                 <div className="achievement-details">
                   <strong>{achievement.title}</strong>
                   <p>{achievement.description}</p>
                   {award && (
-                    <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                    <small>
+                      Completed{" "}
+                      {new Date(award.unlocked_at).toLocaleDateString()}
+                    </small>
                   )}
                 </div>
-                <span className={`achievement-status${isUnlocked ? ' is-unlocked' : ''}`}>
-                  {isUnlocked ? 'Completed' : 'Not completed'}
+                <span
+                  className={`achievement-status${isUnlocked ? " is-unlocked" : ""}`}
+                >
+                  {isUnlocked ? "Completed" : "Not completed"}
                 </span>
                 {isSuperAdmin && (
                   <div className="achievement-actions">
                     <button
                       type="button"
-                      disabled={!studentId || busyAchievementId === achievement.id}
-                      onClick={() => toggleAchievement(achievement.id, isUnlocked)}
+                      disabled={
+                        !studentId || busyAchievementId === achievement.id
+                      }
+                      onClick={() =>
+                        toggleAchievement(achievement.id, isUnlocked)
+                      }
                     >
                       {busyAchievementId === achievement.id
-                        ? 'Saving...'
-                        : isUnlocked ? 'Revoke' : 'Mark complete'}
+                        ? "Saving..."
+                        : isUnlocked
+                          ? "Revoke"
+                          : "Mark complete"}
                     </button>
                   </div>
                 )}

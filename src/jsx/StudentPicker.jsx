@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import Pagination from './Pagination';
-import '../css/StudentPicker.css';
+import { useEffect, useState } from "react";
+import Pagination from "./Pagination";
+import "../css/StudentPicker.css";
 
 const PAGE_SIZE = 10;
-const BROWSE_STUDENTS = '__browse_all_students__';
+const BROWSE_STUDENTS = "__browse_all_students__";
 
 export default function StudentPicker({
   id,
@@ -11,9 +11,9 @@ export default function StudentPicker({
   students,
   value,
   onChange,
-  placeholder = 'Select a student',
-  className = '',
-  itemLabel = 'student',
+  placeholder = "Select a student",
+  className = "",
+  itemLabel = "student",
   disabled = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,10 +28,10 @@ export default function StudentPicker({
   useEffect(() => {
     if (!isOpen) return undefined;
     function closeOnEscape(event) {
-      if (event.key === 'Escape') setIsOpen(false);
+      if (event.key === "Escape") setIsOpen(false);
     }
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
   }, [isOpen]);
 
   function handleSelectChange(event) {
@@ -51,20 +51,33 @@ export default function StudentPicker({
 
   return (
     <>
-      <label className={`student-picker-label ${className}`.trim()} htmlFor={id}>
+      <label
+        className={`student-picker-label ${className}`.trim()}
+        htmlFor={id}
+      >
         {label}
-        <select id={id} value={value} onChange={handleSelectChange} disabled={disabled}>
+        <select
+          id={id}
+          value={value}
+          onChange={handleSelectChange}
+          disabled={disabled}
+        >
           <option value="">{placeholder}</option>
           {students.map((student) => (
-            <option key={student.id} value={student.id}>{student.name || `Unknown ${itemLabel}`}</option>
+            <option key={student.id} value={student.id}>
+              {student.name || `Unknown ${itemLabel}`}
+            </option>
           ))}
           <option value={BROWSE_STUDENTS}>Show more students</option>
         </select>
       </label>
       {isOpen && (
-        <div className="student-picker-backdrop" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setIsOpen(false);
-        }}>
+        <div
+          className="student-picker-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsOpen(false);
+          }}
+        >
           <section
             className="student-picker-dialog"
             role="dialog"
@@ -73,7 +86,13 @@ export default function StudentPicker({
           >
             <div className="student-picker-heading">
               <h2 id={`${id}-dialog-title`}>Choose a {itemLabel}</h2>
-              <button type="button" aria-label="Close student picker" onClick={() => setIsOpen(false)}>×</button>
+              <button
+                type="button"
+                aria-label="Close student picker"
+                onClick={() => setIsOpen(false)}
+              >
+                ×
+              </button>
             </div>
             {students.length ? (
               <>
@@ -82,7 +101,7 @@ export default function StudentPicker({
                     <button
                       key={student.id}
                       type="button"
-                      className={student.id === value ? 'selected' : ''}
+                      className={student.id === value ? "selected" : ""}
                       aria-pressed={student.id === value}
                       onClick={() => chooseStudent(student.id)}
                     >
@@ -98,7 +117,9 @@ export default function StudentPicker({
                 />
               </>
             ) : (
-              <p className="student-picker-empty">No students are available to select.</p>
+              <p className="student-picker-empty">
+                No students are available to select.
+              </p>
             )}
           </section>
         </div>

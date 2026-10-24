@@ -1,24 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from './supabase_Client';
-import { useAuth } from './useAunth';
-import StudentPicker from './StudentPicker';
-import '../css/Messages.css';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "./supabase_Client";
+import { useAuth } from "./useAunth";
+import StudentPicker from "./StudentPicker";
+import "../css/Messages.css";
 
-const ATTACHMENT_BUCKET = 'message-attachments';
+const ATTACHMENT_BUCKET = "message-attachments";
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 function MessagePrivacyNotice() {
-  return <div className="message-privacy-notice" role="note">
-    <span aria-hidden="true">⚠</span>
-    <p><strong>Do not send sensitive information.</strong> Never share passwords, security PINs, security answers, bank details, or personal identification documents in messages or attachments.</p>
-  </div>;
+  return (
+    <div className="message-privacy-notice" role="note">
+      <span aria-hidden="true">⚠</span>
+      <p>
+        <strong>Do not send sensitive information.</strong> Never share
+        passwords, security PINs, security answers, bank details, or personal
+        identification documents in messages or attachments.
+      </p>
+    </div>
+  );
 }
 
 function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState("");
   const [files, setFiles] = useState([]);
-  const [fileError, setFileError] = useState('');
+  const [fileError, setFileError] = useState("");
 
   async function submit(event) {
     event.preventDefault();
@@ -26,9 +32,9 @@ function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
     const form = event.currentTarget;
     const sent = await onSend(body.trim(), files);
     if (sent) {
-      setBody('');
+      setBody("");
       setFiles([]);
-      setFileError('');
+      setFileError("");
       form.reset();
     }
   }
@@ -36,12 +42,12 @@ function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
   function selectFiles(event) {
     const selected = Array.from(event.target.files || []);
     if (selected.length > MAX_ATTACHMENTS) {
-      event.target.value = '';
+      event.target.value = "";
       setFiles([]);
       setFileError(`Choose no more than ${MAX_ATTACHMENTS} attachments.`);
       return;
     }
-    setFileError('');
+    setFileError("");
     setFiles(selected);
   }
 
@@ -71,8 +77,8 @@ function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
       </label>
       <p id="attachment-help" className="attachment-help">
         {files.length > 0
-          ? files.map((file) => file.name).join(', ')
-          : 'You can send a message with attachments only.'}
+          ? files.map((file) => file.name).join(", ")
+          : "You can send a message with attachments only."}
       </p>
       {fileError && <p className="error">{fileError}</p>}
       {hasOversizedFile && (
@@ -81,37 +87,54 @@ function MessageComposer({ onSend, sending, submitLabel, recipientSelect }) {
       <button
         type="submit"
         className="button primary"
-        disabled={sending || files.length > MAX_ATTACHMENTS || hasOversizedFile || (!body.trim() && files.length === 0)}
+        disabled={
+          sending ||
+          files.length > MAX_ATTACHMENTS ||
+          hasOversizedFile ||
+          (!body.trim() && files.length === 0)
+        }
       >
-        {sending ? 'Sending...' : submitLabel}
+        {sending ? "Sending..." : submitLabel}
       </button>
     </form>
   );
 }
 
 function Attachment({ attachment }) {
-  if (attachment.content_type?.startsWith('image/')) {
+  if (attachment.content_type?.startsWith("image/")) {
     return (
-      <a className="message-attachment" href={attachment.url} target="_blank" rel="noreferrer">
+      <a
+        className="message-attachment"
+        href={attachment.url}
+        target="_blank"
+        rel="noreferrer"
+      >
         <img src={attachment.url} alt={attachment.file_name} loading="lazy" />
         <span>{attachment.file_name}</span>
       </a>
     );
   }
 
-  if (attachment.content_type?.startsWith('video/')) {
+  if (attachment.content_type?.startsWith("video/")) {
     return (
       <div className="message-attachment message-video">
         <video controls preload="metadata" src={attachment.url}>
           Your browser does not support video playback.
         </video>
-        <a href={attachment.url} target="_blank" rel="noreferrer">{attachment.file_name}</a>
+        <a href={attachment.url} target="_blank" rel="noreferrer">
+          {attachment.file_name}
+        </a>
       </div>
     );
   }
 
   return (
-    <a className="message-file" href={attachment.url} target="_blank" rel="noreferrer">
+    <a
+      className="message-file"
+      href={attachment.url}
+      target="_blank"
+      rel="noreferrer"
+    >
       <span aria-hidden="true">📎</span>
       <span>{attachment.file_name}</span>
     </a>
@@ -119,7 +142,9 @@ function Attachment({ attachment }) {
 }
 
 function groupConversations(messages) {
-  const messagesById = new Map(messages.map((message) => [message.id, message]));
+  const messagesById = new Map(
+    messages.map((message) => [message.id, message]),
+  );
   const conversationsById = new Map();
 
   for (const message of messages) {
@@ -131,7 +156,10 @@ function groupConversations(messages) {
       root = messagesById.get(root.parent_message_id);
     }
 
-    const conversation = conversationsById.get(root.id) || { id: root.id, messages: [] };
+    const conversation = conversationsById.get(root.id) || {
+      id: root.id,
+      messages: [],
+    };
     conversation.messages.push(message);
     conversationsById.set(root.id, conversation);
   }
@@ -139,40 +167,45 @@ function groupConversations(messages) {
   return [...conversationsById.values()]
     .map((conversation) => ({
       ...conversation,
-      messages: conversation.messages.sort((first, second) => (
-        new Date(first.sent_at || 0).getTime() - new Date(second.sent_at || 0).getTime()
-      )),
+      messages: conversation.messages.sort(
+        (first, second) =>
+          new Date(first.sent_at || 0).getTime() -
+          new Date(second.sent_at || 0).getTime(),
+      ),
     }))
-    .sort((first, second) => (
-      new Date(second.messages.at(-1)?.sent_at || 0).getTime()
-      - new Date(first.messages.at(-1)?.sent_at || 0).getTime()
-    ));
+    .sort(
+      (first, second) =>
+        new Date(second.messages.at(-1)?.sent_at || 0).getTime() -
+        new Date(first.messages.at(-1)?.sent_at || 0).getTime(),
+    );
 }
 
 export default function Messages() {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [recipients, setRecipients] = useState([]);
-  const [recipientId, setRecipientId] = useState('');
+  const [recipientId, setRecipientId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [replyToId, setReplyToId] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recipientsLoading, setRecipientsLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const closeDialogButton = useRef(null);
   const conversations = useMemo(() => groupConversations(messages), [messages]);
-  const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
+  const selectedConversation = conversations.find(
+    (conversation) => conversation.id === selectedConversationId,
+  );
 
   useEffect(() => {
     if (!selectedConversationId) return undefined;
     closeDialogButton.current?.focus();
     function closeOnEscape(event) {
-      if (event.key === 'Escape') setSelectedConversationId(null);
+      if (event.key === "Escape") setSelectedConversationId(null);
     }
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
   }, [selectedConversation]);
 
   useEffect(() => {
@@ -182,13 +215,15 @@ export default function Messages() {
   async function load() {
     setLoading(true);
     setRecipientsLoading(true);
-    setError('');
+    setError("");
     try {
       const { data: messageRows, error: messagesError } = await supabase
-        .from('messages')
-        .select('*, sender:profiles!messages_sender_id_fkey(name), recipient:profiles!messages_recipient_id_fkey(name)')
+        .from("messages")
+        .select(
+          "*, sender:profiles!messages_sender_id_fkey(name), recipient:profiles!messages_recipient_id_fkey(name)",
+        )
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .order('sent_at', { ascending: false });
+        .order("sent_at", { ascending: false });
 
       if (messagesError) {
         setError(`Messages could not be loaded: ${messagesError.message}`);
@@ -197,28 +232,40 @@ export default function Messages() {
       }
 
       const rows = messageRows || [];
-      const parentIds = [...new Set(rows.map((message) => message.parent_message_id).filter(Boolean))];
+      const parentIds = [
+        ...new Set(
+          rows.map((message) => message.parent_message_id).filter(Boolean),
+        ),
+      ];
       const parentsById = new Map();
       if (parentIds.length > 0) {
         const { data: parentRows, error: parentsError } = await supabase
-          .from('messages')
-          .select('id,body,sender_id,recipient_id')
-          .in('id', parentIds);
+          .from("messages")
+          .select("id,body,sender_id,recipient_id")
+          .in("id", parentIds);
         if (parentsError) {
-          setError(`Reply context could not be loaded: ${parentsError.message}`);
+          setError(
+            `Reply context could not be loaded: ${parentsError.message}`,
+          );
         } else {
-          for (const parent of parentRows || []) parentsById.set(parent.id, parent);
+          for (const parent of parentRows || [])
+            parentsById.set(parent.id, parent);
         }
       }
 
       let attachmentRows = [];
       if (rows.length > 0) {
         const { data, error: attachmentsError } = await supabase
-          .from('message_attachments')
-          .select('id,message_id,file_name,content_type,storage_path')
-          .in('message_id', rows.map((message) => message.id));
+          .from("message_attachments")
+          .select("id,message_id,file_name,content_type,storage_path")
+          .in(
+            "message_id",
+            rows.map((message) => message.id),
+          );
         if (attachmentsError) {
-          setError(`Message attachments could not be loaded: ${attachmentsError.message}`);
+          setError(
+            `Message attachments could not be loaded: ${attachmentsError.message}`,
+          );
         } else {
           attachmentRows = data || [];
         }
@@ -238,36 +285,45 @@ export default function Messages() {
         attachmentsByMessage.set(attachment.message_id, existing);
       }
 
-      setMessages(rows.map((message) => ({
-        ...message,
-        parent: parentsById.get(message.parent_message_id) || null,
-        attachments: attachmentsByMessage.get(message.id) || [],
-      })));
+      setMessages(
+        rows.map((message) => ({
+          ...message,
+          parent: parentsById.get(message.parent_message_id) || null,
+          attachments: attachmentsByMessage.get(message.id) || [],
+        })),
+      );
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
       if (sessionError) {
         setError(`Your session could not be checked: ${sessionError.message}`);
         setRecipients([]);
       } else if (!session?.access_token) {
-        setError('Sign in again to load message recipients.');
+        setError("Sign in again to load message recipients.");
         setRecipients([]);
       } else {
         const apiUrl = import.meta.env.DEV
-          ? 'http://localhost:3001/api/message-recipients'
-          : '/api/message-recipients';
+          ? "http://localhost:3001/api/message-recipients"
+          : "/api/message-recipients";
         const recipientsResponse = await fetch(apiUrl, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const recipientsResult = await recipientsResponse.json();
         if (!recipientsResponse.ok) {
-          setError(`Recipients could not be loaded: ${recipientsResult.error || 'Please try again.'}`);
+          setError(
+            `Recipients could not be loaded: ${recipientsResult.error || "Please try again."}`,
+          );
           setRecipients([]);
         } else {
           setRecipients(recipientsResult.recipients || []);
         }
       }
     } catch (loadError) {
-      setError(`Messages could not be loaded: ${loadError instanceof Error ? loadError.message : 'Please try again.'}`);
+      setError(
+        `Messages could not be loaded: ${loadError instanceof Error ? loadError.message : "Please try again."}`,
+      );
       setMessages([]);
     } finally {
       setLoading(false);
@@ -275,19 +331,24 @@ export default function Messages() {
     }
   }
 
-  async function deliverMessage({ recipient, body, files, parentMessageId = null }) {
+  async function deliverMessage({
+    recipient,
+    body,
+    files,
+    parentMessageId = null,
+  }) {
     setSending(true);
-    setError('');
+    setError("");
     try {
       const { data: message, error: insertError } = await supabase
-        .from('messages')
+        .from("messages")
         .insert({
           sender_id: user.id,
           recipient_id: recipient,
           body,
           parent_message_id: parentMessageId,
         })
-        .select('id')
+        .select("id")
         .single();
 
       if (insertError) {
@@ -297,13 +358,16 @@ export default function Messages() {
 
       if (files.length > 0) {
         const uploadedPaths = [];
-        let attachmentError = '';
+        let attachmentError = "";
         for (const file of files) {
-          const safeName = file.name.replace(/[\\/]/g, '_');
+          const safeName = file.name.replace(/[\\/]/g, "_");
           const storagePath = `${user.id}/${message.id}/${crypto.randomUUID()}-${safeName}`;
           const { error: uploadError } = await supabase.storage
             .from(ATTACHMENT_BUCKET)
-            .upload(storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+            .upload(storagePath, file, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
           if (uploadError) {
             attachmentError = uploadError.message;
             break;
@@ -317,19 +381,25 @@ export default function Messages() {
             uploaded_by: user.id,
             storage_path: uploadedPaths[index],
             file_name: file.name,
-            content_type: file.type || 'application/octet-stream',
+            content_type: file.type || "application/octet-stream",
             size_bytes: file.size,
           }));
-          const { error: metadataError } = await supabase.from('message_attachments').insert(attachmentRecords);
+          const { error: metadataError } = await supabase
+            .from("message_attachments")
+            .insert(attachmentRecords);
           if (metadataError) attachmentError = metadataError.message;
         }
 
         if (attachmentError) {
           const failureMessage = `The message was sent, but its attachments could not be saved: ${attachmentError}.`;
           const { error: cleanupError } = uploadedPaths.length
-            ? await supabase.storage.from(ATTACHMENT_BUCKET).remove(uploadedPaths)
+            ? await supabase.storage
+                .from(ATTACHMENT_BUCKET)
+                .remove(uploadedPaths)
             : { error: null };
-          const cleanupNote = cleanupError ? ` Uploaded files may need cleanup: ${cleanupError.message}` : '';
+          const cleanupNote = cleanupError
+            ? ` Uploaded files may need cleanup: ${cleanupError.message}`
+            : "";
           await load();
           setError(`${failureMessage}${cleanupNote}`);
           return true;
@@ -339,7 +409,9 @@ export default function Messages() {
       await load();
       return true;
     } catch (sendError) {
-      setError(`Message could not be sent: ${sendError instanceof Error ? sendError.message : 'Please try again.'}`);
+      setError(
+        `Message could not be sent: ${sendError instanceof Error ? sendError.message : "Please try again."}`,
+      );
       return false;
     } finally {
       setSending(false);
@@ -348,19 +420,20 @@ export default function Messages() {
 
   async function sendNewMessage(body, files) {
     if (!recipientId) {
-      setError('Choose a recipient before sending.');
+      setError("Choose a recipient before sending.");
       return false;
     }
     const sent = await deliverMessage({ recipient: recipientId, body, files });
     if (sent) {
-      setRecipientId('');
+      setRecipientId("");
       setShowForm(false);
     }
     return sent;
   }
 
   async function sendReply(message, body, files) {
-    const recipient = message.sender_id === user.id ? message.recipient_id : message.sender_id;
+    const recipient =
+      message.sender_id === user.id ? message.recipient_id : message.sender_id;
     const sent = await deliverMessage({
       recipient,
       body,
@@ -375,17 +448,27 @@ export default function Messages() {
     <section className="messages-page">
       <MessagePrivacyNotice />
       <div className="toolbar">
-        <div><h3>Messages</h3><p>Your conversations.</p></div>
+        <div>
+          <h3>Messages</h3>
+          <p>Your conversations.</p>
+        </div>
         <button
           type="button"
           className="button primary small-button"
-          onClick={() => { setShowForm((visible) => !visible); setError(''); }}
+          onClick={() => {
+            setShowForm((visible) => !visible);
+            setError("");
+          }}
         >
-          {showForm ? 'Cancel' : '+ New message'}
+          {showForm ? "Cancel" : "+ New message"}
         </button>
       </div>
 
-      {error && <p className="error message-error" role="alert">{error}</p>}
+      {error && (
+        <p className="error message-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {showForm && (
         <div className="panel new-message-panel">
@@ -393,7 +476,7 @@ export default function Messages() {
             onSend={sendNewMessage}
             sending={sending}
             submitLabel="Send message"
-            recipientSelect={(
+            recipientSelect={
               <StudentPicker
                 id="message-recipient-select"
                 label="Recipient"
@@ -401,19 +484,31 @@ export default function Messages() {
                 value={recipientId}
                 onChange={setRecipientId}
                 itemLabel="recipient"
-                placeholder={recipientsLoading ? 'Loading recipients...' : recipients.length ? 'Select recipient' : 'No recipients available'}
+                placeholder={
+                  recipientsLoading
+                    ? "Loading recipients..."
+                    : recipients.length
+                      ? "Select recipient"
+                      : "No recipients available"
+                }
                 disabled={recipientsLoading || recipients.length === 0}
               />
-            )}
+            }
           />
         </div>
       )}
 
       <div className="panel message-list">
         {loading && <p className="empty">Loading messages...</p>}
-        {!loading && conversations.length === 0 && <p className="empty">No messages yet.</p>}
+        {!loading && conversations.length === 0 && (
+          <p className="empty">No messages yet.</p>
+        )}
         {!loading && conversations.length > 0 && (
-          <div className="message-table" role="table" aria-label="Conversations">
+          <div
+            className="message-table"
+            role="table"
+            aria-label="Conversations"
+          >
             <div className="message-table-header" role="row">
               <span role="columnheader">#</span>
               <span role="columnheader">To / From</span>
@@ -423,23 +518,34 @@ export default function Messages() {
             {conversations.map((conversation, index) => {
               const firstMessage = conversation.messages[0];
               const latestMessage = conversation.messages.at(-1);
-              const counterpart = firstMessage.sender_id === user.id
-                ? firstMessage.recipient?.name
-                : firstMessage.sender?.name;
-              const direction = firstMessage.sender_id === user.id ? 'To' : 'From';
-              const preview = latestMessage.body?.trim() || 'Attachment';
+              const counterpart =
+                firstMessage.sender_id === user.id
+                  ? firstMessage.recipient?.name
+                  : firstMessage.sender?.name;
+              const direction =
+                firstMessage.sender_id === user.id ? "To" : "From";
+              const preview = latestMessage.body?.trim() || "Attachment";
               return (
                 <button
                   key={conversation.id}
                   type="button"
                   className="message-table-row"
                   role="row"
-                  onClick={() => { setSelectedConversationId(conversation.id); setReplyToId(null); }}
+                  onClick={() => {
+                    setSelectedConversationId(conversation.id);
+                    setReplyToId(null);
+                  }}
                 >
-                  <span className="message-number" role="cell">{index + 1}</span>
+                  <span className="message-number" role="cell">
+                    {index + 1}
+                  </span>
                   <span className="message-counterpart" role="cell">
-                    <span className="message-avatar" aria-hidden="true">{counterpart?.charAt(0)?.toUpperCase() || '?'}</span>
-                    <span>{direction} {counterpart || 'Unknown recipient'}</span>
+                    <span className="message-avatar" aria-hidden="true">
+                      {counterpart?.charAt(0)?.toUpperCase() || "?"}
+                    </span>
+                    <span>
+                      {direction} {counterpart || "Unknown recipient"}
+                    </span>
                   </span>
                   <span className="message-preview" role="cell">
                     {preview}
@@ -447,8 +553,13 @@ export default function Messages() {
                       <small>{conversation.messages.length} messages</small>
                     )}
                   </span>
-                  <time role="cell" dateTime={latestMessage.sent_at || undefined}>
-                    {latestMessage.sent_at ? new Date(latestMessage.sent_at).toLocaleDateString() : ''}
+                  <time
+                    role="cell"
+                    dateTime={latestMessage.sent_at || undefined}
+                  >
+                    {latestMessage.sent_at
+                      ? new Date(latestMessage.sent_at).toLocaleDateString()
+                      : ""}
                   </time>
                 </button>
               );
@@ -461,12 +572,22 @@ export default function Messages() {
         <div
           className="message-dialog-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelectedConversationId(null);
+            if (event.target === event.currentTarget)
+              setSelectedConversationId(null);
           }}
         >
-          <section className="message-dialog" role="dialog" aria-modal="true" aria-label="Message conversation">
+          <section
+            className="message-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Message conversation"
+          >
             <header className="message-dialog-header">
-              <h2>Message from {selectedConversation.messages[0].sender?.name || 'Unknown sender'}</h2>
+              <h2>
+                Message from{" "}
+                {selectedConversation.messages[0].sender?.name ||
+                  "Unknown sender"}
+              </h2>
               <button
                 ref={closeDialogButton}
                 type="button"
@@ -479,51 +600,81 @@ export default function Messages() {
             </header>
             <div className="message-dialog-content">
               <h3 className="message-dialog-subject">
-                {selectedConversation.messages[0].body?.trim().split('\n')[0] || 'Message with attachments'}
+                {selectedConversation.messages[0].body?.trim().split("\n")[0] ||
+                  "Message with attachments"}
               </h3>
               {selectedConversation.messages.map((message) => {
                 return (
                   <article key={message.id} className="message-thread-message">
                     {message.parent && (
                       <p className="message-reply-context">
-                        Replying to {message.parent.sender_id === user.id ? 'your' : 'their'} message: {message.parent.body}
+                        Replying to{" "}
+                        {message.parent.sender_id === user.id
+                          ? "your"
+                          : "their"}{" "}
+                        message: {message.parent.body}
                       </p>
                     )}
                     <p>
                       <strong>To</strong>
-                      <span className="message-dialog-avatar" aria-hidden="true">
-                        {message.recipient?.name?.charAt(0)?.toUpperCase() || '?'}
+                      <span
+                        className="message-dialog-avatar"
+                        aria-hidden="true"
+                      >
+                        {message.recipient?.name?.charAt(0)?.toUpperCase() ||
+                          "?"}
                       </span>
-                      <span className="message-dialog-name">{message.recipient?.name || 'Unknown recipient'}</span>
+                      <span className="message-dialog-name">
+                        {message.recipient?.name || "Unknown recipient"}
+                      </span>
                     </p>
                     <p>
                       <strong>From</strong>
-                      <span className="message-dialog-avatar" aria-hidden="true">
-                        {message.sender?.name?.charAt(0)?.toUpperCase() || '?'}
+                      <span
+                        className="message-dialog-avatar"
+                        aria-hidden="true"
+                      >
+                        {message.sender?.name?.charAt(0)?.toUpperCase() || "?"}
                       </span>
-                      <span className="message-dialog-name">{message.sender?.name || 'Unknown sender'}</span>
+                      <span className="message-dialog-name">
+                        {message.sender?.name || "Unknown sender"}
+                      </span>
                       {message.sent_at && (
-                        <time dateTime={message.sent_at}>@ {new Date(message.sent_at).toLocaleString()}</time>
+                        <time dateTime={message.sent_at}>
+                          @ {new Date(message.sent_at).toLocaleString()}
+                        </time>
                       )}
                     </p>
-                    {message.body && <p className="message-dialog-body">{message.body}</p>}
+                    {message.body && (
+                      <p className="message-dialog-body">{message.body}</p>
+                    )}
                     {message.attachments.length > 0 && (
                       <div className="message-attachments">
                         {message.attachments.map((attachment) => (
-                          <Attachment key={attachment.id} attachment={attachment} />
+                          <Attachment
+                            key={attachment.id}
+                            attachment={attachment}
+                          />
                         ))}
                       </div>
                     )}
                     <button
                       type="button"
                       className="text-button message-reply-button"
-                      onClick={() => { setReplyToId(replyToId === message.id ? null : message.id); setError(''); }}
+                      onClick={() => {
+                        setReplyToId(
+                          replyToId === message.id ? null : message.id,
+                        );
+                        setError("");
+                      }}
                     >
-                      {replyToId === message.id ? 'Cancel reply' : 'Reply'}
+                      {replyToId === message.id ? "Cancel reply" : "Reply"}
                     </button>
                     {replyToId === message.id && (
                       <MessageComposer
-                        onSend={(body, files) => sendReply(message, body, files)}
+                        onSend={(body, files) =>
+                          sendReply(message, body, files)
+                        }
                         sending={sending}
                         submitLabel="Send reply"
                       />

@@ -1,6 +1,11 @@
-import '../css/Pagination.css';
+import "../css/Pagination.css";
 
-export default function Pagination({ page, pageSize, totalItems, onPageChange }) {
+export default function Pagination({
+  page,
+  pageSize,
+  totalItems,
+  onPageChange,
+}) {
   const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const firstItem = totalItems ? (page - 1) * pageSize + 1 : 0;
   const lastItem = Math.min(page * pageSize, totalItems);
@@ -19,7 +24,9 @@ export default function Pagination({ page, pageSize, totalItems, onPageChange })
         >
           Previous
         </button>
-        <span aria-live="polite">Page {page} of {pageCount}</span>
+        <span aria-live="polite">
+          Page {page} of {pageCount}
+        </span>
         <button
           type="button"
           aria-label="Next page"

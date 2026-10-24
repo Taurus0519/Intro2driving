@@ -19,7 +19,10 @@ body {
   font-size: 14px;
   line-height: 1.5;
 }
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 button {
@@ -78,8 +81,9 @@ a {
   cursor: pointer;
   opacity: 0.85;
 }
-.nav-link:hover, .nav-link.active {
-  background: rgba(0,0,0,.15);
+.nav-link:hover,
+.nav-link.active {
+  background: rgba(0, 0, 0, 0.15);
   opacity: 1;
   border-left-color: #efc24c;
 }
@@ -211,7 +215,10 @@ a {
   background: #fff;
   font-size: 13px;
   font-weight: 700;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 .button:hover {
   border-color: #aebfca;
@@ -234,7 +241,9 @@ a {
   padding: 5px 10px;
   font-size: 12px;
 }
-input, select, textarea {
+input,
+select,
+textarea {
   width: 100%;
   min-height: 40px;
   padding: 9px 11px;
@@ -243,7 +252,9 @@ input, select, textarea {
   color: var(--ink);
   background: #fff;
 }
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--blue);
   outline: 3px solid rgba(23, 104, 159, 0.14);
 }
@@ -277,7 +288,8 @@ form.panel {
   font-size: 11px;
   font-weight: 800;
 }
-.status.inactive, .status.pending {
+.status.inactive,
+.status.pending {
   color: #765317;
   background: #fff4d7;
 }
@@ -429,7 +441,7 @@ form.panel {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(30,65,95,.08);
+  box-shadow: 0 4px 12px rgba(30, 65, 95, 0.08);
 }
 .stat .label {
   font-size: 11px;
@@ -446,7 +458,7 @@ form.panel {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(30,65,95,.08);
+  box-shadow: 0 4px 12px rgba(30, 65, 95, 0.08);
   margin-bottom: 18px;
 }
 .toolbar {
@@ -523,7 +535,8 @@ form.panel {
     flex-direction: row;
     overflow-x: auto;
   }
-  .brand-mark, .brand-name {
+  .brand-mark,
+  .brand-name {
     margin: 0;
   }
   .brand-mark {
@@ -572,11 +585,91 @@ form.panel {
     gap: 8px;
   }
 }
-.loading-screen{min-height:100vh;display:grid;place-items:center;padding:24px}
+.loading-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
 /* Keep the portal header and login aligned with the reference screens. */
-html,body,#root{background:#eef8fd;color:var(--ink)}
-.topbar{height:auto;background:transparent;color:var(--ink);padding:0;margin-bottom:30px;box-shadow:none}
-.topbar h2{margin:0;font-size:23px}.topbar .portal-eyebrow{margin-bottom:18px}
-.login-view{background:linear-gradient(120deg,#88c1e5,#d7eef9)}
-.login-card{width:min(100%,440px);border-radius:16px}.login-card>.brand-mark{margin:0 0 20px;background:#b83939;color:white}.login-card .eyebrow,.login-card h1,.login-card .muted{text-align:left}.login-card .eyebrow{font-size:12px;letter-spacing:0;color:#19384f}.login-card h1{font-size:32px;margin-top:16px}.login-card .muted{margin:17px 0}.login-links{display:grid;justify-content:start;gap:12px;border:0;padding:0;margin-top:18px}.login-links .text-button{text-align:left}
-.security-account{font-size:13px;color:var(--muted);overflow-wrap:anywhere}.login-security-hint{font-size:12px;color:#745217;padding:10px 12px;border:1px solid #e9c874;border-radius:5px;background:#fff8e6}.security-notice{color:#19725a}.security-pin-card select{width:100%;max-width:100%}
+html,
+body,
+#root {
+  background: #eef8fd;
+  color: var(--ink);
+}
+.topbar {
+  height: auto;
+  background: transparent;
+  color: var(--ink);
+  padding: 0;
+  margin-bottom: 30px;
+  box-shadow: none;
+}
+.topbar h2 {
+  margin: 0;
+  font-size: 23px;
+}
+.topbar .portal-eyebrow {
+  margin-bottom: 18px;
+}
+.login-view {
+  background: linear-gradient(120deg, #88c1e5, #d7eef9);
+}
+.login-card {
+  width: min(100%, 440px);
+  border-radius: 16px;
+}
+.login-card > .brand-mark {
+  margin: 0 0 20px;
+  background: #b83939;
+  color: white;
+}
+.login-card .eyebrow,
+.login-card h1,
+.login-card .muted {
+  text-align: left;
+}
+.login-card .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0;
+  color: #19384f;
+}
+.login-card h1 {
+  font-size: 32px;
+  margin-top: 16px;
+}
+.login-card .muted {
+  margin: 17px 0;
+}
+.login-links {
+  display: grid;
+  justify-content: start;
+  gap: 12px;
+  border: 0;
+  padding: 0;
+  margin-top: 18px;
+}
+.login-links .text-button {
+  text-align: left;
+}
+.security-account {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.login-security-hint {
+  font-size: 12px;
+  color: #745217;
+  padding: 10px 12px;
+  border: 1px solid #e9c874;
+  border-radius: 5px;
+  background: #fff8e6;
+}
+.security-notice {
+  color: #19725a;
+}
+.security-pin-card select {
+  width: 100%;
+  max-width: 100%;
+}

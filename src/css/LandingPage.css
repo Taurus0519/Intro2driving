@@ -60,7 +60,9 @@ body:has(.public-landing) {
   border-radius: 10px;
   color: #fff;
   background: var(--landing-brand-blue);
-  transition: background-color 140ms ease, border-color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 .landing-menu-toggle:hover {
   border-color: var(--landing-brand-navy);
@@ -138,7 +140,9 @@ body:has(.public-landing) {
   border-left: 3px solid transparent;
   font-size: 14px;
   font-weight: 700;
-  transition: background-color 140ms ease, border-color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 .landing-menu-links a:hover {
   border-left-color: var(--landing-brand-red);
@@ -175,8 +179,12 @@ body:has(.public-landing) {
   outline-offset: -4px;
 }
 @keyframes landing-menu-enter {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 .landing-intro {
   align-self: center;
@@ -225,7 +233,9 @@ body:has(.public-landing) {
   font-size: 0.8125rem;
   font-weight: 800;
   text-align: center;
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .landing-button:hover {
   transform: translateY(-2px);

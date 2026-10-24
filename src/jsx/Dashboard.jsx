@@ -1,27 +1,30 @@
-import Calendar from './Calendar';
-import StudentProgressPanel from './StudentProgressPanel';
-import EnrolmentChart from './EnrolmentChart';
-import GameScoreList from './GameScoreList';
-import { useEffect, useState } from 'react';
-import '../css/Dashboard.css';
-import { supabase } from './supabase_Client';
-import { useAuth } from './useAunth.jsx';
-import { ACHIEVEMENTS } from '../js/achievementData';
-import { Link } from 'react-router-dom';
-import { PDC_CHECKLIST_ITEM_COUNT, PDC_CHECKLIST_ITEMS } from '../js/pdcChecklistData';
-import SuccessRateCharts from './SuccessRateCharts';
-import { fetchAllRows } from '../js/learningStats.mjs';
-import { getProfileDisplayName } from '../js/profileIdentity.mjs';
-import '../css/StudentDetails.css';
+import Calendar from "./Calendar";
+import StudentProgressPanel from "./StudentProgressPanel";
+import EnrolmentChart from "./EnrolmentChart";
+import GameScoreList from "./GameScoreList";
+import { useEffect, useState } from "react";
+import "../css/Dashboard.css";
+import { supabase } from "./supabase_Client";
+import { useAuth } from "./useAunth.jsx";
+import { ACHIEVEMENTS } from "../js/achievementData";
+import { Link } from "react-router-dom";
+import {
+  PDC_CHECKLIST_ITEM_COUNT,
+  PDC_CHECKLIST_ITEMS,
+} from "../js/pdcChecklistData";
+import SuccessRateCharts from "./SuccessRateCharts";
+import { fetchAllRows } from "../js/learningStats.mjs";
+import { getProfileDisplayName } from "../js/profileIdentity.mjs";
+import "../css/StudentDetails.css";
 
 const PDC_CHECKLIST_ITEM_IDS = new Set(
   PDC_CHECKLIST_ITEMS.filter((item) => !item.optional).map((item) => item.id),
 );
 const AGE_GROUP_COLORS = {
-  '16-17': '#3b82f6',
-  '18-24': '#14b8a6',
-  '25-34': '#f59e0b',
-  '35+': '#8b5cf6',
+  "16-17": "#3b82f6",
+  "18-24": "#14b8a6",
+  "25-34": "#f59e0b",
+  "35+": "#8b5cf6",
 };
 
 function summarizeGameScores(rows) {
@@ -30,7 +33,9 @@ function summarizeGameScores(rows) {
   const latestByLevel = new Map();
   for (const row of rows) {
     const level = Number(row.level);
-    const recordedAt = row.recorded_at ? new Date(row.recorded_at).getTime() : -Infinity;
+    const recordedAt = row.recorded_at
+      ? new Date(row.recorded_at).getTime()
+      : -Infinity;
     if (!Number.isFinite(level)) continue;
 
     const current = latestByLevel.get(level);
@@ -41,7 +46,12 @@ function summarizeGameScores(rows) {
 
   return [...latestByLevel.entries()]
     .sort((a, b) => a[0] - b[0])
-    .map(([level, row]) => ({ level, score: Number(row.score), maxScore: Number(row.max_score), recordedAt: row.recorded_at }));
+    .map(([level, row]) => ({
+      level,
+      score: Number(row.score),
+      maxScore: Number(row.max_score),
+      recordedAt: row.recorded_at,
+    }));
 }
 
 function ProgressCard({ icon, count, title, hint }) {
@@ -57,7 +67,7 @@ function ProgressCard({ icon, count, title, hint }) {
 
 function getAgeGroupGradient(ageGroups) {
   const total = Object.values(ageGroups).reduce((sum, count) => sum + count, 0);
-  if (!total) return 'conic-gradient(#e8eef3 0deg 360deg)';
+  if (!total) return "conic-gradient(#e8eef3 0deg 360deg)";
 
   let currentAngle = 0;
   const slices = Object.entries(ageGroups).map(([group, count]) => {
@@ -66,54 +76,71 @@ function getAgeGroupGradient(ageGroups) {
     return `${AGE_GROUP_COLORS[group]} ${startAngle}deg ${currentAngle}deg`;
   });
 
-  return `conic-gradient(${slices.join(', ')})`;
+  return `conic-gradient(${slices.join(", ")})`;
 }
 
 function StudentDashboard({ profile }) {
   const [progress, setProgress] = useState({ quizzes: 0 });
-  const [quizProgressError, setQuizProgressError] = useState('');
-  const [gameProgress, setGameProgress] = useState(Number(profile?.progress) || 0);
-  const [gameProgressError, setGameProgressError] = useState('');
+  const [quizProgressError, setQuizProgressError] = useState("");
+  const [gameProgress, setGameProgress] = useState(
+    Number(profile?.progress) || 0,
+  );
+  const [gameProgressError, setGameProgressError] = useState("");
   const [gameScores, setGameScores] = useState([]);
-  const [gameScoresError, setGameScoresError] = useState('');
+  const [gameScoresError, setGameScoresError] = useState("");
   const [completedAchievements, setCompletedAchievements] = useState([]);
-  const [achievementError, setAchievementError] = useState('');
-  const [pdcProgress, setPdcProgress] = useState({ answered: 0, complete: false });
-  const [pdcError, setPdcError] = useState('');
+  const [achievementError, setAchievementError] = useState("");
+  const [pdcProgress, setPdcProgress] = useState({
+    answered: 0,
+    complete: false,
+  });
+  const [pdcError, setPdcError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     async function loadGameProgress() {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('progress')
-        .eq('id', profile.id)
+        .from("profiles")
+        .select("progress")
+        .eq("id", profile.id)
         .single();
 
       if (!active) return;
       if (error) {
-        setGameProgressError(`Game progress could not be loaded: ${error.message}`);
+        setGameProgressError(
+          `Game progress could not be loaded: ${error.message}`,
+        );
         return;
       }
 
       const value = Number(data.progress);
       if (!Number.isFinite(value)) {
-        setGameProgressError('Game progress could not be loaded: the saved value is not a number.');
+        setGameProgressError(
+          "Game progress could not be loaded: the saved value is not a number.",
+        );
         return;
       }
 
       setGameProgress(value);
-      setGameProgressError('');
+      setGameProgressError("");
     }
 
     void loadGameProgress();
-    const refreshInterval = window.setInterval(() => void loadGameProgress(), 30000);
+    const refreshInterval = window.setInterval(
+      () => void loadGameProgress(),
+      30000,
+    );
     const channel = supabase
       .channel(`student-game-progress-${profile.id}`)
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${profile.id}` },
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${profile.id}`,
+        },
         () => void loadGameProgress(),
       )
       .subscribe();
@@ -130,27 +157,37 @@ function StudentDashboard({ profile }) {
 
     async function loadProgress() {
       const { count, error } = await supabase
-        .from('quiz_chapter_progress')
-        .select('chapter_number', { count: 'exact', head: true })
-        .eq('student_id', profile.id);
+        .from("quiz_chapter_progress")
+        .select("chapter_number", { count: "exact", head: true })
+        .eq("student_id", profile.id);
 
       if (!active) return;
       if (error) {
-        setQuizProgressError(`Quiz completion could not be loaded: ${error.message}`);
+        setQuizProgressError(
+          `Quiz completion could not be loaded: ${error.message}`,
+        );
         return;
       }
 
       setProgress({ quizzes: count ?? 0 });
-      setQuizProgressError('');
+      setQuizProgressError("");
     }
 
     void loadProgress();
-    const refreshInterval = window.setInterval(() => void loadProgress(), 30000);
+    const refreshInterval = window.setInterval(
+      () => void loadProgress(),
+      30000,
+    );
     const channel = supabase
       .channel(`student-quiz-progress-${profile.id}`)
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'quiz_chapter_progress', filter: `student_id=eq.${profile.id}` },
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "quiz_chapter_progress",
+          filter: `student_id=eq.${profile.id}`,
+        },
         () => void loadProgress(),
       )
       .subscribe();
@@ -167,23 +204,27 @@ function StudentDashboard({ profile }) {
 
     async function loadGameScores() {
       const { data, error } = await supabase
-        .from('game_scores')
-        .select('level, score, max_score, recorded_at')
-        .eq('player_id', profile.id)
-        .order('recorded_at', { ascending: false });
+        .from("game_scores")
+        .select("level, score, max_score, recorded_at")
+        .eq("player_id", profile.id)
+        .order("recorded_at", { ascending: false });
 
       if (!active) return;
       if (error) {
-        if (error.code === '42P01') {
-          setGameScoresError('Game scores have not been configured in Supabase yet.');
+        if (error.code === "42P01") {
+          setGameScoresError(
+            "Game scores have not been configured in Supabase yet.",
+          );
         } else {
-          setGameScoresError(`Game scores could not be loaded: ${error.message}`);
+          setGameScoresError(
+            `Game scores could not be loaded: ${error.message}`,
+          );
         }
         return;
       }
 
       setGameScores(summarizeGameScores(data || []));
-      setGameScoresError('');
+      setGameScoresError("");
     }
 
     void loadGameScores();
@@ -197,20 +238,27 @@ function StudentDashboard({ profile }) {
 
     async function loadPdcProgress() {
       const { data, error } = await supabase
-        .from('pdc_checklist_responses')
-        .select('item_id, result')
-        .eq('student_id', profile.id);
+        .from("pdc_checklist_responses")
+        .select("item_id, result")
+        .eq("student_id", profile.id);
 
       if (!active) return;
       if (error) {
-        setPdcError(`PDC checklist status could not be loaded: ${error.message}`);
+        setPdcError(
+          `PDC checklist status could not be loaded: ${error.message}`,
+        );
         return;
       }
 
-      const answered = (data || []).filter((item) =>
-        PDC_CHECKLIST_ITEM_IDS.has(item.item_id) && (item.result === 'yes' || item.result === 'no')
+      const answered = (data || []).filter(
+        (item) =>
+          PDC_CHECKLIST_ITEM_IDS.has(item.item_id) &&
+          (item.result === "yes" || item.result === "no"),
       ).length;
-      setPdcProgress({ answered, complete: answered === PDC_CHECKLIST_ITEM_COUNT });
+      setPdcProgress({
+        answered,
+        complete: answered === PDC_CHECKLIST_ITEM_COUNT,
+      });
     }
 
     void loadPdcProgress();
@@ -224,14 +272,16 @@ function StudentDashboard({ profile }) {
 
     async function loadAchievements() {
       const { data, error } = await supabase
-        .from('player_achievements')
-        .select('achievement_id, unlocked_at')
-        .eq('user_id', profile.id)
-        .order('unlocked_at', { ascending: false });
+        .from("player_achievements")
+        .select("achievement_id, unlocked_at")
+        .eq("user_id", profile.id)
+        .order("unlocked_at", { ascending: false });
 
       if (!active) return;
       if (error) {
-        setAchievementError(`Achievements could not be loaded: ${error.message}`);
+        setAchievementError(
+          `Achievements could not be loaded: ${error.message}`,
+        );
         return;
       }
 
@@ -244,7 +294,7 @@ function StudentDashboard({ profile }) {
     };
   }, [profile.id]);
 
-  const welcomeName = getProfileDisplayName(profile, 'Student');
+  const welcomeName = getProfileDisplayName(profile, "Student");
 
   return (
     <div className="student-dashboard">
@@ -254,7 +304,9 @@ function StudentDashboard({ profile }) {
           <h2>Welcome back, {welcomeName}!</h2>
           <p>Keep learning and build the confidence to drive safely.</p>
         </div>
-        <span className="welcome-stars" aria-hidden="true">★ ✦</span>
+        <span className="welcome-stars" aria-hidden="true">
+          ★ ✦
+        </span>
       </section>
 
       <div className="dashboard-columns">
@@ -262,10 +314,22 @@ function StudentDashboard({ profile }) {
           <SuccessRateCharts studentId={profile.id} />
           <div className="progress-heading">
             <h3>Game Scores</h3>
-            <span>{gameProgressError ? 'Progress unavailable' : `${gameProgress}% complete`}</span>
+            <span>
+              {gameProgressError
+                ? "Progress unavailable"
+                : `${gameProgress}% complete`}
+            </span>
           </div>
-          {gameProgressError && <p role="alert" className="quiz-results-error">{gameProgressError}</p>}
-          {quizProgressError && <p role="alert" className="quiz-results-error">{quizProgressError}</p>}
+          {gameProgressError && (
+            <p role="alert" className="quiz-results-error">
+              {gameProgressError}
+            </p>
+          )}
+          {quizProgressError && (
+            <p role="alert" className="quiz-results-error">
+              {quizProgressError}
+            </p>
+          )}
 
           <div className="progress-cards">
             <ProgressCard
@@ -284,7 +348,13 @@ function StudentDashboard({ profile }) {
               icon="✓"
               count={`${pdcProgress.answered}/${PDC_CHECKLIST_ITEM_COUNT}`}
               title="PDC Checklist"
-              hint={pdcError ? 'Status unavailable' : pdcProgress.complete ? 'Completed' : 'In progress'}
+              hint={
+                pdcError
+                  ? "Status unavailable"
+                  : pdcProgress.complete
+                    ? "Completed"
+                    : "In progress"
+              }
             />
           </div>
 
@@ -293,7 +363,9 @@ function StudentDashboard({ profile }) {
               <h3>Your Game Scores</h3>
             </div>
             {gameScoresError ? (
-              <p role="alert" className="quiz-results-error">{gameScoresError}</p>
+              <p role="alert" className="quiz-results-error">
+                {gameScoresError}
+              </p>
             ) : (
               <GameScoreList scores={gameScores} />
             )}
@@ -305,11 +377,15 @@ function StudentDashboard({ profile }) {
               <Link to="/pdc-checklist">View checklist</Link>
             </div>
             {pdcError ? (
-              <p role="alert" className="quiz-results-error">{pdcError}</p>
+              <p role="alert" className="quiz-results-error">
+                {pdcError}
+              </p>
             ) : (
-              <p>{pdcProgress.complete
-                ? 'Your PDC checklist is complete.'
-                : `Your PDC checklist is ${pdcProgress.answered} of ${PDC_CHECKLIST_ITEM_COUNT} items complete.`}</p>
+              <p>
+                {pdcProgress.complete
+                  ? "Your PDC checklist is complete."
+                  : `Your PDC checklist is ${pdcProgress.answered} of ${PDC_CHECKLIST_ITEM_COUNT} items complete.`}
+              </p>
             )}
           </section>
 
@@ -319,28 +395,36 @@ function StudentDashboard({ profile }) {
               <Link to="/achievements">View all</Link>
             </div>
             {achievementError ? (
-              <p role="alert" className="quiz-results-error">{achievementError}</p>
+              <p role="alert" className="quiz-results-error">
+                {achievementError}
+              </p>
             ) : completedAchievements.length ? (
               <ul className="completed-achievements-list">
                 {completedAchievements.map((award) => {
-                  const achievement = ACHIEVEMENTS.find((item) => item.id === award.achievement_id);
+                  const achievement = ACHIEVEMENTS.find(
+                    (item) => item.id === award.achievement_id,
+                  );
                   if (!achievement) return null;
 
                   return (
                     <li key={award.achievement_id}>
                       <div>
                         <strong>{achievement.title}</strong>
-                        <small>Completed {new Date(award.unlocked_at).toLocaleDateString()}</small>
+                        <small>
+                          Completed{" "}
+                          {new Date(award.unlocked_at).toLocaleDateString()}
+                        </small>
                       </div>
                     </li>
                   );
                 })}
               </ul>
             ) : (
-              <p className="quiz-results-empty">No achievements completed yet.</p>
+              <p className="quiz-results-empty">
+                No achievements completed yet.
+              </p>
             )}
           </section>
-
         </div>
 
         <div className="dashboard-aside">
@@ -351,7 +435,10 @@ function StudentDashboard({ profile }) {
           </section>
           <section className="dash-card aside-card">
             <h3>Announcement</h3>
-            <p>Keep your progress moving forward and check back for updates from your instructor.</p>
+            <p>
+              Keep your progress moving forward and check back for updates from
+              your instructor.
+            </p>
           </section>
         </div>
       </div>
@@ -361,18 +448,18 @@ function StudentDashboard({ profile }) {
 
 function AdminDashboard({ profile }) {
   const [ageGroups, setAgeGroups] = useState({
-    '16-17': 0,
-    '18-24': 0,
-    '25-34': 0,
-    '35+': 0,
+    "16-17": 0,
+    "18-24": 0,
+    "25-34": 0,
+    "35+": 0,
   });
-  const [ageGroupsError, setAgeGroupsError] = useState('');
+  const [ageGroupsError, setAgeGroupsError] = useState("");
   const [agePieHover, setAgePieHover] = useState(null);
   const [pdcStudentCount, setPdcStudentCount] = useState(0);
   const [pdcCompletedCount, setPdcCompletedCount] = useState(0);
-  const [pdcStatsError, setPdcStatsError] = useState('');
+  const [pdcStatsError, setPdcStatsError] = useState("");
   const [students, setStudents] = useState([]);
-  const [studentsError, setStudentsError] = useState('');
+  const [studentsError, setStudentsError] = useState("");
   const [studentsLoading, setStudentsLoading] = useState(true);
 
   function handleAgePieMouseMove(event) {
@@ -380,8 +467,11 @@ function AdminDashboard({ profile }) {
     const bounds = chart.getBoundingClientRect();
     const dx = event.clientX - (bounds.left + bounds.width / 2);
     const dy = event.clientY - (bounds.top + bounds.height / 2);
-    const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
-    const total = Object.values(ageGroups).reduce((sum, count) => sum + count, 0);
+    const angle = ((Math.atan2(dy, dx) * 180) / Math.PI + 90 + 360) % 360;
+    const total = Object.values(ageGroups).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
 
     let currentAngle = 0;
     for (const [group, count] of Object.entries(ageGroups)) {
@@ -405,14 +495,26 @@ function AdminDashboard({ profile }) {
   useEffect(() => {
     let active = true;
     async function loadStudents() {
-      const { data, error } = await fetchAllRows(() => supabase.from('profiles').select('id, name, created_at').eq('role', 'student').order('name').order('id'));
+      const { data, error } = await fetchAllRows(() =>
+        supabase
+          .from("profiles")
+          .select("id, name, created_at")
+          .eq("role", "student")
+          .order("name")
+          .order("id"),
+      );
       if (!active) return;
       setStudentsLoading(false);
-      if (error) setStudentsError('Monthly enrolments could not be loaded.');
-      else { setStudents(data || []); setStudentsError(''); }
+      if (error) setStudentsError("Monthly enrolments could not be loaded.");
+      else {
+        setStudents(data || []);
+        setStudentsError("");
+      }
     }
     void loadStudents();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -422,28 +524,41 @@ function AdminDashboard({ profile }) {
       if (!active) return;
 
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-        if (!session?.access_token) throw new Error('Your session has expired. Sign in again.');
+        if (!session?.access_token)
+          throw new Error("Your session has expired. Sign in again.");
 
-        const response = await fetch('/api/student-age-distribution', {
-          headers: { Authorization: ['Bearer', session.access_token].join(' ') },
+        const response = await fetch("/api/student-age-distribution", {
+          headers: {
+            Authorization: ["Bearer", session.access_token].join(" "),
+          },
         });
         const result = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error(result?.error || 'Student age distribution could not be loaded.');
+          throw new Error(
+            result?.error || "Student age distribution could not be loaded.",
+          );
         }
-        if (!result?.ageGroups || !Object.values(result.ageGroups).every(Number.isFinite)) {
-          throw new Error('Student age distribution returned invalid data.');
+        if (
+          !result?.ageGroups ||
+          !Object.values(result.ageGroups).every(Number.isFinite)
+        ) {
+          throw new Error("Student age distribution returned invalid data.");
         }
 
         if (active) {
           setAgeGroups(result.ageGroups);
-          setAgeGroupsError('');
+          setAgeGroupsError("");
         }
       } catch (error) {
         if (active) {
-          setAgeGroupsError(error.message || 'Student age distribution could not be loaded.');
+          setAgeGroupsError(
+            error.message || "Student age distribution could not be loaded.",
+          );
         }
       }
     }
@@ -459,8 +574,14 @@ function AdminDashboard({ profile }) {
 
     async function loadPdcStats() {
       const [studentsResult, responsesResult] = await Promise.all([
-        fetchAllRows(() => supabase.from('profiles').select('id').eq('role', 'student')),
-        fetchAllRows(() => supabase.from('pdc_checklist_responses').select('student_id, item_id, result')),
+        fetchAllRows(() =>
+          supabase.from("profiles").select("id").eq("role", "student"),
+        ),
+        fetchAllRows(() =>
+          supabase
+            .from("pdc_checklist_responses")
+            .select("student_id, item_id, result"),
+        ),
       ]);
 
       if (!active) return;
@@ -471,21 +592,27 @@ function AdminDashboard({ profile }) {
         return;
       }
 
-      const studentIds = new Set((studentsResult.data || []).map((student) => student.id));
+      const studentIds = new Set(
+        (studentsResult.data || []).map((student) => student.id),
+      );
       const evaluatedItems = new Map();
       for (const response of responsesResult.data || []) {
         if (
-          !studentIds.has(response.student_id)
-          || !PDC_CHECKLIST_ITEM_IDS.has(response.item_id)
-          || !['yes', 'no'].includes(response.result)
-        ) continue;
-        if (!evaluatedItems.has(response.student_id)) evaluatedItems.set(response.student_id, new Set());
+          !studentIds.has(response.student_id) ||
+          !PDC_CHECKLIST_ITEM_IDS.has(response.item_id) ||
+          !["yes", "no"].includes(response.result)
+        )
+          continue;
+        if (!evaluatedItems.has(response.student_id))
+          evaluatedItems.set(response.student_id, new Set());
         evaluatedItems.get(response.student_id).add(response.item_id);
       }
 
       setPdcStudentCount(studentIds.size);
       setPdcCompletedCount(
-        [...evaluatedItems.values()].filter((items) => items.size >= PDC_CHECKLIST_ITEM_COUNT).length,
+        [...evaluatedItems.values()].filter(
+          (items) => items.size >= PDC_CHECKLIST_ITEM_COUNT,
+        ).length,
       );
     }
 
@@ -500,77 +627,110 @@ function AdminDashboard({ profile }) {
       <section className="role-welcome">
         <div>
           <span className="welcome-script">School overview</span>
-          <h2>Welcome back, {getProfileDisplayName(profile, 'Admin')}!</h2>
+          <h2>Welcome back, {getProfileDisplayName(profile, "Admin")}!</h2>
           <p>Manage your driving school from one place.</p>
         </div>
-        <span className="welcome-stars" aria-hidden="true">★ ✦</span>
+        <span className="welcome-stars" aria-hidden="true">
+          ★ ✦
+        </span>
       </section>
 
       <div className="dashboard-columns">
         <div className="dashboard-primary">
           <SuccessRateCharts students={students} />
           <div className="admin-overview-row">
-          <section className="dash-card age-distribution">
-            <div className="card-heading">
-              <h3>Student Age Distribution</h3>
-              <span>{Object.values(ageGroups).reduce((sum, count) => sum + count, 0)} students with age data</span>
-            </div>
-            {ageGroupsError ? (
-              <p role="alert" className="quiz-results-error">{ageGroupsError}</p>
-            ) : (
-              <div className="age-distribution-content">
-                <div className="age-pie-wrap">
-                  <div
-                    className="age-pie-chart"
-                    role="img"
-                    aria-label={`Student age groups: ${Object.entries(ageGroups).map(([group, count]) => `${group}: ${count}`).join(', ')}`}
-                    aria-describedby={agePieHover ? 'age-pie-tooltip' : undefined}
-                    style={{ background: getAgeGroupGradient(ageGroups) }}
-                    onMouseMove={handleAgePieMouseMove}
-                    onMouseLeave={() => setAgePieHover(null)}
-                  />
-                  {agePieHover && (
-                    <div
-                      id="age-pie-tooltip"
-                      className="age-pie-tooltip"
-                      role="tooltip"
-                      style={{ left: agePieHover.x, top: agePieHover.y }}
-                    >
-                      <span>{agePieHover.group} years</span>
-                      <strong>
-                        {agePieHover.count} {agePieHover.count === 1 ? 'student' : 'students'} ({agePieHover.percentage.toFixed(1)}%)
-                      </strong>
-                    </div>
-                  )}
-                </div>
-                <ul className="age-pie-legend">
-                  {Object.entries(ageGroups).map(([group, count]) => (
-                    <li key={group}>
-                      <span className="age-pie-swatch" style={{ background: AGE_GROUP_COLORS[group] }} />
-                      <span>{group} years</span>
-                      <strong>{count}</strong>
-                    </li>
-                  ))}
-                </ul>
+            <section className="dash-card age-distribution">
+              <div className="card-heading">
+                <h3>Student Age Distribution</h3>
+                <span>
+                  {Object.values(ageGroups).reduce(
+                    (sum, count) => sum + count,
+                    0,
+                  )}{" "}
+                  students with age data
+                </span>
               </div>
-            )}
-          </section>
-          <EnrolmentChart students={students} error={studentsError} loading={studentsLoading} />
-          <div className="progress-cards admin-progress-cards">
-            <ProgressCard
-              icon="✓"
-              count={pdcStatsError ? '—' : pdcCompletedCount}
-              title="PDC Checklist Completed"
-              hint={pdcStatsError ? 'Count unavailable' : `of ${pdcStudentCount} students`}
+              {ageGroupsError ? (
+                <p role="alert" className="quiz-results-error">
+                  {ageGroupsError}
+                </p>
+              ) : (
+                <div className="age-distribution-content">
+                  <div className="age-pie-wrap">
+                    <div
+                      className="age-pie-chart"
+                      role="img"
+                      aria-label={`Student age groups: ${Object.entries(
+                        ageGroups,
+                      )
+                        .map(([group, count]) => `${group}: ${count}`)
+                        .join(", ")}`}
+                      aria-describedby={
+                        agePieHover ? "age-pie-tooltip" : undefined
+                      }
+                      style={{ background: getAgeGroupGradient(ageGroups) }}
+                      onMouseMove={handleAgePieMouseMove}
+                      onMouseLeave={() => setAgePieHover(null)}
+                    />
+                    {agePieHover && (
+                      <div
+                        id="age-pie-tooltip"
+                        className="age-pie-tooltip"
+                        role="tooltip"
+                        style={{ left: agePieHover.x, top: agePieHover.y }}
+                      >
+                        <span>{agePieHover.group} years</span>
+                        <strong>
+                          {agePieHover.count}{" "}
+                          {agePieHover.count === 1 ? "student" : "students"} (
+                          {agePieHover.percentage.toFixed(1)}%)
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                  <ul className="age-pie-legend">
+                    {Object.entries(ageGroups).map(([group, count]) => (
+                      <li key={group}>
+                        <span
+                          className="age-pie-swatch"
+                          style={{ background: AGE_GROUP_COLORS[group] }}
+                        />
+                        <span>{group} years</span>
+                        <strong>{count}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+            <EnrolmentChart
+              students={students}
+              error={studentsError}
+              loading={studentsLoading}
             />
+            <div className="progress-cards admin-progress-cards">
+              <ProgressCard
+                icon="✓"
+                count={pdcStatsError ? "—" : pdcCompletedCount}
+                title="PDC Checklist Completed"
+                hint={
+                  pdcStatsError
+                    ? "Count unavailable"
+                    : `of ${pdcStudentCount} students`
+                }
+              />
+            </div>
           </div>
-
-          </div>
-          {pdcStatsError && <p role="alert" className="quiz-results-error">{pdcStatsError}</p>}
-          <StudentProgressPanel students={students} studentsLoading={studentsLoading} studentsError={studentsError} />
-
-
-
+          {pdcStatsError && (
+            <p role="alert" className="quiz-results-error">
+              {pdcStatsError}
+            </p>
+          )}
+          <StudentProgressPanel
+            students={students}
+            studentsLoading={studentsLoading}
+            studentsError={studentsError}
+          />
         </div>
 
         <div className="dashboard-aside">
@@ -583,7 +743,9 @@ function AdminDashboard({ profile }) {
 
 export default function Dashboard() {
   const { profile } = useAuth();
-  return profile?.role === 'student'
-    ? <StudentDashboard profile={profile} />
-    : <AdminDashboard profile={profile} />;
+  return profile?.role === "student" ? (
+    <StudentDashboard profile={profile} />
+  ) : (
+    <AdminDashboard profile={profile} />
+  );
 }

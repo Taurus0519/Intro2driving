@@ -3,7 +3,7 @@
   display: block;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: .17em;
+  letter-spacing: 0.17em;
   color: #778a99;
   margin-bottom: 3px;
 }
@@ -59,7 +59,8 @@ body:has(.student-dashboard) .topbar h2 {
   .role-badge {
     margin: 0;
   }
-  .sidebar .brand-mark, .brand-name {
+  .sidebar .brand-mark,
+  .brand-name {
     margin: 0;
   }
   .sidebar-logo {

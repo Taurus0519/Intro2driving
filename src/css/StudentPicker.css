@@ -1,12 +1,78 @@
-.student-picker-label{display:block}
-.student-picker-label select{display:block;width:100%;margin-top:5px;padding:9px}
-.student-picker-backdrop{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:20px;background:rgb(13 34 48 / 55%)}
-.student-picker-dialog{width:min(100%,520px);max-height:min(80vh,680px);overflow-y:auto;padding:20px;border-radius:10px;background:#fff;box-shadow:0 14px 44px rgb(0 0 0 / 24%);color:#182d3a}
-.student-picker-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.student-picker-heading h2{margin:0;font-size:18px}
-.student-picker-heading button{width:34px;height:34px;border:1px solid #cbd9e0;border-radius:5px;background:#fff;color:#294b60;font-size:24px;line-height:1;cursor:pointer}
-.student-picker-options{display:grid;gap:6px}
-.student-picker-options>button{padding:10px 12px;border:1px solid #d5e2e8;border-radius:5px;background:#fff;color:#176ca6;text-align:left;font:inherit;cursor:pointer}
-.student-picker-options>button:hover,.student-picker-options>button.selected{border-color:#176ca6;background:#eef7fc}
-.student-picker-options>button:focus-visible,.student-picker-heading button:focus-visible{outline:2px solid #176ca6;outline-offset:2px}
-.student-picker-empty{margin:16px 0;color:#607d91}
+.student-picker-label {
+  display: block;
+}
+.student-picker-label select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px;
+}
+.student-picker-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(13 34 48 / 55%);
+}
+.student-picker-dialog {
+  width: min(100%, 520px);
+  max-height: min(80vh, 680px);
+  overflow-y: auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 44px rgb(0 0 0 / 24%);
+  color: #182d3a;
+}
+.student-picker-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.student-picker-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.student-picker-heading button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #cbd9e0;
+  border-radius: 5px;
+  background: #fff;
+  color: #294b60;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.student-picker-options {
+  display: grid;
+  gap: 6px;
+}
+.student-picker-options > button {
+  padding: 10px 12px;
+  border: 1px solid #d5e2e8;
+  border-radius: 5px;
+  background: #fff;
+  color: #176ca6;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.student-picker-options > button:hover,
+.student-picker-options > button.selected {
+  border-color: #176ca6;
+  background: #eef7fc;
+}
+.student-picker-options > button:focus-visible,
+.student-picker-heading button:focus-visible {
+  outline: 2px solid #176ca6;
+  outline-offset: 2px;
+}
+.student-picker-empty {
+  margin: 16px 0;
+  color: #607d91;
+}
