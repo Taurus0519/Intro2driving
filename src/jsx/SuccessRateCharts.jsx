@@ -361,8 +361,8 @@ export default function SuccessRateCharts({ studentId, students = [] }) {
       </div>
       <p className="success-rate-caption">
         Quiz pass rate counts attempts scoring at least {QUIZ_PASSING_PERCENT}%;
-        each student can take up to {MAX_QUIZ_ATTEMPTS} attempts across all
-        chapters. Updates every 30 seconds.
+        each student can take up to {MAX_QUIZ_ATTEMPTS} attempts per chapter.
+        Updates every 30 seconds.
       </p>
     </section>
   );

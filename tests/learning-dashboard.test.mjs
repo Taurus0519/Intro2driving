@@ -71,15 +71,32 @@ test("quiz rates classify 50 percent as pass and count attempts rather than answ
   assert.equal(summary.percentage.toFixed(1), "66.7");
 });
 
-test("quiz attempt rate includes at most the latest five attempts per student", () => {
+test("quiz attempt rate includes at most the latest three attempts per chapter and student", () => {
   const rows = [
-    { student_id: "one", score: 10, total_questions: 10 },
+    {
+      student_id: "one",
+      chapter_number: 1,
+      score: 10,
+      total_questions: 10,
+    },
     ...Array.from({ length: 5 }, () => ({
       student_id: "one",
+      chapter_number: 1,
       score: 0,
       total_questions: 10,
     })),
-    { student_id: "two", score: 5, total_questions: 10 },
+    {
+      student_id: "one",
+      chapter_number: 2,
+      score: 5,
+      total_questions: 10,
+    },
+    {
+      student_id: "two",
+      chapter_number: 1,
+      score: 5,
+      total_questions: 10,
+    },
   ];
   const summary = summarizeQuizAttempts(rows);
   assert.deepEqual(
@@ -88,12 +105,12 @@ test("quiz attempt rate includes at most the latest five attempts per student", 
       failed: summary.failed,
       attempts: summary.attempts,
     },
-    { passed: 1, failed: 5, attempts: 6 },
+    { passed: 2, failed: 3, attempts: 5 },
   );
-  assert.equal(summary.percentage.toFixed(1), "16.7");
+  assert.equal(summary.percentage, 40);
 });
 
-test("quiz chapter bars group passed and failed attempts after applying the course attempt limit", () => {
+test("quiz chapter bars group passed and failed attempts after applying each chapter limit", () => {
   const rows = [
     { student_id: "one", chapter_number: 1, score: 10, total_questions: 10 },
     { student_id: "one", chapter_number: 1, score: 0, total_questions: 10 },
@@ -106,8 +123,8 @@ test("quiz chapter bars group passed and failed attempts after applying the cour
     { student_id: "two", chapter_number: 2, score: 0, total_questions: 10 },
   ];
   assert.deepEqual(getQuizChapterBreakdown(rows), [
-    { label: "Chapter 1", passed: 0, failed: 1, attempts: 1 },
-    { label: "Chapter 2", passed: 4, failed: 1, attempts: 5 },
+    { label: "Chapter 1", passed: 1, failed: 1, attempts: 2 },
+    { label: "Chapter 2", passed: 3, failed: 1, attempts: 4 },
   ]);
 });
 
@@ -121,7 +138,8 @@ test("quiz chapter bars count the latest attempts when results arrive newest fir
     created_at: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
   })).reverse();
   assert.deepEqual(getQuizChapterBreakdown(rows), [
-    { label: "Chapter 2", passed: 0, failed: 5, attempts: 5 },
+    { label: "Chapter 1", passed: 1, failed: 0, attempts: 1 },
+    { label: "Chapter 2", passed: 0, failed: 3, attempts: 3 },
   ]);
 });
 

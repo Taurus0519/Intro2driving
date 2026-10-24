@@ -1,5 +1,5 @@
 export const QUIZ_PASSING_PERCENT = 50;
-export const MAX_QUIZ_ATTEMPTS = 5;
+export const MAX_QUIZ_ATTEMPTS = 3;
 
 export function getCountedQuizAttempts(
   rows,
@@ -22,9 +22,11 @@ export function getCountedQuizAttempts(
     )
       continue;
     const studentKey = row.student_id || "__single_student__";
-    const attempts = attemptsByStudent.get(studentKey) || [];
+    const chapterKey = row.chapter_number ?? "__unassigned_chapter__";
+    const attemptKey = `${studentKey}:${chapterKey}`;
+    const attempts = attemptsByStudent.get(attemptKey) || [];
     attempts.push(row);
-    attemptsByStudent.set(studentKey, attempts);
+    attemptsByStudent.set(attemptKey, attempts);
   }
 
   return [...attemptsByStudent.values()].flatMap((attempts) => {

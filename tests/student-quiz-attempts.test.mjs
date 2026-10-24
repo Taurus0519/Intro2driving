@@ -12,6 +12,7 @@ function setup({ role = "student", validToken = true, unlocked = true } = {}) {
       score: 10,
       total_questions: 10,
       chapter_number: 1,
+      submission_id: "attempt-one",
     },
     { student_id: otherId, score: 4, total_questions: 10, chapter_number: 2 },
   ];
@@ -92,7 +93,12 @@ test("student quiz results return only the authenticated student’s attempts", 
   await handler(request, response);
   assert.equal(response.statusCode, 200);
   assert.deepEqual(response.body.attempts, [
-    { score: 10, total_questions: 10, chapter_number: 1 },
+    {
+      score: 10,
+      total_questions: 10,
+      chapter_number: 1,
+      submission_id: "attempt-one",
+    },
   ]);
   assert.equal(response.headers["Cache-Control"], "private, no-store");
   assert.equal(response.headers.Vary, "Authorization");

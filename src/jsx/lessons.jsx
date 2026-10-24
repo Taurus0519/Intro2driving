@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./useAunth";
 import { supabase } from "./supabase_Client";
 import {
@@ -45,6 +45,12 @@ function shuffleQuestions(items) {
   return shuffled;
 }
 
+function countChapterAttempts(attempts, chapterNumber) {
+  return attempts.filter(
+    (attempt) => Number(attempt.chapter_number) === chapterNumber,
+  ).length;
+}
+
 export default function Lessons() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
@@ -61,7 +67,7 @@ export default function Lessons() {
   const [completedChapters, setCompletedChapters] = useState([]);
   const [loadingChapterProgress, setLoadingChapterProgress] = useState(true);
   const [chapterProgressError, setChapterProgressError] = useState("");
-  const [quizAttemptCount, setQuizAttemptCount] = useState(0);
+  const [quizAttempts, setQuizAttempts] = useState([]);
   const [loadingQuizAttemptCount, setLoadingQuizAttemptCount] = useState(true);
   const [quizAttemptCountError, setQuizAttemptCountError] = useState("");
   const [checkingQuizAttemptCount, setCheckingQuizAttemptCount] =
@@ -71,6 +77,8 @@ export default function Lessons() {
   const [questionError, setQuestionError] = useState("");
   const [imageAttachmentsEnabled, setImageAttachmentsEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const submissionLocked = useRef(false);
+  const submissionId = useRef(null);
   const [submitError, setSubmitError] = useState("");
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
 
@@ -182,7 +190,7 @@ export default function Lessons() {
     async function loadAttemptCount() {
       setLoadingQuizAttemptCount(true);
       setQuizAttemptCountError("");
-      let count = null;
+      let attempts = null;
       let error = null;
       try {
         const {
@@ -204,7 +212,7 @@ export default function Lessons() {
           );
         if (!Array.isArray(result?.attempts))
           throw new Error("Quiz attempts returned invalid data.");
-        count = result.attempts.length;
+        attempts = result.attempts;
       } catch (loadError) {
         error = loadError;
       }
@@ -215,7 +223,7 @@ export default function Lessons() {
           `Quiz attempt limit could not be checked: ${error.message || "Please try again."}`,
         );
       } else {
-        setQuizAttemptCount(count);
+        setQuizAttempts(attempts);
         setQuizAttemptCountError("");
       }
       setLoadingQuizAttemptCount(false);
@@ -244,10 +252,9 @@ export default function Lessons() {
         throw new Error(result?.error || "Quiz attempts could not be loaded.");
       if (!Array.isArray(result?.attempts))
         throw new Error("Quiz attempts returned invalid data.");
-      const count = result.attempts.length;
-      setQuizAttemptCount(count);
+      setQuizAttempts(result.attempts);
       setQuizAttemptCountError("");
-      return count;
+      return result.attempts;
     } catch (error) {
       setQuizAttemptCountError(
         `Quiz attempt limit could not be checked: ${error.message || "Please try again."}`,
@@ -418,66 +425,75 @@ export default function Lessons() {
   async function submitQuiz(e) {
     if (e) e.preventDefault();
 
-    if (activeQuestions.length !== QUESTIONS_PER_QUIZ || submitting) {
+    if (
+      activeQuestions.length !== QUESTIONS_PER_QUIZ ||
+      submitting ||
+      submissionLocked.current ||
+      !submissionId.current
+    ) {
       return;
     }
 
-    const currentAttemptCount = await refreshQuizAttemptCount();
-    if (currentAttemptCount === null) {
-      setSubmitError(
-        "Your quiz result could not be saved because the attempt limit could not be verified. Please try again.",
-      );
-      return;
-    }
-    if (currentAttemptCount >= MAX_QUIZ_ATTEMPTS) {
-      setQuizStarted(false);
-      setSubmitError(
-        `You have used all ${MAX_QUIZ_ATTEMPTS} quiz attempts across the course.`,
-      );
-      return;
-    }
-
+    submissionLocked.current = true;
     setSubmitting(true);
     setSubmitError("");
-    let errorMessage = "";
-    let attemptResult = null;
+    const currentSubmissionId = submissionId.current;
+    let submitted = false;
     try {
+      const attempts = await refreshQuizAttemptCount();
+      if (attempts === null) {
+        setSubmitError(
+          "Your quiz result could not be saved because the attempt limit could not be verified. Please try again.",
+        );
+        return;
+      }
+
       const { data, error } = await supabase.rpc("complete_quiz_chapter", {
         p_chapter_number: selectedChapter,
         p_answers: answers,
+        p_submission_id: currentSubmissionId,
       });
-      errorMessage = error?.message || "";
-      if (!error) {
-        const savedAttempt = Array.isArray(data) ? data[0] : null;
-        if (!savedAttempt) {
-          errorMessage =
-            "The chapter was submitted, but its result could not be returned. Refresh the page to check your progress.";
-        } else {
-          attemptResult = {
-            score: savedAttempt.score,
-            total: savedAttempt.total_questions,
-            percentage: savedAttempt.percentage,
-          };
-        }
+      if (error) throw error;
+
+      const savedAttempt = Array.isArray(data) ? data[0] : null;
+      if (!savedAttempt) {
+        throw new Error(
+          "The chapter was submitted, but its result could not be returned. Refresh the page to check your progress.",
+        );
       }
+
+      setResult({
+        score: savedAttempt.score,
+        total: savedAttempt.total_questions,
+        percentage: savedAttempt.percentage,
+      });
+      setQuizAttempts((current) =>
+        current.some((attempt) => attempt.submission_id === currentSubmissionId)
+          ? current
+          : [
+              ...current,
+              {
+                chapter_number: selectedChapter,
+                score: savedAttempt.score,
+                total_questions: savedAttempt.total_questions,
+                submission_id: currentSubmissionId,
+              },
+            ],
+      );
+      setCompletedChapters((current) =>
+        current.includes(selectedChapter)
+          ? current
+          : [...current, selectedChapter],
+      );
+      submitted = true;
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setSubmitError(
+        `Your quiz result could not be saved: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setSubmitting(false);
+      if (!submitted) submissionLocked.current = false;
     }
-
-    if (errorMessage) {
-      setSubmitError(`Your quiz result could not be saved: ${errorMessage}`);
-      return;
-    }
-
-    setResult(attemptResult);
-    setQuizAttemptCount(currentAttemptCount + 1);
-    setCompletedChapters((current) =>
-      current.includes(selectedChapter)
-        ? current
-        : [...current, selectedChapter],
-    );
   }
 
   const chapterCounts = Array.from(
@@ -488,7 +504,14 @@ export default function Lessons() {
   );
   const selectedChapterReady =
     chapterCounts[selectedChapter - 1] >= QUESTIONS_PER_QUIZ;
-  const attemptsRemaining = Math.max(0, MAX_QUIZ_ATTEMPTS - quizAttemptCount);
+  const selectedChapterAttemptCount = countChapterAttempts(
+    quizAttempts,
+    selectedChapter,
+  );
+  const attemptsRemaining = Math.max(
+    0,
+    MAX_QUIZ_ATTEMPTS - selectedChapterAttemptCount,
+  );
   const currentQuestion = activeQuestions[currentIndex];
   const selectedAnswer = currentQuestion
     ? answers[currentQuestion.id]
@@ -500,6 +523,8 @@ export default function Lessons() {
       : "Continue";
 
   function selectChapter(chapterNumber) {
+    submissionLocked.current = false;
+    submissionId.current = null;
     setSelectedChapter(chapterNumber);
     setActiveQuestions([]);
     setQuizStarted(false);
@@ -521,7 +546,12 @@ export default function Lessons() {
     const currentAttemptCount = await refreshQuizAttemptCount();
     setCheckingQuizAttemptCount(false);
     if (currentAttemptCount === null) return;
-    if (currentAttemptCount >= MAX_QUIZ_ATTEMPTS) return;
+    if (
+      countChapterAttempts(currentAttemptCount, selectedChapter) >=
+      MAX_QUIZ_ATTEMPTS
+    ) {
+      return;
+    }
 
     const chapterQuestions = questions.filter(
       (question) => question.chapterNumber === selectedChapter,
@@ -534,6 +564,8 @@ export default function Lessons() {
     setAnswers({});
     setCurrentIndex(0);
     setSubmitError("");
+    submissionLocked.current = false;
+    submissionId.current = crypto.randomUUID();
     setQuizStarted(true);
   }
 
@@ -844,7 +876,7 @@ export default function Lessons() {
                   <p role="status">Checking quiz attempts...</p>
                 ) : (
                   <p>
-                    Course attempts remaining: {attemptsRemaining} of{" "}
+                    Chapter attempts remaining: {attemptsRemaining} of{" "}
                     {MAX_QUIZ_ATTEMPTS}.
                   </p>
                 )}
@@ -863,7 +895,7 @@ export default function Lessons() {
                     !selectedChapterReady ||
                     loadingQuizAttemptCount ||
                     Boolean(quizAttemptCountError) ||
-                    quizAttemptCount >= MAX_QUIZ_ATTEMPTS ||
+                    selectedChapterAttemptCount >= MAX_QUIZ_ATTEMPTS ||
                     checkingQuizAttemptCount
                   }
                 >
@@ -873,10 +905,10 @@ export default function Lessons() {
                       ? "Retake Chapter"
                       : "Start Chapter"}
                 </button>
-                {quizAttemptCount >= MAX_QUIZ_ATTEMPTS && (
+                {selectedChapterAttemptCount >= MAX_QUIZ_ATTEMPTS && (
                   <p role="status">
-                    You have used all {MAX_QUIZ_ATTEMPTS} quiz attempts across
-                    the course.
+                    You have used all {MAX_QUIZ_ATTEMPTS} attempts for this
+                    chapter.
                   </p>
                 )}
               </section>
